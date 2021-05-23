@@ -1,4 +1,4 @@
-package info.skyblond.nekohit.neo.pojo;
+package info.skyblond.nekohit.neo.domain;
 
 public class WCABasicInfo {
     public int stakePer100Token;
