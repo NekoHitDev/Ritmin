@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import static io.neow3j.devpack.StringLiteralHelper.hexToBytes;
 import info.skyblond.nekohit.neo.domain.WCABasicInfo;
 import info.skyblond.nekohit.neo.domain.WCABuyerInfo;
 import info.skyblond.nekohit.neo.domain.WCAPojo;
@@ -7,12 +8,14 @@ import io.neow3j.devpack.ByteString;
 import io.neow3j.devpack.CallFlags;
 import io.neow3j.devpack.Contract;
 import io.neow3j.devpack.Hash160;
+import io.neow3j.devpack.List;
 import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.Storage;
 import io.neow3j.devpack.StorageContext;
 import io.neow3j.devpack.StorageMap;
 import io.neow3j.devpack.annotations.DisplayName;
 import io.neow3j.devpack.annotations.ManifestExtra;
+import io.neow3j.devpack.annotations.OnNEP17Payment;
 import io.neow3j.devpack.contracts.StdLib;
 import io.neow3j.devpack.events.Event3Args;
 import io.neow3j.devpack.events.Event4Args;
@@ -25,7 +28,7 @@ public class WCAContract {
 
     private static final StorageContext CTX = Storage.getStorageContext();
 
-    private static final Hash160 CAT_TOKEN_HASH = null; //TODO: set to cat token hash
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("8C2C4AD2DB6FEB751E7693872570AA26597F2B3F"));
 
     @DisplayName("CreateWCA")
     private static Event5Args<Hash160, Integer, Integer, Integer, String> onCreateWCA;
@@ -36,16 +39,26 @@ public class WCAContract {
     @DisplayName("FinishWCA")
     private static Event3Args<Hash160, String, Boolean> onFinishWCA;
 
-    private static final StorageMap wacBasicInfoMap = CTX.createMap("WCA_BASIC_INFO");
+    private static final StorageMap wcaBasicInfoMap = CTX.createMap("WCA_BASIC_INFO");
 
-    private static final StorageMap wacBuyerInfoMap = CTX.createMap("WCA_BUYER_INFO");
+    private static final StorageMap wcaBuyerInfoMap = CTX.createMap("WCA_BUYER_INFO");
+
+    private static final StorageMap wcaIdentifierMap = CTX.createMap("WCA_IDENTIFIERS");
+
+    @DisplayName("onPayment")
+    static Event3Args<Hash160, Integer, Object> onPayment;
+
+    @OnNEP17Payment
+    public static void onPayment(Hash160 from, int amount, Object data) {
+        onPayment.fire(from, amount, data);
+    }
 
     private static ByteString getTrueId(Hash160 owner, String identifier) {
         return owner.asByteString().concat(identifier);
     }
 
     private static WCABasicInfo getWCABasicInfo(ByteString trueId) {
-        ByteString data = wacBasicInfoMap.get(trueId);
+        ByteString data = wcaBasicInfoMap.get(trueId);
         if (data == null) {
             return null;
         }
@@ -53,11 +66,21 @@ public class WCAContract {
     }
 
     private static WCABuyerInfo getWCABuyerInfo(ByteString trueId) {
-        ByteString data = wacBuyerInfoMap.get(trueId);
+        ByteString data = wcaBuyerInfoMap.get(trueId);
         if (data == null) {
             return null;
         }
         return (WCABuyerInfo) StdLib.deserialize(data);
+    }
+
+    private static List<String> queryIdentifiers(Hash160 owner) {
+        return (List<String>) StdLib.deserialize(wcaIdentifierMap.get(owner.asByteString()));
+    }
+
+    private static void insertIdentifier(Hash160 owner, String identifier) {
+        List<String> identifiers = queryIdentifiers(owner);
+        identifiers.add(identifier);
+        wcaIdentifierMap.put(owner.asByteString(), StdLib.serialize(identifiers));
     }
 
     public static String queryWCA(Hash160 owner, String identifier) {
@@ -108,9 +131,10 @@ public class WCAContract {
         ByteString trueId = getTrueId(owner, identifier);
 
         // identifier should be unique
-        if (wacBasicInfoMap.get(trueId) != null) {
+        if (wcaBasicInfoMap.get(trueId) != null) {
             throw new Exception("Duplicate identifier.");
         }
+        insertIdentifier(owner, identifier);
         // create wca info obj
         WCABasicInfo info = new WCABasicInfo(stakePer100Token, maxTokenSoldCount, endTimestamp);
         ByteString basicData = StdLib.serialize(info);
@@ -118,8 +142,8 @@ public class WCAContract {
         // remove token from creator
         // deductTokenFromBalance(owner, totalStake);
         // store
-        wacBasicInfoMap.put(trueId, basicData);
-        wacBuyerInfoMap.put(trueId, buyerData);
+        wcaBasicInfoMap.put(trueId, basicData);
+        wcaBuyerInfoMap.put(trueId, buyerData);
 
         onCreateWCA.fire(owner, stakePer100Token, maxTokenSoldCount, endTimestamp, identifier);
     }
@@ -166,7 +190,7 @@ public class WCAContract {
 
         // store
         ByteString data = StdLib.serialize(buyerInfo);
-        wacBuyerInfoMap.put(trueId, data);
+        wcaBuyerInfoMap.put(trueId, data);
         onBuyWCA.fire(buyer, owner, identifier, amount);
         return amount;
 //        return wacBuyerInfoMap.get(trueId).length();
@@ -206,8 +230,8 @@ public class WCAContract {
             // all amount goes to creator, return stake to creator
             // addTokenToBalance(owner, buyerInfo.totalAmount + basicInfo.stakePer100Token * basicInfo.maxTokenSoldCount / 100);
             // remove wca
-            wacBasicInfoMap.delete(trueId);
-            wacBuyerInfoMap.delete(trueId);
+            wcaBasicInfoMap.delete(trueId);
+            wcaBuyerInfoMap.delete(trueId);
             onFinishWCA.fire(owner, identifier, true);
         } else if (basicInfo.endTimestamp <= Runtime.getTime()) {
             // otherwise, if wca is end, return amount+stake to buyer
@@ -222,8 +246,8 @@ public class WCAContract {
                 // addTokenToBalance(owner, buyerInfo.remainTokenCount * basicInfo.stakePer100Token / 100);
             }
             // remove wca
-            wacBasicInfoMap.delete(trueId);
-            wacBuyerInfoMap.delete(trueId);
+            wcaBasicInfoMap.delete(trueId);
+            wcaBuyerInfoMap.delete(trueId);
             onFinishWCA.fire(owner, identifier, false);
         } else {
             // nothing is done.
