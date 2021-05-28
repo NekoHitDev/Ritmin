@@ -2,11 +2,12 @@ package info.skyblond.nekohit.neo.contract;
 
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
-import io.neow3j.contract.Token;
+import info.skyblond.nekohit.neo.helper.StorageHelper;
 import io.neow3j.devpack.ByteString;
 import io.neow3j.devpack.CallFlags;
 import io.neow3j.devpack.Contract;
 import io.neow3j.devpack.Hash160;
+import io.neow3j.devpack.Helper;
 import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.Storage;
 import io.neow3j.devpack.StorageContext;
@@ -32,7 +33,8 @@ public class CatToken {
     @DisplayName("Transfer")
     private static Event3Args<Hash160, Hash160, Integer> onTransfer;
 
-    private static final int INITIAL_SUPPLY = 10_000_000_00;
+    // issue #4, fixed supply with 1 billion
+    private static final long INITIAL_SUPPLY = 1_000_000_000_00L;
     private static final int DECIMALS = 2;
     private static final String ASSET_PREFIX = "asset";
     private static final String TOTAL_SUPPLY_KEY = "totalSupply";
@@ -57,7 +59,6 @@ public class CatToken {
     }
 
     public static boolean transfer(Hash160 from, Hash160 to, int amount, Object[] data) throws Exception {
-
         if (!from.isValid() || !to.isValid()) {
             throw new Exception("From or To address is not a valid address.");
         }
@@ -97,9 +98,9 @@ public class CatToken {
                 throw new Exception("Contract was already deployed.");
             }
             // Initialize supply
-            Storage.put(sc, TOTAL_SUPPLY_KEY, INITIAL_SUPPLY);
+            StorageHelper.put(sc, TOTAL_SUPPLY_KEY, INITIAL_SUPPLY);
             // And allocate all tokens to the contract owner.
-            assetMap.put(OWNER.toByteArray(), INITIAL_SUPPLY);
+            StorageHelper.put(sc, Helper.concat(Helper.toByteArray(ASSET_PREFIX), OWNER.toByteArray()), INITIAL_SUPPLY);
         }
     }
 
@@ -109,11 +110,6 @@ public class CatToken {
             throw new Exception("The new contract script and manifest must not be empty.");
         }
         ContractManagement.update(script, manifest);
-    }
-
-    public static void destroy() throws Exception {
-        throwIfSignerIsNotOwner();
-        ContractManagement.destroy();
     }
 
     @OnVerification
@@ -152,35 +148,5 @@ public class CatToken {
 
     private static int getBalance(Hash160 key) {
         return assetMap.get(key.toByteArray()).toInteger();
-    }
-
-    /**
-     * Issue more tokens, by adding more token to the owner and update total supply
-     */
-    public static boolean issueNewToken(int amount) throws Exception {
-        throwIfSignerIsNotOwner();
-        if (amount <= 0) {
-            return false;
-        }
-        addToBalance(OWNER, amount);
-        Storage.put(sc, TOTAL_SUPPLY_KEY, getTotalSupply() + amount);
-        return true;
-    }
-
-    /**
-     * Remove tokens from owner's account.
-     * 
-     */
-    public static boolean destroyToken(int amount) throws Exception {
-        throwIfSignerIsNotOwner();
-        if (amount <= 0) {
-            return false;
-        }
-        if (getBalance(OWNER) < amount) {
-            return false;
-        }
-        deductFromBalance(OWNER, amount);
-        Storage.put(sc, TOTAL_SUPPLY_KEY, getTotalSupply() - amount);
-        return true;
     }
 }
