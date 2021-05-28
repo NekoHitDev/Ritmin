@@ -19,6 +19,7 @@ dependencies {
 }
 
 neow3jCompiler {
-    className = "info.skyblond.nekohit.neo.contract.CatToken"
+    // className = "info.skyblond.nekohit.neo.contract.CatToken"
+    className = "info.skyblond.nekohit.neo.contract.WCAContract"
     debug = true
 }
