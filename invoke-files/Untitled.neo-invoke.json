@@ -1,0 +1,13 @@
+[
+  {
+    "contract": "WCAContract",
+    "operation": "createWCA",
+    "args": [
+      "@genesis",
+      1,
+      22,
+      2222,
+      "helloworld"
+    ]
+  }
+]

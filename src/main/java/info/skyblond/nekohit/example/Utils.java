@@ -26,11 +26,23 @@ public class Utils {
 
     public static final Wallet CONTRACT_OWNER_WALLET = Wallet.withAccounts(CONTRACT_OWNER_ACCOUNT);
 
+    public static final Account GENESIS = Account.fromAddress("NKvMswbG7QsRTEU9dkY2uY7ReKxmhXrc1M");
+
+    public static final Hash160 WCA_CONTRACT_HASH = Hash160.fromAddress("NR6We6gPCDmrYzv8PsVGvRzHG9ki5TpZrd");
+
     public static void transferCatToken(Wallet wallet, Hash160 from, Hash160 to, long amount, Object data)
             throws IOException, Throwable {
         CAT_TOKEN
                 .transferFromSpecificAccounts(wallet, to, BigInteger.valueOf(amount), ContractParameter.any(data), from)
                 .signers(Signer.calledByEntry(from)).wallet(wallet).sign().send();
         TimeUnit.SECONDS.sleep(15);
+    }
+
+    public static double getGasWithDecimals(int value) {
+        return value / Math.pow(10, 8);
+    }
+
+    public static double getCatWithDecimals(long value) {
+        return value / Math.pow(10, 2);
     }
 }
