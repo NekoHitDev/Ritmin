@@ -58,7 +58,7 @@ public class CatToken {
         return Storage.get(sc, TOTAL_SUPPLY_KEY).toInteger();
     }
 
-    public static boolean transfer(Hash160 from, Hash160 to, int amount, Object[] data) throws Exception {
+    public static boolean transfer(Hash160 from, Hash160 to, int amount, Object data) throws Exception {
         if (!from.isValid() || !to.isValid()) {
             throw new Exception("From or To address is not a valid address.");
         }
