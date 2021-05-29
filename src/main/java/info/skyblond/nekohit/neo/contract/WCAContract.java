@@ -10,6 +10,7 @@ import io.neow3j.devpack.ByteString;
 import io.neow3j.devpack.CallFlags;
 import io.neow3j.devpack.Contract;
 import io.neow3j.devpack.Hash160;
+import io.neow3j.devpack.Helper;
 import io.neow3j.devpack.List;
 import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.Storage;
@@ -39,7 +40,7 @@ public class WCAContract {
 
     private static final StorageContext CTX = Storage.getStorageContext();
 
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("0d3aeba74209d6460f2c5a83d75c70dbc153aaa2"));
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("df5526bbbaa3a4f01d14d4455f564c45859f2fa7"));
 
     // ---------- TODO BELOW ----------
 
@@ -62,8 +63,8 @@ public class WCAContract {
     static Event3Args<Hash160, Integer, Object> onPayment;
 
     @OnNEP17Payment
-    public static void onPayment(Hash160 from, int amount, Object[] data) throws Exception {
-        var trueId = (ByteString) data[0];
+    public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
+        var trueId = (ByteString) data;
         // identifier should be unique
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
         if (basicInfo == null) {
@@ -139,7 +140,7 @@ public class WCAContract {
         }
 
         WCAPojo result = new WCAPojo(basicInfo.stakePer100Token, basicInfo.maxTokenSoldCount,
-                buyerInfo.remainTokenCount, basicInfo.endTimestamp, basicInfo.paid);
+                buyerInfo.remainTokenCount, basicInfo.endTimestamp, basicInfo.paid, basicInfo.finished);
 
         return StdLib.jsonSerialize(result);
     }
@@ -177,7 +178,7 @@ public class WCAContract {
             throw new Exception("Invalid sender signature. The owner of the wca needs to be " + "the signing account.");
         }
 
-        ByteString trueId = getTrueId(owner, identifier);
+        ByteString trueId = owner.asByteString().concat(identifier);
         // identifier should be unique
         if (wcaBasicInfoMap.get(trueId) != null) {
             throw new Exception("Duplicate identifier.");
