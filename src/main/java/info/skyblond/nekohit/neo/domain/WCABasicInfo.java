@@ -8,7 +8,6 @@ public class WCABasicInfo {
     public int maxTokenSoldCount;
     public int endTimestamp;
     public boolean paid;
-    public boolean finished;
 
     public WCABasicInfo(Hash160 owner, int stakePer100Token, int maxTokenSoldCount, int endTimestamp) {
         this.owner = owner;
@@ -16,6 +15,5 @@ public class WCABasicInfo {
         this.maxTokenSoldCount = maxTokenSoldCount;
         this.endTimestamp = endTimestamp;
         paid = false;
-        finished = false;
     }
 }

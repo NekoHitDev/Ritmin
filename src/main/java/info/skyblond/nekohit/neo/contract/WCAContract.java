@@ -10,7 +10,6 @@ import io.neow3j.devpack.ByteString;
 import io.neow3j.devpack.CallFlags;
 import io.neow3j.devpack.Contract;
 import io.neow3j.devpack.Hash160;
-import io.neow3j.devpack.Helper;
 import io.neow3j.devpack.List;
 import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.Storage;
@@ -40,7 +39,8 @@ public class WCAContract {
 
     private static final StorageContext CTX = Storage.getStorageContext();
 
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("df5526bbbaa3a4f01d14d4455f564c45859f2fa7"));
+    // Note this is the reverse(the little endian) of CatToken Hash.
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("a72f9f85454c565f45d4141df0a4a3babb2655df"));
 
     // ---------- TODO BELOW ----------
 
@@ -48,10 +48,10 @@ public class WCAContract {
     private static Event5Args<Hash160, Integer, Integer, Integer, String> onCreateWCA;
 
     @DisplayName("BuyWCA")
-    private static Event3Args<Hash160, ByteString, Integer> onBuyWCA;
+    private static Event3Args<Hash160, String, Integer> onBuyWCA;
 
     @DisplayName("FinishWCA")
-    private static Event2Args<ByteString, Boolean> onFinishWCA;
+    private static Event2Args<String, Boolean> onFinishWCA;
 
     private static final StorageMap wcaBasicInfoMap = CTX.createMap("WCA_BASIC_INFO");
 
@@ -64,25 +64,28 @@ public class WCAContract {
 
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
-        var trueId = (ByteString) data;
+        if (!from.isValid()) {
+            throw new Exception("From address is not a valid address.");
+        }
+        var trueId = (String) data;
         // identifier should be unique
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
         if (basicInfo == null) {
             throw new Exception("Identifier not found.");
         }
 
-        if (basicInfo.finished) {
-            throw new Exception("You can't pay for a finished WCA.");
-        }
-
         if (basicInfo.endTimestamp <= Runtime.getTime()) {
             throw new Exception("You can't pay for a terminated WCA.");
         }
 
-        if (basicInfo.owner == from) {
+        if (basicInfo.owner.equals(from)) {
             // owner paying stake
             if (basicInfo.paid) {
                 throw new Exception("You can't pay a paid WCA.");
+            }
+            if (!Runtime.checkWitness(basicInfo.owner) && basicInfo.owner != Runtime.getCallingScriptHash()) {
+                throw new Exception(
+                        "Invalid sender signature. The sender of the tokens needs to be the creator account.");
             }
             // check amount
             if (basicInfo.stakePer100Token * basicInfo.maxTokenSoldCount / 100 != amount) {
@@ -98,11 +101,7 @@ public class WCAContract {
         onPayment.fire(from, amount, data);
     }
 
-    private static ByteString getTrueId(Hash160 owner, String identifier) {
-        return owner.asByteString().concat(identifier);
-    }
-
-    private static WCABasicInfo getWCABasicInfo(ByteString trueId) {
+    private static WCABasicInfo getWCABasicInfo(String trueId) {
         ByteString data = wcaBasicInfoMap.get(trueId);
         if (data == null) {
             return null;
@@ -110,7 +109,7 @@ public class WCAContract {
         return (WCABasicInfo) StdLib.deserialize(data);
     }
 
-    private static WCABuyerInfo getWCABuyerInfo(ByteString trueId) {
+    private static WCABuyerInfo getWCABuyerInfo(String trueId) {
         ByteString data = wcaBuyerInfoMap.get(trueId);
         if (data == null) {
             return null;
@@ -119,16 +118,43 @@ public class WCAContract {
     }
 
     private static List<String> queryIdentifiers(Hash160 owner) {
-        return (List<String>) StdLib.deserialize(wcaIdentifierMap.get(owner.asByteString()));
+        var rawData = wcaIdentifierMap.get(owner.asByteString());
+        if (rawData == null)
+            return null;
+        return (List<String>) StdLib.deserialize(rawData);
     }
 
     private static void insertIdentifier(Hash160 owner, String identifier) {
         List<String> identifiers = queryIdentifiers(owner);
+        if (identifiers == null) {
+            identifiers = new List<>();
+        }
         identifiers.add(identifier);
         wcaIdentifierMap.put(owner.asByteString(), StdLib.serialize(identifiers));
     }
 
-    public static String queryWCA(ByteString trueId) {
+    private static void removeIdentifier(Hash160 owner, String identifier) {
+        List<String> identifiers = queryIdentifiers(owner);
+        if (identifiers == null) {
+            // no identifiers
+            return;
+        }
+        // find the index of the given id
+        var index = 0;
+        for (; index < identifiers.size(); index++) {
+            if (identifiers.get(index).equals(identifier))
+                break;
+        }
+        if (index == identifiers.size()) {
+            // not found
+            return;
+        }
+        identifiers.remove(index);
+        // put it back
+        wcaIdentifierMap.put(owner.asByteString(), StdLib.serialize(identifiers));
+    }
+
+    public static String queryWCA(String trueId) {
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
         if (basicInfo == null) {
             return "";
@@ -140,7 +166,7 @@ public class WCAContract {
         }
 
         WCAPojo result = new WCAPojo(basicInfo.stakePer100Token, basicInfo.maxTokenSoldCount,
-                buyerInfo.remainTokenCount, basicInfo.endTimestamp, basicInfo.paid, basicInfo.finished);
+                buyerInfo.remainTokenCount, buyerInfo.buyer.size(), basicInfo.endTimestamp, basicInfo.paid);
 
         return StdLib.jsonSerialize(result);
     }
@@ -178,11 +204,11 @@ public class WCAContract {
             throw new Exception("Invalid sender signature. The owner of the wca needs to be " + "the signing account.");
         }
 
-        ByteString trueId = owner.asByteString().concat(identifier);
         // identifier should be unique
-        if (wcaBasicInfoMap.get(trueId) != null) {
+        if (wcaBasicInfoMap.get(identifier) != null) {
             throw new Exception("Duplicate identifier.");
         }
+
         // save identifier
         insertIdentifier(owner, identifier);
 
@@ -190,15 +216,16 @@ public class WCAContract {
         WCABasicInfo info = new WCABasicInfo(owner, stakePer100Token, maxTokenSoldCount, endTimestamp);
         ByteString basicData = StdLib.serialize(info);
         ByteString buyerData = StdLib.serialize(new WCABuyerInfo(maxTokenSoldCount));
+
         // store
-        wcaBasicInfoMap.put(trueId, basicData);
-        wcaBuyerInfoMap.put(trueId, buyerData);
+        wcaBasicInfoMap.put(identifier, basicData);
+        wcaBuyerInfoMap.put(identifier, buyerData);
         // fire event and done
         onCreateWCA.fire(owner, stakePer100Token, maxTokenSoldCount, endTimestamp, identifier);
-        return trueId.toString();
+        return identifier;
     }
 
-    public static void buyWCA(Hash160 buyer, ByteString trueId, int amount) throws Exception {
+    private static void buyWCA(Hash160 buyer, String trueId, int amount) throws Exception {
         if (!buyer.isValid()) {
             throw new Exception("Buyer address is not a valid address.");
         }
@@ -206,11 +233,7 @@ public class WCAContract {
             throw new Exception("The token amount was non-positive.");
         }
         if (!Runtime.checkWitness(buyer) && buyer != Runtime.getCallingScriptHash()) {
-            throw new Exception(
-                    "Invalid sender signature. The sender of the tokens needs to be " + "the signing account.");
-        }
-        if (getTokenBalance(buyer) < amount) {
-            throw new Exception("Insufficient account balance.");
+            throw new Exception("Invalid sender signature. The sender of the tokens needs to be the sender account.");
         }
 
         // identifier should be unique
@@ -223,10 +246,6 @@ public class WCAContract {
             throw new Exception("You can't buy an unpaid WCA.");
         }
 
-        if (basicInfo.finished) {
-            throw new Exception("You can't buy a finished WCA.");
-        }
-
         if (basicInfo.endTimestamp <= Runtime.getTime()) {
             throw new Exception("You can't buy a terminated WCA.");
         }
@@ -235,6 +254,7 @@ public class WCAContract {
         if (buyerInfo == null) {
             throw new Exception("Buyer info not found.");
         }
+
         if (buyerInfo.remainTokenCount < amount) {
             throw new Exception("Insufficient token remain in this WCA.");
         }
@@ -248,21 +268,17 @@ public class WCAContract {
         onBuyWCA.fire(buyer, trueId, amount);
     }
 
-    public static boolean finishWCA(ByteString trueId, boolean finished) throws Exception {
+    public static boolean finishWCA(String trueId, boolean finished) throws Exception {
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
         if (basicInfo == null) {
             throw new Exception("Identifier not found.");
         }
 
         if (!basicInfo.paid) {
-            // unpaid wca, just finished it
-            basicInfo.finished = true;
-            ByteString data = StdLib.serialize(basicInfo);
-            wcaBasicInfoMap.put(trueId, data);
-        }
-
-        if (basicInfo.finished) {
-            throw new Exception("You can't finish a finished WCA.");
+            // unpaid wca, just remove it
+            wcaBasicInfoMap.delete(trueId);
+            wcaBuyerInfoMap.delete(trueId);
+            removeIdentifier(basicInfo.owner, trueId);
         }
 
         if (finished) {
@@ -287,28 +303,28 @@ public class WCAContract {
 
             // all amount goes to creator, return stake to creator
             transferTokenTo(basicInfo.owner,
-                    buyerInfo.totalAmount + basicInfo.stakePer100Token * basicInfo.maxTokenSoldCount / 100);
+                    buyerInfo.totalAmount + basicInfo.stakePer100Token * basicInfo.maxTokenSoldCount / 100, trueId);
 
-            basicInfo.finished = true;
-            ByteString data = StdLib.serialize(basicInfo);
-            wcaBasicInfoMap.put(trueId, data);
+            wcaBasicInfoMap.delete(trueId);
+            wcaBuyerInfoMap.delete(trueId);
+            removeIdentifier(basicInfo.owner, trueId);
             onFinishWCA.fire(trueId, true);
         } else if (basicInfo.endTimestamp <= Runtime.getTime()) {
             // otherwise, if wca is end, return amount+stake to buyer
             // return remain stake to creator
             for (int i = 0; i < buyerInfo.buyer.size(); i++) {
                 int stake = buyerInfo.amount.get(i) * basicInfo.stakePer100Token / 100;
-                transferTokenTo(buyerInfo.buyer.get(i), buyerInfo.amount.get(i) + stake);
+                transferTokenTo(buyerInfo.buyer.get(i), buyerInfo.amount.get(i) + stake, trueId);
             }
 
             // return remaining stake
             if (buyerInfo.remainTokenCount > 0) {
-                transferTokenTo(basicInfo.owner, buyerInfo.remainTokenCount * basicInfo.stakePer100Token / 100);
+                transferTokenTo(basicInfo.owner, buyerInfo.remainTokenCount * basicInfo.stakePer100Token / 100, trueId);
             }
 
-            basicInfo.finished = true;
-            ByteString data = StdLib.serialize(basicInfo);
-            wcaBasicInfoMap.put(trueId, data);
+            wcaBasicInfoMap.delete(trueId);
+            wcaBuyerInfoMap.delete(trueId);
+            removeIdentifier(basicInfo.owner, trueId);
             onFinishWCA.fire(trueId, true);
         } else {
             // nothing is done.
@@ -324,9 +340,9 @@ public class WCAContract {
         return (int) Contract.call(CAT_TOKEN_HASH, "balanceOf", CallFlags.ALL, new Object[] { address });
     }
 
-    private static void transferTokenTo(Hash160 target, int amount) {
+    private static void transferTokenTo(Hash160 target, int amount, String identifier) {
         Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.ALL,
-                new Object[] { Runtime.getExecutingScriptHash(), target, amount, null });
+                new Object[] { Runtime.getExecutingScriptHash(), target, amount, identifier });
     }
 
     public static void update(ByteString script, String manifest) throws Exception {
@@ -337,10 +353,12 @@ public class WCAContract {
         ContractManagement.update(script, manifest);
     }
 
+    /**
+     * I don't know why, but set it to false make it work properly
+     */
     @OnVerification
     public static boolean verify() throws Exception {
-        throwIfSignerIsNotOwner();
-        return true;
+        return false;
     }
 
     public static Hash160 contractOwner() {
