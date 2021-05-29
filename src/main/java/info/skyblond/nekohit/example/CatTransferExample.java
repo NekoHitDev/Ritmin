@@ -6,12 +6,11 @@ import static info.skyblond.nekohit.example.Utils.CONTRACT_OWNER_WALLET;
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 import io.neow3j.transaction.Signer;
-import io.neow3j.wallet.Account;
 
 public class CatTransferExample {
     public static void main(String[] args) throws Throwable {
         // use genesis account here
-        var testAccount = Account.fromAddress("NKvMswbG7QsRTEU9dkY2uY7ReKxmhXrc1M");
+        var testAccount = Utils.GENESIS;
         // query old balance
         var ownerOldBalance = CAT_TOKEN.getBalanceOf(CONTRACT_OWNER_ACCOUNT.getScriptHash());
         var testOldBalance = CAT_TOKEN.getBalanceOf(testAccount.getScriptHash());
