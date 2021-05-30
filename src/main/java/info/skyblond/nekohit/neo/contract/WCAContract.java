@@ -64,9 +64,10 @@ public class WCAContract {
 
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
-        if (!from.isValid()) {
-            throw new Exception("From address is not a valid address.");
+        if (CAT_TOKEN_HASH != Runtime.getCallingScriptHash()) {
+            throw new Exception("Only Cat Token can invoke this function.");
         }
+
         var trueId = (String) data;
         // identifier should be unique
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
@@ -80,12 +81,9 @@ public class WCAContract {
 
         if (basicInfo.owner.equals(from)) {
             // owner paying stake
+
             if (basicInfo.paid) {
                 throw new Exception("You can't pay a paid WCA.");
-            }
-            if (!Runtime.checkWitness(basicInfo.owner) && basicInfo.owner != Runtime.getCallingScriptHash()) {
-                throw new Exception(
-                        "Invalid sender signature. The sender of the tokens needs to be the creator account.");
             }
             // check amount
             if (basicInfo.stakePer100Token * basicInfo.maxTokenSoldCount / 100 != amount) {
@@ -94,6 +92,9 @@ public class WCAContract {
             basicInfo.paid = true;
             wcaBasicInfoMap.put(trueId, StdLib.serialize(basicInfo));
         } else {
+            if (!basicInfo.paid) {
+                throw new Exception("You can't buy an unpaid WCA.");
+            }
             // buyer want to buy a WCA
             buyWCA(from, trueId, amount);
         }
@@ -226,30 +227,6 @@ public class WCAContract {
     }
 
     private static void buyWCA(Hash160 buyer, String trueId, int amount) throws Exception {
-        if (!buyer.isValid()) {
-            throw new Exception("Buyer address is not a valid address.");
-        }
-        if (amount <= 0) {
-            throw new Exception("The token amount was non-positive.");
-        }
-        if (!Runtime.checkWitness(buyer) && buyer != Runtime.getCallingScriptHash()) {
-            throw new Exception("Invalid sender signature. The sender of the tokens needs to be the sender account.");
-        }
-
-        // identifier should be unique
-        WCABasicInfo basicInfo = getWCABasicInfo(trueId);
-        if (basicInfo == null) {
-            throw new Exception("Identifier not found.");
-        }
-
-        if (!basicInfo.paid) {
-            throw new Exception("You can't buy an unpaid WCA.");
-        }
-
-        if (basicInfo.endTimestamp <= Runtime.getTime()) {
-            throw new Exception("You can't buy a terminated WCA.");
-        }
-
         WCABuyerInfo buyerInfo = getWCABuyerInfo(trueId);
         if (buyerInfo == null) {
             throw new Exception("Buyer info not found.");
