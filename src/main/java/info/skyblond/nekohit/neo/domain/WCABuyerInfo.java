@@ -1,4 +1,4 @@
-package info.skyblond.nekohit.neo.pojo;
+package info.skyblond.nekohit.neo.domain;
 
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
