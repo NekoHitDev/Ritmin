@@ -18,6 +18,13 @@ public class WCABuyerInfo {
         this.totalAmount = 0;
     }
 
+    /**
+     * Add buyer's purchase record into list. Should check constrains with
+     * {@link WCABuyerInfo#throwIfNotAvailableToBuy(int)} before.
+     * 
+     * @param buyer
+     * @param amount
+     */
     public void addBuyer(Hash160 buyer, int amount) {
         this.buyer.add(buyer);
         this.amount.add(amount);
@@ -26,5 +33,15 @@ public class WCABuyerInfo {
         this.totalAmount += amount;
     }
 
+    /**
+     * Check if this WCA can be bought.
+     * 
+     * @param amount the amount of buyer intended to buy
+     * @throws Exception throws if not availabale for purchase
+     */
+    public void throwIfNotAvailableToBuy(int amount) throws Exception {
+        if (remainTokenCount < amount) {
+            throw new Exception("Insufficient token remain in this WCA.");
+        }
+    }
 }
-
