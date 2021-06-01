@@ -10,7 +10,7 @@ import io.neow3j.transaction.Signer;
 public class CatTransferExample {
     public static void main(String[] args) throws Throwable {
         // use genesis account here
-        var testAccount = Utils.GENESIS;
+        var testAccount = Utils.GENESIS_ACCOUNT;
         // query old balance
         var ownerOldBalance = CAT_TOKEN.getBalanceOf(CONTRACT_OWNER_ACCOUNT.getScriptHash());
         var testOldBalance = CAT_TOKEN.getBalanceOf(testAccount.getScriptHash());
