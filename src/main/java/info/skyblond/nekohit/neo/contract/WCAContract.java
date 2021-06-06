@@ -275,7 +275,7 @@ public class WCAContract {
 
         int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalAmount - buyerInfo.remainTokenCount;
         int totalMiletones = basicInfo.milestones.size();
-        int unfinishedMilestones = totalMiletones - basicInfo.countFinishedMilestone();
+        int unfinishedMilestones = totalMiletones - basicInfo.finishedCount;
         
         // for each buyer, return their token based on unfinished ms count
         // also remove stakes for that unfinished one

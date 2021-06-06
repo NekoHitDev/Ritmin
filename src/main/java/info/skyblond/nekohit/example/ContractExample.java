@@ -13,14 +13,14 @@ public class ContractExample {
     private static final Logger log = LoggerFactory.getLogger(ContractExample.class);
 
     public static void main(String[] args) throws Throwable {
-        var contract = new SmartContract(new Hash160("0x68d3226f78a5f2f93d334f1f8518ebeb2d2538a0"), Utils.NEOW3J);
+        var contract = new SmartContract(new Hash160("0x2950f1d5992ed56539c7b1e4d8b9a4e449dc4dde"), Utils.NEOW3J);
         // test some unicode char here
         String[] descriptions = new String[] { "aaa", "bbb", "中文字符" };
         Long[] endTimestamps = new Long[descriptions.length];
 
         // create a WCA, shuold stake 5000_00
         log.info("Create WCA");
-        String trueId = createWCA(contract, 1_00, 5000_00, descriptions, endTimestamps, "test_id2");
+        String trueId = createWCA(contract, 1_00, 5000_00, descriptions, endTimestamps, "test_id");
         log.info("created WCA: {}", trueId);
         log.info("WCA info: {}", queryWCAJson(contract, trueId));
         log.info("owner cat balance: {}",
@@ -51,6 +51,8 @@ public class ContractExample {
         // finish WCA
         log.info("Finish WCA");
         for (int i = 0; i < descriptions.length; i++) {
+            if (i == 1) // ignore second milestone
+                continue;
             log.info("Finishing milestone {}", i);
             finishMilestone(contract, trueId, i, descriptions[i] + " Finished!");
             log.info("WCA info: {}", queryWCAJson(contract, trueId));

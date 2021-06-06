@@ -8,6 +8,7 @@ public class WCABasicInfo {
     public int stakePer100Token;
     public int maxTokenSoldCount;
     public List<WCAMilestone> milestones;
+    public int finishedCount;
 
     /**
      * Pointer to next ready to finished milestone *INDEX*(i.e. start with 0)
@@ -27,6 +28,7 @@ public class WCABasicInfo {
         }
         this.milestones = milestones;
 
+        finishedCount = 0;
         nextMilestoneIndex = 0;
         paid = false;
     }
@@ -77,6 +79,7 @@ public class WCABasicInfo {
         // not finished nor expired, then we can modify it.
         ms.linkToResult = proofOfWork;
         nextMilestoneIndex = index + 1;
+        finishedCount++;
     }
 
     /**
@@ -93,22 +96,5 @@ public class WCABasicInfo {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Given the number of how many milestones are complete.
-     * @return the number
-     * @throws Exception
-     */
-    public int countFinishedMilestone() throws Exception {
-        int count = 0;
-        // TODO the loop seems like broken: Invalid type for PICKITEM: Any
-        for(int i = 0; i < milestones.size(); i++) {
-            WCAMilestone ms = milestones.get(i);
-            if (ms.isFinished()){
-                count++;
-            }
-        }
-        return count;
     }
 }
