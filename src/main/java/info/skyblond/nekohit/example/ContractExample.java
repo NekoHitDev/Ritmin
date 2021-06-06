@@ -6,14 +6,13 @@ import org.slf4j.LoggerFactory;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
-import io.neow3j.types.Hash160;
 
 public class ContractExample {
 
     private static final Logger log = LoggerFactory.getLogger(ContractExample.class);
 
     public static void main(String[] args) throws Throwable {
-        var contract = new SmartContract(new Hash160("0x2950f1d5992ed56539c7b1e4d8b9a4e449dc4dde"), Utils.NEOW3J);
+        var contract = Constants.WCA_CONTRACT;
         // test some unicode char here
         String[] descriptions = new String[] { "aaa", "bbb", "中文字符" };
         Long[] endTimestamps = new Long[descriptions.length];
@@ -24,29 +23,29 @@ public class ContractExample {
         log.info("created WCA: {}", trueId);
         log.info("WCA info: {}", queryWCAJson(contract, trueId));
         log.info("owner cat balance: {}",
-                Utils.getCatWithDecimals(Utils.CAT_TOKEN.getBalanceOf(Utils.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
+                Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
 
         log.info("Pay stake");
-        Utils.transferCatToken(Utils.CONTRACT_OWNER_WALLET, contract.getScriptHash(), 5000_00, trueId);
+        Utils.transferCatToken(Constants.CONTRACT_OWNER_WALLET, contract.getScriptHash(), 5000_00, trueId);
         log.info("WCA info: {}", queryWCAJson(contract, trueId));
         log.info("owner cat balance: {}",
-                Utils.getCatWithDecimals(Utils.CAT_TOKEN.getBalanceOf(Utils.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
+                Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
 
         log.info("Prepare test wallet");
         var testWallet = Utils.prepaWallet(5000_00);
         log.info("owner cat balance: {}",
-                Utils.getCatWithDecimals(Utils.CAT_TOKEN.getBalanceOf(Utils.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
+                Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
         log.info("Test cat balance: {}",
-                Utils.getCatWithDecimals(Utils.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
+                Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
 
         // buy a WCA
         log.info("Buy WCA");
         Utils.transferCatToken(testWallet, contract.getScriptHash(), 5000_00, trueId);
         log.info("WCA info: {}", queryWCAJson(contract, trueId));
         log.info("owner cat balance: {}",
-                Utils.getCatWithDecimals(Utils.CAT_TOKEN.getBalanceOf(Utils.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
+                Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
         log.info("Test cat balance: {}",
-                Utils.getCatWithDecimals(Utils.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
+                Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
 
         // finish WCA
         log.info("Finish WCA");
@@ -57,9 +56,9 @@ public class ContractExample {
             finishMilestone(contract, trueId, i, descriptions[i] + " Finished!");
             log.info("WCA info: {}", queryWCAJson(contract, trueId));
             log.info("owner cat balance: {}", Utils
-                    .getCatWithDecimals(Utils.CAT_TOKEN.getBalanceOf(Utils.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
+                    .getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
             log.info("Test cat balance: {}", Utils
-                    .getCatWithDecimals(Utils.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
+                    .getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
         }
         // not sure why, but cannot exit by itself
         System.exit(0);
@@ -74,11 +73,11 @@ public class ContractExample {
             endTimestamps[i] = System.currentTimeMillis() + 1800 * 1000 + i;
         }
         var tx = contract
-                .invokeFunction("createWCA", ContractParameter.hash160(Utils.CONTRACT_OWNER_ACCOUNT),
+                .invokeFunction("createWCA", ContractParameter.hash160(Constants.CONTRACT_OWNER_ACCOUNT),
                         ContractParameter.integer(stakePer100Token), ContractParameter.integer(totalAmount),
                         Utils.arrayParameter((Object[]) descriptions), Utils.arrayParameter((Object[]) endTimestamps),
                         ContractParameter.string(identifier))
-                .signers(Signer.calledByEntry(Utils.CONTRACT_OWNER_ACCOUNT)).wallet(Utils.CONTRACT_OWNER_WALLET).sign();
+                .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
         var response = tx.send();
         AtomicReference<String> trueId = new AtomicReference<>();
         if (response.getError() == null) {
@@ -99,7 +98,7 @@ public class ContractExample {
         var tx = contract
                 .invokeFunction("finishMilestone", ContractParameter.string(identifier),
                         ContractParameter.integer(index), ContractParameter.string(proofOfWork))
-                .signers(Signer.calledByEntry(Utils.CONTRACT_OWNER_ACCOUNT)).wallet(Utils.CONTRACT_OWNER_WALLET).sign();
+                .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
         var response = tx.send();
         if (response.getError() == null) {
             tx.track().blockingSubscribe(l -> {
@@ -113,7 +112,7 @@ public class ContractExample {
 
     private static String queryWCAJson(SmartContract contract, String trueId) throws Throwable {
         var tx = contract.invokeFunction("queryWCA", ContractParameter.string(trueId))
-                .signers(Signer.calledByEntry(Utils.CONTRACT_OWNER_ACCOUNT)).wallet(Utils.CONTRACT_OWNER_WALLET).sign();
+                .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
         var response = tx.send();
         AtomicReference<String> result = new AtomicReference<>();
         if (response.getError() == null) {
