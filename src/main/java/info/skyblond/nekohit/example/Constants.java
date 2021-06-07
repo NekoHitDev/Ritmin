@@ -19,7 +19,7 @@ public class Constants {
 
     public static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0x2950f1d5992ed56539c7b1e4d8b9a4e449dc4dde"), Constants.NEOW3J);
 
-    public static final FungibleToken CAT_TOKEN = new FungibleToken(new Hash160("df5526bbbaa3a4f01d14d4455f564c45859f2fa7"), NEOW3J);
+    public static final FungibleToken CAT_TOKEN = new FungibleToken(new Hash160("0xdf5526bbbaa3a4f01d14d4455f564c45859f2fa7"), NEOW3J);
 
     public static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
 
@@ -34,7 +34,7 @@ public class Constants {
     public static final Account GENESIS_ACCOUNT = Account.createMultiSigAccount(
         Arrays.asList(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
 
-    public static final Wallet GENESIS = Wallet.withAccounts(GENESIS_ACCOUNT, NODE_ACCOUNT);
+    public static final Wallet GENESIS_WALLET = Wallet.withAccounts(GENESIS_ACCOUNT, NODE_ACCOUNT);
 
     public static final Hash160 WCA_CONTRACT_HASH = Hash160.fromAddress("NR6We6gPCDmrYzv8PsVGvRzHG9ki5TpZrd");
 }

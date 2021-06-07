@@ -1,11 +1,11 @@
 package info.skyblond.nekohit.example;
 
-import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
+import io.neow3j.utils.Await;
 
 public class ContractExample {
 
@@ -79,18 +79,16 @@ public class ContractExample {
                         ContractParameter.string(identifier))
                 .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
         var response = tx.send();
-        AtomicReference<String> trueId = new AtomicReference<>();
-        if (response.getError() == null) {
-            tx.track().blockingSubscribe(l -> {
-                var exe = tx.getApplicationLog().getExecutions().get(0);
-                trueId.set(exe.getStack().get(0).getString());
-                log.info("createWCA tx: {}", tx.getTxId());
-            });
-        } else {
-            log.error("Error when creating WCA: {}", response.getError().getMessage());
+        if (response.hasError()) {
+            throw new Exception(response.getError().getMessage());
         }
+
+        log.info("createWCA tx: {}", tx.getTxId());
+        Await.waitUntilTransactionIsExecuted(tx.getTxId(), Constants.NEOW3J);
+        
         log.info("createWCA gas fee: {}", Utils.getGasWithDecimals(tx.getSystemFee() + tx.getNetworkFee()));
-        return trueId.get();
+        
+        return tx.getApplicationLog().getExecutions().get(0).getStack().get(0).getString();
     }
 
     private static void finishMilestone(SmartContract contract, String identifier, int index, String proofOfWork)
@@ -100,32 +98,31 @@ public class ContractExample {
                         ContractParameter.integer(index), ContractParameter.string(proofOfWork))
                 .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
         var response = tx.send();
-        if (response.getError() == null) {
-            tx.track().blockingSubscribe(l -> {
-                log.info("finishWCA tx: {}", tx.getTxId());
-            });
-        } else {
-            log.error("Error when finishing WCA: {}", response.getError().getMessage());
+
+        if (response.hasError()) {
+            throw new Exception(response.getError().getMessage());
         }
-        log.info("finish WCA gas fee: {}", Utils.getGasWithDecimals(tx.getSystemFee() + tx.getNetworkFee()));
+
+        log.info("finishMilestone tx: {}", tx.getTxId());
+        Await.waitUntilTransactionIsExecuted(tx.getTxId(), Constants.NEOW3J);
+
+        log.info("finishMilestone gas fee: {}", Utils.getGasWithDecimals(tx.getSystemFee() + tx.getNetworkFee()));
     }
 
     private static String queryWCAJson(SmartContract contract, String trueId) throws Throwable {
         var tx = contract.invokeFunction("queryWCA", ContractParameter.string(trueId))
                 .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
         var response = tx.send();
-        AtomicReference<String> result = new AtomicReference<>();
-        if (response.getError() == null) {
-            tx.track().blockingSubscribe(l -> {
-                log.info("query WCA tx: {}", tx.getTxId());
-                var exe = tx.getApplicationLog().getExecutions().get(0);
-                result.set(exe.getStack().get(0).getString());
-            });
-        } else {
-            log.error("Error when querying WCA: {}", response.getError().getMessage());
-            return null;
+
+        if (response.hasError()) {
+            throw new Exception(response.getError().getMessage());
         }
-        log.info("query WCA gas fee: {}", Utils.getGasWithDecimals(tx.getSystemFee() + tx.getNetworkFee()));
-        return result.get();
+
+        log.info("queryWCA tx: {}", tx.getTxId());
+        Await.waitUntilTransactionIsExecuted(tx.getTxId(), Constants.NEOW3J);
+        
+        log.info("queryWCA gas fee: {}", Utils.getGasWithDecimals(tx.getSystemFee() + tx.getNetworkFee()));
+        
+        return tx.getApplicationLog().getExecutions().get(0).getStack().get(0).getString();
     }
 }

@@ -12,11 +12,11 @@ import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.ContractParameterType;
 import io.neow3j.types.Hash160;
+import io.neow3j.utils.Await;
 import io.neow3j.wallet.Wallet;
 
 public class Utils {
     private static final Logger log = LoggerFactory.getLogger(Utils.class);
-    
 
     public static double getGasWithDecimals(long value) {
         return value / Math.pow(10, 8);
@@ -41,13 +41,11 @@ public class Utils {
                         ContractParameter.string(identifier))
                 .signers(Signer.calledByEntry(wallet.getDefaultAccount().getScriptHash())).sign();
         var response = tx.send();
-        if (response.getError() == null) {
-            tx.track().blockingSubscribe(l -> {
-                log.info("Transfer token tx: {}", tx.getTxId());
-            });
-        } else {
-            log.error("Error when transfer token: {}", response.getError().getMessage());
+        if (response.hasError()) {
+            throw new Exception(response.getError().getMessage());
         }
+        log.info("Transfer token tx: {}", tx.getTxId());
+        Await.waitUntilTransactionIsExecuted(tx.getTxId(), Constants.NEOW3J);
         log.info("Transfer token gas fee: {}", Utils.getGasWithDecimals(tx.getSystemFee() + tx.getNetworkFee()));
     }
 
@@ -68,16 +66,16 @@ public class Utils {
 
     /**
      * This is a custome version to support long values.
+     * 
      * @see ContractParameter#array(Object...)
      */
     public static ContractParameter arrayParameter(Object... entries) {
         if (entries.length == 0) {
-            throw new IllegalArgumentException("At least one parameter is required to create an " +
-                    "array contract parameter.");
+            throw new IllegalArgumentException(
+                    "At least one parameter is required to create an array contract parameter.");
         }
         if (Arrays.stream(entries).anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Cannot add a null object to an array contract " +
-                    "parameter.");
+            throw new IllegalArgumentException("Cannot add a null object to an array contract parameter.");
         }
         ContractParameter[] params = Arrays.stream(entries)
                 .map(Utils::castToContractParameter)
@@ -101,8 +99,7 @@ public class Utils {
         } else if (o instanceof String) {
             return ContractParameter.string((String) o);
         } else {
-            throw new IllegalArgumentException("The provided object could not be casted into " +
-                    "a supported contract parameter type.");
+            throw new IllegalArgumentException( "The provided object could not be casted into a supported contract parameter type.");
         }
     }
 }
