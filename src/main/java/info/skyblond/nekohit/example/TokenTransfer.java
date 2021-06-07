@@ -9,6 +9,7 @@ import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.GasToken;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.transaction.Signer;
+import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
@@ -18,10 +19,10 @@ public class TokenTransfer {
     private static final Logger log = LoggerFactory.getLogger(TokenTransfer.class);
 
     // config
-    private static final Wallet fromWallet      = Constants.GENESIS;
+    private static final Wallet fromWallet      = Constants.GENESIS_WALLET;
     private static final Account receiver       = Constants.CONTRACT_OWNER_ACCOUNT;
     private static final BigInteger amount      = BigInteger.valueOf(10000000_00);
-    private static final FungibleToken token    = new GasToken(Constants.NEOW3J);
+    private static final FungibleToken token    = Constants.GAS_TOKEN;
     public static void main(String[] args) throws Throwable {
 
         log.info("transfer {} {} token(s)", amount, token.getSymbol());
