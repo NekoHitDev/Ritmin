@@ -1,20 +1,30 @@
 package info.skyblond.nekohit.neo.domain;
 
+import io.neow3j.devpack.List;
+import io.neow3j.devpack.contracts.StdLib;
+
 public class WCAPojo {
+    public String ownerBase64;
     public int stakePer100Token;
     public int maxTokenSoldCount;
     public int remainTokenCount;
     public int buyerCount;
-    public int endTimestamp;
+    public int milestonesCount;
+    public List<WCAMilestone> milestones;
+    public int nextMilestone;
     public boolean stakePaid;
 
-    public WCAPojo(int stakePer100Token, int maxTokenSoldCount, int remainTokenCount, int buyerCount, int endTimestamp,
-            boolean stakePaid) {
-        this.stakePer100Token = stakePer100Token;
-        this.maxTokenSoldCount = maxTokenSoldCount;
-        this.remainTokenCount = remainTokenCount;
-        this.buyerCount = buyerCount;
-        this.endTimestamp = endTimestamp;
-        this.stakePaid = stakePaid;
+    public WCAPojo(WCABasicInfo basicInfo, WCABuyerInfo buyerInfo) {
+        // TODO This is a workaround since Hash160 convert to int is too big for
+        // StdLib.jsonSerialize, so encoded by Base64 first
+        this.ownerBase64 = StdLib.base64Encode(basicInfo.owner.asByteString());
+        this.stakePer100Token = basicInfo.stakePer100Token;
+        this.maxTokenSoldCount = basicInfo.maxTokenSoldCount;
+        this.remainTokenCount = buyerInfo.remainTokenCount;
+        this.buyerCount = buyerInfo.buyer.size();
+        this.milestones = basicInfo.milestones;
+        this.milestonesCount = basicInfo.milestones.size();
+        this.nextMilestone = basicInfo.nextMilestoneIndex;
+        this.stakePaid = basicInfo.paid;
     }
 }
