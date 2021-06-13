@@ -9,7 +9,7 @@ import info.skyblond.nekohit.neo.domain.WCAMilestone;
 import info.skyblond.nekohit.neo.domain.WCAPojo;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.ByteString;
-import io.neow3j.devpack.CallFlags;
+import io.neow3j.devpack.constants.*;
 import io.neow3j.devpack.Contract;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
@@ -21,6 +21,8 @@ import io.neow3j.devpack.annotations.DisplayName;
 import io.neow3j.devpack.annotations.ManifestExtra;
 import io.neow3j.devpack.annotations.OnNEP17Payment;
 import io.neow3j.devpack.annotations.OnVerification;
+import io.neow3j.devpack.annotations.Permission;
+import io.neow3j.devpack.annotations.Trust;
 import io.neow3j.devpack.contracts.StdLib;
 import io.neow3j.devpack.events.Event2Args;
 import io.neow3j.devpack.events.Event3Args;
@@ -33,6 +35,8 @@ import io.neow3j.devpack.events.Event4Args;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "Something")
+@Trust(value = "5be91fdb4ad1ae8dc209c597e0bfc8bba8299752")
+@Permission(contract = "*")
 public class WCAContract {
 
     // refers to the ContractOwner wallet defined in `devnet.neo-express`
@@ -42,7 +46,7 @@ public class WCAContract {
     private static final StorageContext CTX = Storage.getStorageContext();
 
     // Note this is the reverse(the little endian) of CatToken Hash.
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("a72f9f85454c565f45d4141df0a4a3babb2655df"));
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("5be91fdb4ad1ae8dc209c597e0bfc8bba8299752"));
 
     // ---------- TODO Events below ----------
     @DisplayName("CreateWCA")
@@ -110,7 +114,7 @@ public class WCAContract {
     }
 
     private static List<String> queryIdentifiers(Hash160 owner) {
-        var rawData = wcaIdentifierMap.get(owner.asByteString());
+        var rawData = wcaIdentifierMap.get(owner.toByteString());
         if (rawData == null)
             return null;
         return (List<String>) StdLib.deserialize(rawData);
@@ -122,7 +126,7 @@ public class WCAContract {
             identifiers = new List<>();
         }
         identifiers.add(identifier);
-        wcaIdentifierMap.put(owner.asByteString(), StdLib.serialize(identifiers));
+        wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
     }
 
     private static void removeIdentifier(Hash160 owner, String identifier) {
@@ -143,7 +147,7 @@ public class WCAContract {
         }
         identifiers.remove(index);
         // put it back
-        wcaIdentifierMap.put(owner.asByteString(), StdLib.serialize(identifiers));
+        wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
     }
 
     public static String queryWCA(String trueId) {
@@ -246,14 +250,15 @@ public class WCAContract {
         
         // for each buyer, return their token based on unfinished ms count
         // also remove stakes for that unfinished one
-        for (int i = 0; i < buyerInfo.buyer.size(); i++) {
-            var purchaseAmount = buyerInfo.amount.get(i);
+        var buyers = buyerInfo.purchases.keys();
+        for (int i = 0; i < buyers.length; i++) {
+            var purchaseAmount = buyerInfo.purchases.get(buyers[i]);
             var totalAmount = purchaseAmount + purchaseAmount * basicInfo.stakePer100Token / 100;
             var returnAmount = totalAmount * unfinishedMilestones / totalMiletones;
-            transferTokenTo(buyerInfo.buyer.get(i), returnAmount, trueId);
+            transferTokenTo(buyers[i], returnAmount, trueId);
             remainTokens -= returnAmount;
         }
-        // considering all dicimals are floored, so totalTokens >= 0
+        // considering all dicimals are floored, so totalTokens > 0
         // return the reset of total tokens to creator
         if (remainTokens > 0) {
             transferTokenTo(basicInfo.owner, remainTokens, trueId);
@@ -271,7 +276,7 @@ public class WCAContract {
     // ---------- TODO ABOVE ----------
 
     private static void transferTokenTo(Hash160 target, int amount, String identifier) {
-        Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.ALL,
+        Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.All,
                 new Object[] { Runtime.getExecutingScriptHash(), target, amount, identifier });
     }
 

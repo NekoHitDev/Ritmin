@@ -7,6 +7,8 @@ import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.utils.Await;
 
+import java.util.Arrays;
+
 public class ContractExample {
 
     private static final Logger log = LoggerFactory.getLogger(ContractExample.class);
@@ -18,9 +20,9 @@ public class ContractExample {
         Long[] endTimestamps = new Long[descriptions.length];
         int thresholdIndex = 1;
 
-        // create a WCA, shuold stake 5000_00
+        // create a WCA, should stake 5000_00
         log.info("Create WCA");
-        String trueId = createWCA(contract, 1_00, 5000_00, descriptions, endTimestamps, thresholdIndex, "test_id");
+        String trueId = createWCA(contract, 1_00, 5000_00, descriptions, endTimestamps, thresholdIndex, "test_id" + System.currentTimeMillis());
         log.info("created WCA: {}", trueId);
         log.info("WCA info: {}", queryWCAJson(contract, trueId));
         log.info("owner cat balance: {}",
@@ -33,21 +35,28 @@ public class ContractExample {
                 Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
 
         log.info("Prepare test wallet");
-        var testWallet = Utils.prepaWallet(5000_00);
+        var testWallet = Utils.prepaTestWallet(5000_00);
         log.info("owner cat balance: {}",
                 Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
         log.info("Test cat balance: {}",
                 Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
 
         // buy a WCA
-        log.info("Buy WCA");
-        Utils.transferCatToken(testWallet, contract.getScriptHash(), 5000_00, trueId);
+        log.info("Buy WCA 1/2");
+        Utils.transferCatToken(testWallet, contract.getScriptHash(), 3000_00, trueId);
         log.info("WCA info: {}", queryWCAJson(contract, trueId));
         log.info("owner cat balance: {}",
                 Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
         log.info("Test cat balance: {}",
                 Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
-
+        log.info("Buy WCA 2/2");
+        Utils.transferCatToken(testWallet, contract.getScriptHash(), 2000_00, trueId);
+        log.info("WCA info: {}", queryWCAJson(contract, trueId));
+        log.info("owner cat balance: {}",
+                Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(Constants.CONTRACT_OWNER_ACCOUNT.getScriptHash())));
+        log.info("Test cat balance: {}",
+                Utils.getCatWithDecimals(Constants.CAT_TOKEN.getBalanceOf(testWallet.getDefaultAccount().getScriptHash())));
+        
         // finish WCA
         log.info("Finish WCA");
         for (int i = 0; i < descriptions.length; i++) {
@@ -80,8 +89,8 @@ public class ContractExample {
                         ContractParameter.hash160(Constants.CONTRACT_OWNER_ACCOUNT),
                         ContractParameter.integer(stakePer100Token), 
                         ContractParameter.integer(totalAmount),
-                        Utils.arrayParameter((Object[]) descriptions), 
-                        Utils.arrayParameter((Object[]) endTimestamps),
+                        ContractParameter.array(Arrays.asList(descriptions)), 
+                        ContractParameter.array(Arrays.asList(endTimestamps)),
                         ContractParameter.integer(thresholdIndex),
                         ContractParameter.string(identifier))
                 .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
