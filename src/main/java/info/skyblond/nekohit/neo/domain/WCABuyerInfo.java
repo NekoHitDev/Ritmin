@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.domain;
 
+import static info.skyblond.nekohit.neo.helper.Utils.require;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
 
@@ -20,29 +21,18 @@ public class WCABuyerInfo {
     }
 
     /**
-     * Add buyer's purchase record into list. Should check constrains with
-     * {@link WCABuyerInfo#throwIfNotAvailableToBuy(int)} before.
+     * Record buyer's purchase record into list. 
      * 
-     * @param buyer
-     * @param amount
+     * @param buyer who is making this purchase
+     * @param amount how much does he/her/it want to buy
+     * @throws Exception if remain amount is smaller than buyer's intended amount
      */
-    public void addBuyer(Hash160 buyer, int amount) {
+    public void recordPurchase(Hash160 buyer, int amount) throws Exception {
+        require(remainTokenCount >= amount, "Insufficient token remain in this WCA.");
         this.buyer.add(buyer);
         this.amount.add(amount);
 
         this.remainTokenCount -= amount;
         this.totalAmount += amount;
-    }
-
-    /**
-     * Check if this WCA can be bought.
-     * 
-     * @param amount the amount of buyer intended to buy
-     * @throws Exception throws if not availabale for purchase
-     */
-    public void throwIfNotAvailableToBuy(int amount) throws Exception {
-        if (remainTokenCount < amount) {
-            throw new Exception("Insufficient token remain in this WCA.");
-        }
     }
 }
