@@ -8,6 +8,7 @@ public class WCABasicInfo {
     public int stakePer100Token;
     public int maxTokenSoldCount;
     public List<WCAMilestone> milestones;
+    public int thresholdIndex;
     public int finishedCount;
 
     /**
@@ -19,7 +20,10 @@ public class WCABasicInfo {
      */
     public boolean paid;
 
-    public WCABasicInfo(Hash160 owner, int stakePer100Token, int maxTokenSoldCount, List<WCAMilestone> milestones) throws Exception {
+    public WCABasicInfo(
+        Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
+        List<WCAMilestone> milestones, int thresholdIndex
+    ) throws Exception {
         this.owner = owner;
         this.stakePer100Token = stakePer100Token;
         this.maxTokenSoldCount = maxTokenSoldCount;
@@ -27,6 +31,11 @@ public class WCABasicInfo {
             throw new Exception("You must have at least 1 milestone.");
         }
         this.milestones = milestones;
+        if (thresholdIndex >= 0 && thresholdIndex < this.milestones.size()) {
+            this.thresholdIndex = thresholdIndex;
+        } else {
+            throw new Exception("Invalid value for thresholdIndex");
+        }
 
         finishedCount = 0;
         nextMilestoneIndex = 0;
@@ -96,5 +105,9 @@ public class WCABasicInfo {
         } else {
             return false;
         }
+    }
+
+    public boolean thresholdMet() {
+        return this.nextMilestoneIndex > this.thresholdIndex;
     }
 }

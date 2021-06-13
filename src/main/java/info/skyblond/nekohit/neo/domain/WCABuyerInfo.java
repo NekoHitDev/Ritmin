@@ -4,6 +4,7 @@ import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
 
 public class WCABuyerInfo {
+    // Make this a map and rewrite buy function
     public List<Hash160> buyer;
     public List<Integer> amount;
     public int remainTokenCount;

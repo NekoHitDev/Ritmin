@@ -11,6 +11,7 @@ public class WCAPojo {
     public int buyerCount;
     public int milestonesCount;
     public List<WCAMilestone> milestones;
+    public int thresholdMilestoneIndex;
     public int nextMilestone;
     public boolean stakePaid;
 
@@ -24,6 +25,7 @@ public class WCAPojo {
         this.buyerCount = buyerInfo.buyer.size();
         this.milestones = basicInfo.milestones;
         this.milestonesCount = basicInfo.milestones.size();
+        this.thresholdMilestoneIndex = basicInfo.thresholdIndex;
         this.nextMilestone = basicInfo.nextMilestoneIndex;
         this.stakePaid = basicInfo.paid;
     }

@@ -14,12 +14,13 @@ public class ContractExample {
     public static void main(String[] args) throws Throwable {
         var contract = Constants.WCA_CONTRACT;
         // test some unicode char here
-        String[] descriptions = new String[] { "aaa", "bbb", "中文字符" };
+        String[] descriptions = new String[] { "ms0", "ms1", "ms2", "ms3" };
         Long[] endTimestamps = new Long[descriptions.length];
+        int thresholdIndex = 1;
 
         // create a WCA, shuold stake 5000_00
         log.info("Create WCA");
-        String trueId = createWCA(contract, 1_00, 5000_00, descriptions, endTimestamps, "test_id");
+        String trueId = createWCA(contract, 1_00, 5000_00, descriptions, endTimestamps, thresholdIndex, "test_id");
         log.info("created WCA: {}", trueId);
         log.info("WCA info: {}", queryWCAJson(contract, trueId));
         log.info("owner cat balance: {}",
@@ -50,7 +51,7 @@ public class ContractExample {
         // finish WCA
         log.info("Finish WCA");
         for (int i = 0; i < descriptions.length; i++) {
-            if (i == 1) // ignore second milestone
+            if (i == 2) // ignore ms2
                 continue;
             log.info("Finishing milestone {}", i);
             finishMilestone(contract, trueId, i, descriptions[i] + " Finished!");
@@ -68,14 +69,20 @@ public class ContractExample {
      * Create WCA with Contract Owner account
      */
     private static String createWCA(SmartContract contract, int stakePer100Token, int totalAmount,
-            String[] descriptions, Long[] endTimestamps, String identifier) throws Throwable {
+            String[] descriptions, Long[] endTimestamps, int thresholdIndex, String identifier
+        ) throws Throwable {
         for (int i = 0; i < endTimestamps.length; i++) {
             endTimestamps[i] = System.currentTimeMillis() + 1800 * 1000 + i;
         }
         var tx = contract
-                .invokeFunction("createWCA", ContractParameter.hash160(Constants.CONTRACT_OWNER_ACCOUNT),
-                        ContractParameter.integer(stakePer100Token), ContractParameter.integer(totalAmount),
-                        Utils.arrayParameter((Object[]) descriptions), Utils.arrayParameter((Object[]) endTimestamps),
+                .invokeFunction(
+                        "createWCA", 
+                        ContractParameter.hash160(Constants.CONTRACT_OWNER_ACCOUNT),
+                        ContractParameter.integer(stakePer100Token), 
+                        ContractParameter.integer(totalAmount),
+                        Utils.arrayParameter((Object[]) descriptions), 
+                        Utils.arrayParameter((Object[]) endTimestamps),
+                        ContractParameter.integer(thresholdIndex),
                         ContractParameter.string(identifier))
                 .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
         var response = tx.send();

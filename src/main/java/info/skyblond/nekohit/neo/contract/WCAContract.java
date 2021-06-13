@@ -2,6 +2,7 @@ package info.skyblond.nekohit.neo.contract;
 
 import static io.neow3j.devpack.StringLiteralHelper.hexToBytes;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
+import static info.skyblond.nekohit.neo.helper.Utils.require;
 import info.skyblond.nekohit.neo.domain.WCABasicInfo;
 import info.skyblond.nekohit.neo.domain.WCABuyerInfo;
 import info.skyblond.nekohit.neo.domain.WCAMilestone;
@@ -65,34 +66,26 @@ public class WCAContract {
 
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
-        if (CAT_TOKEN_HASH != Runtime.getCallingScriptHash()) {
-            throw new Exception("Only Cat Token can invoke this function.");
-        }
+        require(CAT_TOKEN_HASH == Runtime.getCallingScriptHash(), "Only Cat Token can invoke this function.");
 
         var trueId = (String) data;
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
-        if (basicInfo == null) {
-            throw new Exception("Identifier not found.");
-        }
+        require(basicInfo != null, "Identifier not found.");
 
         if (basicInfo.owner.equals(from)) {
             // owner paying stake
-            if (basicInfo.paid)
-                throw new Exception("You can't pay a paid WCA.");
-            if (basicInfo.isFinished())
-                throw new Exception("You can't pay a finished WCA.");
-            if (basicInfo.getTotalStake() != amount)
-                throw new Exception("Amount not correct");
-            // not paid before, not finished, amount is correct
+            require(!basicInfo.paid, "You can't pay a paid WCA.");
+            require(!basicInfo.isFinished(), "You can't pay a finished WCA.");
+            require(basicInfo.getTotalStake() == amount, "Amount not correct");
+            // unpaid before, not finished(expired), amount is correct
             basicInfo.paid = true;
             wcaBasicInfoMap.put(trueId, StdLib.serialize(basicInfo));
         } else {
             // buyer want to buy a WCA
             basicInfo.throwIfNotAvailableToBuy();
             WCABuyerInfo buyerInfo = getWCABuyerInfo(trueId);
-            if (buyerInfo == null) {
-                throw new Exception("Buyer info not found.");
-            }
+            require(buyerInfo != null, "Buyer info not found.");
+            // TODO move this check into buy function 
             buyerInfo.throwIfNotAvailableToBuy(amount);
             buyerInfo.addBuyer(from, amount);
             wcaBuyerInfoMap.put(trueId, StdLib.serialize(buyerInfo));
@@ -180,43 +173,31 @@ public class WCAContract {
      * @param maxTokenSoldCount total tokens for buyer
      * @param descriptions      descriptions for milestone
      * @param endTimestamps     endTimestamps for each milestone
+     * @param thresholdIndex    the index of threshold milestone
      * @param identifier        the name of this WCA
      * 
      * @return the global unique id for this WCA
      */
-    public static String createWCA(Hash160 owner, int stakePer100Token, int maxTokenSoldCount, String[] descriptions,
-            int[] endTimestamps, String identifier) throws Exception {
-        if (!owner.isValid()) {
-            throw new Exception("Owner address is not a valid address.");
-        }
-        if (stakePer100Token <= 0) {
-            throw new Exception("The stake amount per 100 token was non-positive.");
-        }
-        if (maxTokenSoldCount <= 0) {
-            throw new Exception("The max sell token count was non-positive.");
-        }
-        if (!Runtime.checkWitness(owner) && owner != Runtime.getCallingScriptHash()) {
-            throw new Exception("Invalid sender signature. The owner of the wca needs to be " + "the signing account.");
-        }
+    public static String createWCA(
+        Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
+        String[] descriptions, int[] endTimestamps, int thresholdIndex,
+        String identifier
+    ) throws Exception {
+        require(owner.isValid(), "Owner address is not a valid address.");
+        require(stakePer100Token > 0, "The stake amount per 100 token must be positive.");
+        require(maxTokenSoldCount > 0, "The max sell token count must be positive.");
+        require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), "Invalid sender signature. The owner of the wca needs to be the signing account.");
         // identifier should be unique
-        if (wcaBasicInfoMap.get(identifier) != null) {
-            throw new Exception("Duplicate identifier.");
-        }
-
+        require(wcaBasicInfoMap.get(identifier) == null, "Duplicate identifier.");
         // check milestone
-        if (descriptions.length != endTimestamps.length) {
-            throw new Exception("Cannot decide milestones count.");
-        }
+        require(descriptions.length == endTimestamps.length, "Cannot decide milestones count.");
+
         // convert to object on the fly, TODO check the gas cost
         List<WCAMilestone> milestones = new List<>();
         int lastTimestamp = 0;
         for (int i = 0; i < endTimestamps.length; i++) {
-            if (lastTimestamp >= endTimestamps[i]) {
-                throw new Exception("The end timestamp should increase.");
-            }
-            if (endTimestamps[i] <= Runtime.getTime()) {
-                throw new Exception("The end timestamp is already expired.");
-            }
+            require(lastTimestamp < endTimestamps[i], "The end timestamp should increase.");
+            require(endTimestamps[i] > Runtime.getTime(), "The end timestamp is already expired.");
             lastTimestamp = endTimestamps[i];
             milestones.add(new WCAMilestone(descriptions[i], endTimestamps[i]));
         }
@@ -225,7 +206,7 @@ public class WCAContract {
         insertIdentifier(owner, identifier);
 
         // create wca info obj
-        WCABasicInfo info = new WCABasicInfo(owner, stakePer100Token, maxTokenSoldCount, milestones);
+        WCABasicInfo info = new WCABasicInfo(owner, stakePer100Token, maxTokenSoldCount, milestones, thresholdIndex);
         ByteString basicData = StdLib.serialize(info);
         ByteString buyerData = StdLib.serialize(new WCABuyerInfo(maxTokenSoldCount));
 
@@ -239,16 +220,10 @@ public class WCAContract {
 
     public static void finishMilestone(String trueId, int index, String proofOfWork) throws Exception {
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
-        if (basicInfo == null) {
-            throw new Exception("Identifier not found.");
-        }
+        require(basicInfo != null, "Identifier not found.");
         // only creator can update WCA to finished
-        if (!Runtime.checkWitness(basicInfo.owner) && basicInfo.owner != Runtime.getCallingScriptHash()) {
-            throw new Exception("Invalid caller signature. The caller needs to be the owner account.");
-        }
-        if (!basicInfo.paid) {
-            throw new Exception("You can't finish an unpaid WCA.");
-        }
+        require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(), "Invalid caller signature. The caller needs to be the owner account.");
+        require(basicInfo.paid, "You can't finish an unpaid WCA.");
 
         basicInfo.finishMilestone(index, proofOfWork);
         // store it back
@@ -261,17 +236,11 @@ public class WCAContract {
 
     public static void finishWCA(String trueId) throws Exception {
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
-        if (basicInfo == null) {
-            throw new Exception("Identifier not found.");
-        }
-        if (!basicInfo.isFinished()) {
-            throw new Exception("You can only apply this to a ready-to-finish WCA.");
-        }
+        require(basicInfo != null, "Identifier not found.");
+        require(basicInfo.isFinished(), "You can only apply this to a ready-to-finish WCA.");
         // get wca buyer info obj
         WCABuyerInfo buyerInfo = getWCABuyerInfo(trueId);
-        if (buyerInfo == null) {
-            throw new Exception("Buyer info not found.");
-        }
+        require(buyerInfo != null, "Buyer info not found.");
 
         int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalAmount - buyerInfo.remainTokenCount;
         int totalMiletones = basicInfo.milestones.size();
