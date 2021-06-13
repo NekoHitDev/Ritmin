@@ -85,9 +85,7 @@ public class WCAContract {
             basicInfo.throwIfNotAvailableToBuy();
             WCABuyerInfo buyerInfo = getWCABuyerInfo(trueId);
             require(buyerInfo != null, "Buyer info not found.");
-            // TODO move this check into buy function 
-            buyerInfo.throwIfNotAvailableToBuy(amount);
-            buyerInfo.addBuyer(from, amount);
+            buyerInfo.recordPurchase(from, amount);
             wcaBuyerInfoMap.put(trueId, StdLib.serialize(buyerInfo));
             onBuyWCA.fire(from, trueId, amount);
         }
