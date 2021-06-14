@@ -16,9 +16,9 @@ public class WCAPojo {
     public boolean stakePaid;
 
     public WCAPojo(WCABasicInfo basicInfo, WCABuyerInfo buyerInfo) {
-        // TODO This is a workaround since Hash160 convert to int is too big for
+        // This is a workaround since Hash160 convert to int is too big for
         // StdLib.jsonSerialize, so encoded by Base64 first
-        this.ownerBase64 = StdLib.base64Encode(basicInfo.owner.toByteString());
+        this.ownerBase64 = StdLib.base64Encode(basicInfo.owner.asByteString());
         this.stakePer100Token = basicInfo.stakePer100Token;
         this.maxTokenSoldCount = basicInfo.maxTokenSoldCount;
         this.remainTokenCount = buyerInfo.remainTokenCount;
