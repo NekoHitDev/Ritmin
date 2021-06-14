@@ -7,6 +7,7 @@ import info.skyblond.nekohit.neo.domain.WCABasicInfo;
 import info.skyblond.nekohit.neo.domain.WCABuyerInfo;
 import info.skyblond.nekohit.neo.domain.WCAMilestone;
 import info.skyblond.nekohit.neo.domain.WCAPojo;
+import info.skyblond.nekohit.neo.helper.Pair;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.ByteString;
 import io.neow3j.devpack.CallFlags;
@@ -272,6 +273,30 @@ public class WCAContract {
         // wcaBuyerInfoMap.delete(trueId);
         // removeIdentifier(basicInfo.owner, trueId);
         onFinishWCA.fire(trueId, true);
+    }
+
+    public static void refund(String identifier, Hash160 buyer) throws Exception {
+        require(buyer.isValid(), "Buyer address is not a valid address.");
+        require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(), "Invalid sender signature. The buyer needs to be the signing account.");
+        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
+        require(basicInfo != null, "Identifier not found.");
+        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
+        require(buyerInfo != null, "Identifier not found.");
+
+        if (basicInfo.thresholdMet()) {
+            // after the threashold
+            Pair<Integer, Integer> buyerAndCreator = buyerInfo.partialRefund(basicInfo, buyer);
+            transferTokenTo(buyer, buyerAndCreator.first, identifier);
+            transferTokenTo(basicInfo.owner, buyerAndCreator.second, identifier);
+        } else {
+            // full refund
+            int amount = buyerInfo.fullRefund(buyer);
+            transferTokenTo(buyer, amount, identifier);
+        }
+
+        // update buyer info
+        ByteString buyerData = StdLib.serialize(buyerInfo);
+        wcaBuyerInfoMap.put(identifier, buyerData);
     }
 
     // ---------- TODO ABOVE ----------
