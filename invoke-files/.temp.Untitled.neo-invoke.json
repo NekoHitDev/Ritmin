@@ -1,0 +1,12 @@
+[
+  {
+    "contract": "CatToken",
+    "operation": "transfer",
+    "args": [
+      "@test_user",
+      "#WCAContract",
+      100000,
+      "test_id"
+    ]
+  }
+]

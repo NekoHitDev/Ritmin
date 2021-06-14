@@ -89,6 +89,7 @@ public class WCAContract {
             basicInfo.throwIfNotAvailableToBuy();
             WCABuyerInfo buyerInfo = getWCABuyerInfo(trueId);
             require(buyerInfo != null, "Buyer info not found.");
+            // This line caused: Specified cast is not valid.
             buyerInfo.recordPurchase(from, amount);
             wcaBuyerInfoMap.put(trueId, StdLib.serialize(buyerInfo));
             onBuyWCA.fire(from, trueId, amount);
