@@ -22,7 +22,7 @@ public class ContractExample {
 
         // create a WCA, should stake 5000_00
         log.info("Create WCA");
-        String trueId = createWCA(contract, 1_00, 5000_00, descriptions, endTimestamps, thresholdIndex, "test_id" + System.currentTimeMillis());
+        String trueId = createWCA(contract, 1_00, 5000_00, descriptions, endTimestamps, thresholdIndex, "test_id");// + System.currentTimeMillis());
         log.info("created WCA: {}", trueId);
         log.info("WCA info: {}", queryWCAJson(contract, trueId));
         log.info("owner cat balance: {}",
