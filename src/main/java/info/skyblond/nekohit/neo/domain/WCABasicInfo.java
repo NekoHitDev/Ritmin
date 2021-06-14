@@ -95,6 +95,15 @@ public class WCABasicInfo {
     }
 
     public boolean thresholdMet() {
-        return this.nextMilestoneIndex > this.thresholdIndex;
+        if (this.nextMilestoneIndex > this.thresholdIndex) {
+            // next milestone include the threshold
+            return true;
+        } else if (this.milestones.get(this.thresholdIndex).isExpired()) {
+            // not met the threshold, but threshold ms is expired
+            return true;
+        } else {
+            // really not met the threshold ms
+            return false;
+        }
     }
 }

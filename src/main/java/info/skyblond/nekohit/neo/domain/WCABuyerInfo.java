@@ -5,6 +5,9 @@ import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.Map;
 import org.bouncycastle.jce.exception.ExtCertPathBuilderException;
 
+import info.skyblond.nekohit.neo.contract.WCAContract;
+import info.skyblond.nekohit.neo.helper.Pair;
+
 public class WCABuyerInfo {
     public Map<Hash160, Integer> purchases;
     public int remainTokenCount;
@@ -24,20 +27,49 @@ public class WCABuyerInfo {
      * @throws Exception if remain amount is smaller than buyer's intended amount
      */
     public void recordPurchase(Hash160 buyer, int amount) throws Exception {
-        var contain = this.purchases.containsKey(buyer);
         require(remainTokenCount >= amount, "Insufficient token remain in this WCA.");
-        require(!contain, "shouldn't contain");
-        if (contain) {
+        if (this.purchases.containsKey(buyer)) {
             // old buyer, get and add the amount
             Integer origin = this.purchases.get(buyer);
             require(origin != null, "Record exists but amount is null.");
             this.purchases.put(buyer, origin + amount);
         } else {
             // new buyer
-            if (true) throw new Exception("!!!");
             this.purchases.put(buyer, amount);
         }
         this.remainTokenCount -= amount;
         this.totalAmount += amount;
+    }
+
+    /**
+     * 
+     * @param basicInfo
+     * @param buyer
+     * @return Pair(buyer amount, creator amount)
+     * @throws Exception
+     */
+    public Pair<Integer, Integer> partialRefund(WCABasicInfo basicInfo, Hash160 buyer) throws Exception {
+        require(this.purchases.containsKey(buyer), "Purchase not found");
+        Integer buyerPurchaseAmount = this.purchases.get(buyer);
+        require(buyerPurchaseAmount != null, "Purchase found but amount is null");
+
+        int totalMiletones = basicInfo.milestones.size();
+        // finished milestone belongs to creator
+        int toCreatorAmount = buyerPurchaseAmount * basicInfo.finishedCount / totalMiletones;
+        // rest of them goes back to buyer
+        int remainAmount = buyerPurchaseAmount - toCreatorAmount;
+        return new Pair<Integer,Integer>(remainAmount, toCreatorAmount);
+    }
+
+    public int fullRefund(Hash160 buyer) throws Exception {
+        require(this.purchases.containsKey(buyer), "Purchase not found");
+        Integer amount = this.purchases.get(buyer);
+        require(amount != null, "Purchase found but amount is null");
+        this.purchases.remove(buyer);
+        // add to remain token
+        this.remainTokenCount += amount;
+        // remove from total selled amount
+        this.totalAmount -= amount;
+        return amount;
     }
 }
