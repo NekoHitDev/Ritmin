@@ -89,8 +89,8 @@ public class ContractExample {
                         ContractParameter.hash160(Constants.CONTRACT_OWNER_ACCOUNT),
                         ContractParameter.integer(stakePer100Token), 
                         ContractParameter.integer(totalAmount),
-                        ContractParameter.array(Arrays.asList(descriptions)), 
-                        ContractParameter.array(Arrays.asList(endTimestamps)),
+                        Utils.arrayParameter((Object[]) descriptions),
+                        Utils.arrayParameter((Object[]) endTimestamps),
                         ContractParameter.integer(thresholdIndex),
                         ContractParameter.string(identifier))
                 .signers(Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)).wallet(Constants.CONTRACT_OWNER_WALLET).sign();
