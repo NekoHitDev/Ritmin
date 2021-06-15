@@ -19,15 +19,15 @@ import io.neow3j.devpack.annotations.OnVerification;
 import io.neow3j.devpack.annotations.Permission;
 import io.neow3j.devpack.annotations.SupportedStandards;
 import io.neow3j.devpack.annotations.Trust;
-import io.neow3j.devpack.CallFlags;
+import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.events.Event3Args;
 
 @ManifestExtra(key = "name", value = "CAT Token Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-//@Permission(contract = "*")
-//@Trust(value = "*")
+@Permission(contract = "*")
+@Trust(value = "*")
 @SupportedStandards("NEP-17")
 public class CatToken {
 
@@ -79,7 +79,7 @@ public class CatToken {
 
         onTransfer.fire(from, to, amount);
         if (ContractManagement.getContract(to) != null) {
-            Contract.call(to, "onNEP17Payment", CallFlags.ALL, new Object[] { from, amount, data });
+            Contract.call(to, "onNEP17Payment", CallFlags.All, new Object[] { from, amount, data });
         }
 
         return true;

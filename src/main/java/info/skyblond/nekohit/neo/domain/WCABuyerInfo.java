@@ -3,9 +3,6 @@ package info.skyblond.nekohit.neo.domain;
 import static info.skyblond.nekohit.neo.helper.Utils.require;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.Map;
-import org.bouncycastle.jce.exception.ExtCertPathBuilderException;
-
-import info.skyblond.nekohit.neo.contract.WCAContract;
 import info.skyblond.nekohit.neo.helper.Pair;
 
 public class WCABuyerInfo {
@@ -58,6 +55,12 @@ public class WCABuyerInfo {
         int toCreatorAmount = buyerPurchaseAmount * basicInfo.finishedCount / totalMiletones;
         // rest of them goes back to buyer
         int remainAmount = buyerPurchaseAmount - toCreatorAmount;
+        // after this, remove this record
+        this.purchases.remove(buyer);
+        // add to remain token
+        this.remainTokenCount += buyerPurchaseAmount;
+        // remove from total selled amount
+        this.totalAmount -= buyerPurchaseAmount;
         return new Pair<Integer,Integer>(remainAmount, toCreatorAmount);
     }
 

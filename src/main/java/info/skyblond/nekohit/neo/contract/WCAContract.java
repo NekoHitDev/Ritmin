@@ -10,7 +10,7 @@ import info.skyblond.nekohit.neo.domain.WCAPojo;
 import info.skyblond.nekohit.neo.helper.Pair;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.ByteString;
-import io.neow3j.devpack.CallFlags;
+import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.Contract;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
@@ -36,8 +36,8 @@ import io.neow3j.devpack.events.Event4Args;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "Something")
-//@Trust(value = "5be91fdb4ad1ae8dc209c597e0bfc8bba8299752")
-//@Permission(contract = "*")
+@Trust(value = "f62083786c200de32b34f0e6ef04270dd9c85d6e")
+@Permission(contract = "*")
 public class WCAContract {
 
     // refers to the ContractOwner wallet defined in `devnet.neo-express`
@@ -47,7 +47,7 @@ public class WCAContract {
     private static final StorageContext CTX = Storage.getStorageContext();
 
     // Note this is the reverse(the little endian) of CatToken Hash.
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("0c35d3fd897950f07d57d7d0f603dc4000e53289"));
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("f62083786c200de32b34f0e6ef04270dd9c85d6e"));
 
     // ---------- TODO Events below ----------
     @DisplayName("CreateWCA")
@@ -116,7 +116,7 @@ public class WCAContract {
     }
 
     private static List<String> queryIdentifiers(Hash160 owner) {
-        var rawData = wcaIdentifierMap.get(owner.asByteString());
+        var rawData = wcaIdentifierMap.get(owner.toByteString());
         if (rawData == null)
             return null;
         return (List<String>) StdLib.deserialize(rawData);
@@ -128,7 +128,7 @@ public class WCAContract {
             identifiers = new List<>();
         }
         identifiers.add(identifier);
-        wcaIdentifierMap.put(owner.asByteString(), StdLib.serialize(identifiers));
+        wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
     }
 
     private static void removeIdentifier(Hash160 owner, String identifier) {
@@ -149,7 +149,7 @@ public class WCAContract {
         }
         identifiers.remove(index);
         // put it back
-        wcaIdentifierMap.put(owner.asByteString(), StdLib.serialize(identifiers));
+        wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
     }
 
     public static String queryWCA(String trueId) {
@@ -284,7 +284,7 @@ public class WCAContract {
         require(buyerInfo != null, "Identifier not found.");
 
         if (basicInfo.thresholdMet()) {
-            // after the threashold
+            // after the threshold
             Pair<Integer, Integer> buyerAndCreator = buyerInfo.partialRefund(basicInfo, buyer);
             transferTokenTo(buyer, buyerAndCreator.first, identifier);
             transferTokenTo(basicInfo.owner, buyerAndCreator.second, identifier);
@@ -302,7 +302,7 @@ public class WCAContract {
     // ---------- TODO ABOVE ----------
 
     private static void transferTokenTo(Hash160 target, int amount, String identifier) {
-        Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.ALL,
+        Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.All,
                 new Object[] { Runtime.getExecutingScriptHash(), target, amount, identifier });
     }
 
