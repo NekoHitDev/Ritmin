@@ -131,27 +131,6 @@ public class WCAContract {
         wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
     }
 
-    private static void removeIdentifier(Hash160 owner, String identifier) {
-        List<String> identifiers = queryIdentifiers(owner);
-        if (identifiers == null) {
-            // no identifiers
-            return;
-        }
-        // find the index of the given id
-        var index = 0;
-        for (; index < identifiers.size(); index++) {
-            if (identifiers.get(index).equals(identifier))
-                break;
-        }
-        if (index == identifiers.size()) {
-            // not found
-            return;
-        }
-        identifiers.remove(index);
-        // put it back
-        wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
-    }
-
     public static String queryWCA(String trueId) {
         WCABasicInfo basicInfo = getWCABasicInfo(trueId);
         if (basicInfo == null) {
