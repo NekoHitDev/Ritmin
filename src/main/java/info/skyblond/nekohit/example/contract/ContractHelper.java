@@ -13,6 +13,7 @@ import io.neow3j.contract.SmartContract;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.protocol.core.response.NeoApplicationLog;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
+import io.neow3j.protocol.core.response.InvocationResult;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.utils.Await;
@@ -47,6 +48,16 @@ public class ContractHelper {
         return txAndResp.first.getApplicationLog();
     }
 
+    public static InvocationResult testInvoke(
+        SmartContract contract, String function, 
+        ContractParameter[] parameters, Signer[] signers
+    ) throws Exception {
+        var tx = contract.callInvokeFunction(function, Arrays.asList(parameters), signers);
+        if (tx.hasError()) {
+            throw new Exception(String.format("Error when invoking %s: %s", function, tx.getError().getMessage()));
+        }
+        return tx.getInvocationResult();
+    }
     
     /**
      * Create WCA with Contract Owner account
@@ -130,17 +141,16 @@ public class ContractHelper {
     }
 
     public static String queryWCAJson(SmartContract contract, String trueId) throws Throwable {
-        var appLog = ContractHelper.invokeFunction(
+        var result = ContractHelper.testInvoke(
             contract, "queryWCA", 
             new ContractParameter[]{
                 ContractParameter.string(trueId)
             }, 
             new Signer[] {
                 Signer.calledByEntry(Constants.CONTRACT_OWNER_ACCOUNT)
-            }, 
-            Constants.CONTRACT_OWNER_WALLET
+            }
         );
-        return appLog.getExecutions().get(0).getStack().get(0).getString();
+        return result.getStack().get(0).getString();
     }
 
 }
