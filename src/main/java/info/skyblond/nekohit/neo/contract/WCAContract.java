@@ -73,8 +73,8 @@ public class WCAContract {
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
         require(CAT_TOKEN_HASH == Runtime.getCallingScriptHash(), "Only Cat Token can invoke this function.");
 
-        var trueId = (String) data;
-        WCABasicInfo basicInfo = getWCABasicInfo(trueId);
+        var identifier = (String) data;
+        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
 
         if (basicInfo.owner.equals(from)) {
@@ -84,31 +84,31 @@ public class WCAContract {
             require(basicInfo.getTotalStake() == amount, "Amount not correct");
             // unpaid before, not finished(expired), amount is correct
             basicInfo.paid = true;
-            wcaBasicInfoMap.put(trueId, StdLib.serialize(basicInfo));
+            wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
         } else {
             // buyer want to buy a WCA
             basicInfo.throwIfNotAvailableToBuy();
-            WCABuyerInfo buyerInfo = getWCABuyerInfo(trueId);
+            WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
             require(buyerInfo != null, "Buyer info not found.");
             // This line caused: Specified cast is not valid.
             buyerInfo.recordPurchase(from, amount);
-            wcaBuyerInfoMap.put(trueId, StdLib.serialize(buyerInfo));
-            onBuyWCA.fire(from, trueId, amount);
+            wcaBuyerInfoMap.put(identifier, StdLib.serialize(buyerInfo));
+            onBuyWCA.fire(from, identifier, amount);
         }
 
         onPayment.fire(from, amount, data);
     }
 
-    private static WCABasicInfo getWCABasicInfo(String trueId) {
-        ByteString data = wcaBasicInfoMap.get(trueId);
+    private static WCABasicInfo getWCABasicInfo(String identifier) {
+        ByteString data = wcaBasicInfoMap.get(identifier);
         if (data == null) {
             return null;
         }
         return (WCABasicInfo) StdLib.deserialize(data);
     }
 
-    private static WCABuyerInfo getWCABuyerInfo(String trueId) {
-        ByteString data = wcaBuyerInfoMap.get(trueId);
+    private static WCABuyerInfo getWCABuyerInfo(String identifier) {
+        ByteString data = wcaBuyerInfoMap.get(identifier);
         if (data == null) {
             return null;
         }
@@ -131,13 +131,13 @@ public class WCAContract {
         wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
     }
 
-    public static String queryWCA(String trueId) {
-        WCABasicInfo basicInfo = getWCABasicInfo(trueId);
+    public static String queryWCA(String identifier) {
+        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         if (basicInfo == null) {
             return "";
         }
 
-        WCABuyerInfo buyerInfo = getWCABuyerInfo(trueId);
+        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         if (buyerInfo == null) {
             return "";
         }
@@ -201,8 +201,8 @@ public class WCAContract {
         return identifier;
     }
 
-    public static void finishMilestone(String trueId, int index, String proofOfWork) throws Exception {
-        WCABasicInfo basicInfo = getWCABasicInfo(trueId);
+    public static void finishMilestone(String identifier, int index, String proofOfWork) throws Exception {
+        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         // only creator can update WCA to finished
         require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(), "Invalid caller signature. The caller needs to be the owner account.");
@@ -210,19 +210,19 @@ public class WCAContract {
 
         basicInfo.finishMilestone(index, proofOfWork);
         // store it back
-        wcaBasicInfoMap.put(trueId, StdLib.serialize(basicInfo));
+        wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
         // if whole WCA is finished
         if (basicInfo.isFinished()) {
-            finishWCA(trueId);
+            finishWCA(identifier);
         }
     }
 
-    public static void finishWCA(String trueId) throws Exception {
-        WCABasicInfo basicInfo = getWCABasicInfo(trueId);
+    public static void finishWCA(String identifier) throws Exception {
+        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         require(basicInfo.isFinished(), "You can only apply this to a ready-to-finish WCA.");
         // get wca buyer info obj
-        WCABuyerInfo buyerInfo = getWCABuyerInfo(trueId);
+        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, "Buyer info not found.");
 
         int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalAmount - buyerInfo.remainTokenCount;
@@ -236,22 +236,22 @@ public class WCAContract {
             var purchaseAmount = buyerInfo.purchases.get(buyers[i]);
             var totalAmount = purchaseAmount + purchaseAmount * basicInfo.stakePer100Token / 100;
             var returnAmount = totalAmount * unfinishedMilestones / totalMiletones;
-            transferTokenTo(buyers[i], returnAmount, trueId);
+            transferTokenTo(buyers[i], returnAmount, identifier);
             remainTokens -= returnAmount;
         }
         // considering all dicimals are floored, so totalTokens > 0
         // return the reset of total tokens to creator
         if (remainTokens > 0) {
-            transferTokenTo(basicInfo.owner, remainTokens, trueId);
+            transferTokenTo(basicInfo.owner, remainTokens, identifier);
         }
 
         // remove the identifier
         // considering user need to access the link to work after WCA is finished
         // we shouldn't delete it immediately
-        // wcaBasicInfoMap.delete(trueId);
-        // wcaBuyerInfoMap.delete(trueId);
-        // removeIdentifier(basicInfo.owner, trueId);
-        onFinishWCA.fire(trueId, true);
+        // wcaBasicInfoMap.delete(identifier);
+        // wcaBuyerInfoMap.delete(identifier);
+        // removeIdentifier(basicInfo.owner, identifier);
+        onFinishWCA.fire(identifier, true);
     }
 
     public static void refund(String identifier, Hash160 buyer) throws Exception {
