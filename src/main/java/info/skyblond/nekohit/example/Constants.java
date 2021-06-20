@@ -17,9 +17,9 @@ public class Constants {
 
     public static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
 
-    public static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0x11588486417490f1343f981812ab2ac2fbd92e3a"), Constants.NEOW3J);
+    public static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0x7beaa74d0c29ada7a4462c3c7ce0965997901e14"), Constants.NEOW3J);
 
-    public static final FungibleToken CAT_TOKEN = new FungibleToken(new Hash160("0xdf5526bbbaa3a4f01d14d4455f564c45859f2fa7"), NEOW3J);
+    public static final FungibleToken CAT_TOKEN = new FungibleToken(new Hash160("0x6e5dc8d90d2704efe6f0342be30d206c788320f6"), NEOW3J);
 
     public static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
 
@@ -28,6 +28,11 @@ public class Constants {
 
     public static final Wallet CONTRACT_OWNER_WALLET = Wallet.withAccounts(CONTRACT_OWNER_ACCOUNT);
 
+    // test_user defind in `devnet.neo-express`
+    public static final Account TEST_USER_ACCOUNT = new Account(ECKeyPair.create(new BigInteger("3b0d3450b306d0e05fbcbe6d8bc73e6108d883f9ee99711a1019f7a423d9455e", 16)));
+
+    public static final Wallet TEST_USER_WALLET = Wallet.withAccounts(TEST_USER_ACCOUNT);
+    
     // the node address defined in `devnet.neo-express`
     private static final Account NODE_ACCOUNT = Account.fromWIF("KxPC9enS55zgQSUz7PMkS4QWsbABUZU58TMB2kkCaW1gnCcY7GUy");
 

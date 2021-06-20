@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.domain;
 
+import static info.skyblond.nekohit.neo.helper.Utils.require;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
 
@@ -8,6 +9,7 @@ public class WCABasicInfo {
     public int stakePer100Token;
     public int maxTokenSoldCount;
     public List<WCAMilestone> milestones;
+    public int thresholdIndex;
     public int finishedCount;
 
     /**
@@ -19,14 +21,20 @@ public class WCABasicInfo {
      */
     public boolean paid;
 
-    public WCABasicInfo(Hash160 owner, int stakePer100Token, int maxTokenSoldCount, List<WCAMilestone> milestones) throws Exception {
+    public WCABasicInfo(
+        Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
+        List<WCAMilestone> milestones, int thresholdIndex
+    ) throws Exception {
         this.owner = owner;
         this.stakePer100Token = stakePer100Token;
         this.maxTokenSoldCount = maxTokenSoldCount;
-        if (milestones.size() == 0) {
-            throw new Exception("You must have at least 1 milestone.");
-        }
+        require(milestones.size() > 0, "You must have at least 1 milestone.");
         this.milestones = milestones;
+        if (thresholdIndex >= 0 && thresholdIndex < this.milestones.size()) {
+            this.thresholdIndex = thresholdIndex;
+        } else {
+            throw new Exception("Invalid value for thresholdIndex");
+        }
 
         finishedCount = 0;
         nextMilestoneIndex = 0;
@@ -48,15 +56,9 @@ public class WCABasicInfo {
      * @throws Exception if not satified the requirements
      */
     public void throwIfNotAvailableToBuy() throws Exception{
-        if (!paid) {
-            throw new Exception("You can't buy an unpaid WCA.");
-        }
-        if (isFinished()) {
-            throw new Exception("You can't buy a finished WCA.");
-        }
-        if (nextMilestoneIndex > 0) {
-            throw new Exception("You can't buy a WCA already started.");
-        }
+        require(paid, "You can't buy an unpaid WCA.");
+        require(!this.isFinished(), "You can't buy a finished WCA.");
+        require(nextMilestoneIndex == 0, "You can't buy a WCA already started.");
     }
 
     /**
@@ -66,16 +68,10 @@ public class WCABasicInfo {
      * @throws Exception throws if reqiurements are not satisfied
      */
     public void finishMilestone(int index, String proofOfWork) throws Exception {
-        if (index < nextMilestoneIndex) {
-            throw new Exception("You can't finish a missed milestone");
-        }
+        require(index >= nextMilestoneIndex, "You can't finish a missed milestone");
         WCAMilestone ms = milestones.get(index);
-        if (ms.isFinished()) {
-            throw new Exception("You can't finish a finished milestone");
-        }
-        if (ms.isExpired()) {
-            throw new Exception("You can't finish a expired milestone");
-        }
+        require(!ms.isFinished(), "You can't finish a finished milestone");
+        require(!ms.isExpired(), "You can't finish a expired milestone");
         // not finished nor expired, then we can modify it.
         ms.linkToResult = proofOfWork;
         nextMilestoneIndex = index + 1;
@@ -94,6 +90,19 @@ public class WCABasicInfo {
         } else if (ms.isExpired()) {
             return true;
         } else {
+            return false;
+        }
+    }
+
+    public boolean thresholdMet() {
+        if (this.nextMilestoneIndex > this.thresholdIndex) {
+            // next milestone include the threshold
+            return true;
+        } else if (this.milestones.get(this.thresholdIndex).isExpired()) {
+            // not met the threshold, but threshold ms is expired
+            return true;
+        } else {
+            // really not met the threshold ms
             return false;
         }
     }
