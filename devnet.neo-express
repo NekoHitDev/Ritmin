@@ -54,6 +54,23 @@
           }
         }
       ]
+    },
+    {
+      "name": "test_user",
+      "accounts": [
+        {
+          "private-key": "3b0d3450b306d0e05fbcbe6d8bc73e6108d883f9ee99711a1019f7a423d9455e",
+          "script-hash": "NPL2rTPsxGXLCyb1RetoDjgtXiiszHWXtW",
+          "label": null,
+          "is-default": true,
+          "contract": {
+            "script": "0c21038a97f9a64275639b86728967f1028207f5c2a2c875a917c93b6126e69c14ff5b4156e7b327",
+            "parameters": [
+              "Signature"
+            ]
+          }
+        }
+      ]
     }
   ],
   "settings": {}

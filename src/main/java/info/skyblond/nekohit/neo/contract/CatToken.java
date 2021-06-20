@@ -1,10 +1,10 @@
 package info.skyblond.nekohit.neo.contract;
 
+import static info.skyblond.nekohit.neo.helper.Utils.require;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
 import info.skyblond.nekohit.neo.helper.StorageHelper;
 import io.neow3j.devpack.ByteString;
-import io.neow3j.devpack.CallFlags;
 import io.neow3j.devpack.Contract;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.Helper;
@@ -16,13 +16,18 @@ import io.neow3j.devpack.annotations.DisplayName;
 import io.neow3j.devpack.annotations.ManifestExtra;
 import io.neow3j.devpack.annotations.OnDeployment;
 import io.neow3j.devpack.annotations.OnVerification;
+import io.neow3j.devpack.annotations.Permission;
 import io.neow3j.devpack.annotations.SupportedStandards;
+import io.neow3j.devpack.annotations.Trust;
+import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.events.Event3Args;
 
 @ManifestExtra(key = "name", value = "CAT Token Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
+@Permission(contract = "*")
+@Trust(value = "*")
 @SupportedStandards("NEP-17")
 public class CatToken {
 
@@ -59,15 +64,11 @@ public class CatToken {
     }
 
     public static boolean transfer(Hash160 from, Hash160 to, int amount, Object data) throws Exception {
-        if (!from.isValid() || !to.isValid()) {
-            throw new Exception("From or To address is not a valid address.");
-        }
-        if (amount < 0) {
-            throw new Exception("The transfer amount was negative.");
-        }
-        if (!Runtime.checkWitness(from) && from != Runtime.getCallingScriptHash()) {
-            throw new Exception("Invalid sender signature. The sender of the tokens needs to be the signing account.");
-        }
+        require(from.isValid() && to.isValid(), "From or To address is not a valid address.");
+        require(amount >= 0, "The transfer amount was negative.");
+        require(Runtime.checkWitness(from) || from == Runtime.getCallingScriptHash(),
+                "Invalid sender signature. The sender of the tokens needs to be the signing account.");
+
         if (getBalance(from) < amount) {
             return false;
         }
@@ -78,25 +79,21 @@ public class CatToken {
 
         onTransfer.fire(from, to, amount);
         if (ContractManagement.getContract(to) != null) {
-            Contract.call(to, "onNEP17Payment", CallFlags.ALL, new Object[] { from, amount, data });
+            Contract.call(to, "onNEP17Payment", CallFlags.All, new Object[] { from, amount, data });
         }
 
         return true;
     }
 
     public static int balanceOf(Hash160 account) throws Exception {
-        if (!account.isValid()) {
-            throw new Exception("Argument is not a valid address.");
-        }
+        require(account.isValid(), "Argument is not a valid address.");
         return getBalance(account);
     }
 
     @OnDeployment
     public static void deploy(Object data, boolean update) throws Exception {
         if (!update) {
-            if (getTotalSupply() > 0) {
-                throw new Exception("Contract was already deployed.");
-            }
+            require(getTotalSupply() == 0, "Contract was already deployed.");
             // Initialize supply
             StorageHelper.put(sc, TOTAL_SUPPLY_KEY, INITIAL_SUPPLY);
             // And allocate all tokens to the contract owner.
