@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'io.neow3j.gradle-plugin' version '3.11.2'
+    id 'com.adarshr.test-logger' version '3.0.0'
 }
 
 group 'info.skyblond.nekohit'
@@ -16,12 +17,18 @@ repositories {
 dependencies {
     implementation 'io.neow3j:contract:3.11.2'
     implementation 'io.neow3j:devpack:3.11.2'
-    implementation 'junit:junit:4.12'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.+'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.+'
 }
 
 neow3jCompiler {
     // className = "info.skyblond.nekohit.neo.contract.CatToken"
     className = "info.skyblond.nekohit.neo.contract.WCAContract"
     debug = true
+}
+
+test {
+    useJUnitPlatform()
 }

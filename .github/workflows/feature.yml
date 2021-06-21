@@ -17,10 +17,6 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # .Net for neoxp
-        dotnet-version: [ '5.0.x' ]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -30,13 +26,24 @@ jobs:
       # Install neoxp from dotnet tool
       - name: Install neoxp
         run: |
-          sudo apt install libsnappy-dev libc6-dev librocksdb-dev -y
+          wget https://packages.microsoft.com/config/ubuntu/21.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https
+          sudo apt-get install -y dotnet-sdk-5.0
+          sudo apt-get install libsnappy-dev libc6-dev librocksdb-dev -y
           dotnet tool install --global Neo.Express --version 2.0.39-preview
+          
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
 
       # Run neoxp in background
-      - name: Run neoxp
-        run: neoxp run -s 3 >> neo.log &
+      - name: Start up neoxp
+        run: neoxp run -i devnet.neo-express -s 3 >> neo.log &
         
-      # wait for 3s
-      - name: Wait
-        run: sleep 3
+      # Test using gradle
+      - name: Unit test
+        run: ./gradlew test
