@@ -64,7 +64,8 @@ public class ContractHelper {
      */
     public static String createWCA(
         SmartContract contract, int stakePer100Token, long totalAmount,
-        String[] descriptions, Long[] endTimestamps, int thresholdIndex, String identifier
+        String[] descriptions, Long[] endTimestamps, int thresholdIndex, 
+        long coolDownInterval, String identifier
     ) throws Throwable {
 
         // expired in 30 hours
@@ -81,6 +82,7 @@ public class ContractHelper {
                 ContractParameter.array(Arrays.asList(descriptions)),
                 ContractParameter.array(Arrays.asList(endTimestamps)),
                 ContractParameter.integer(thresholdIndex),
+                ContractParameter.integer(BigInteger.valueOf(coolDownInterval)),
                 ContractParameter.string(identifier)
             }, 
             new Signer[] {

@@ -157,6 +157,7 @@ public class WCAContract {
      * @param descriptions      descriptions for milestone
      * @param endTimestamps     endTimestamps for each milestone
      * @param thresholdIndex    the index of threshold milestone
+     * @param coolDownInterval  cool down time between finish two milestones, miliseconds
      * @param identifier        the name of this WCA
      * 
      * @return the global unique id for this WCA
@@ -164,7 +165,7 @@ public class WCAContract {
     public static String createWCA(
         Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
         String[] descriptions, int[] endTimestamps, int thresholdIndex,
-        String identifier
+        int coolDownInterval, String identifier
     ) throws Exception {
         require(owner.isValid(), "Owner address is not a valid address.");
         require(stakePer100Token > 0, "The stake amount per 100 token must be positive.");
@@ -189,7 +190,10 @@ public class WCAContract {
         insertIdentifier(owner, identifier);
 
         // create wca info obj
-        WCABasicInfo info = new WCABasicInfo(owner, stakePer100Token, maxTokenSoldCount, milestones, thresholdIndex);
+        WCABasicInfo info = new WCABasicInfo(
+            owner, stakePer100Token, maxTokenSoldCount, 
+            milestones, thresholdIndex, coolDownInterval
+        );
         ByteString basicData = StdLib.serialize(info);
         ByteString buyerData = StdLib.serialize(new WCABuyerInfo(maxTokenSoldCount));
 
@@ -205,7 +209,8 @@ public class WCAContract {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         // only creator can update WCA to finished
-        require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(), "Invalid caller signature. The caller needs to be the owner account.");
+        require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(),
+                "Invalid caller signature. The caller needs to be the owner account.");
         require(basicInfo.paid, "You can't finish an unpaid WCA.");
 
         basicInfo.finishMilestone(index, proofOfWork);
@@ -228,7 +233,7 @@ public class WCAContract {
         int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalAmount - buyerInfo.remainTokenCount;
         int totalMiletones = basicInfo.milestones.size();
         int unfinishedMilestones = totalMiletones - basicInfo.finishedCount;
-        
+
         // for each buyer, return their token based on unfinished ms count
         // also remove stakes for that unfinished one
         var buyers = buyerInfo.purchases.keys();
@@ -256,7 +261,8 @@ public class WCAContract {
 
     public static void refund(String identifier, Hash160 buyer) throws Exception {
         require(buyer.isValid(), "Buyer address is not a valid address.");
-        require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(), "Invalid sender signature. The buyer needs to be the signing account.");
+        require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(),
+                "Invalid sender signature. The buyer needs to be the signing account.");
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
