@@ -36,7 +36,7 @@ jobs:
 
       # Start up neoxp in background
       - name: Start up neoxp
-        run: neoxp run -i devnet.neo-express -s 3 >> neo.log &
+        run: neoxp run -i devnet.neo-express -s 1 >> neo.log &
         
       # Test using gradle
       - name: Unit test
