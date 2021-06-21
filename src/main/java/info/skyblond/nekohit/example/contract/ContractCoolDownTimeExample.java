@@ -1,13 +1,9 @@
 package info.skyblond.nekohit.example.contract;
 
-import java.io.IOException;
-
-import static info.skyblond.nekohit.neo.helper.Utils.require;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import info.skyblond.nekohit.example.Constants;
 import info.skyblond.nekohit.example.Utils;
-import io.neow3j.contract.exceptions.UnexpectedReturnTypeException;
 
 /**
  * This file demonstrate how a refund operation would be:
