@@ -17,6 +17,7 @@ repositories {
 dependencies {
     implementation 'io.neow3j:contract:3.11.2'
     implementation 'io.neow3j:devpack:3.11.2'
+    implementation 'io.neow3j:compiler:3.11.2'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.+'
