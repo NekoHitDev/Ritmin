@@ -38,6 +38,11 @@ jobs:
       - name: Start up neoxp
         run: neoxp run -i devnet.neo-express -s 1 >> neo.log &
         
+      - name: test github secret
+        env:
+          ORG_SECRET_TEST: ${{ secrets.ORG_SECRET_TEST }}
+        run: echo "$ORG_SECRET_TEST"
+        
       # Test using gradle
       - name: Unit test
         run: ./gradlew test
