@@ -233,6 +233,6 @@ public class ContractTestFrame {
 
     protected static boolean isPublicChain() {
         var value = System.getenv("PUBLIC_CHAIN");
-        return value != null && !value.isBlank();
+        return value != null && value.trim().toLowerCase().contains("true");
     }
 }
