@@ -46,6 +46,7 @@ jobs:
         env:
           # This is a test of GitHub Secrets feature
           ORG_SECRET_TEST: ${{ secrets.ORG_SECRET_TEST }}
+          PUBLIC_CHAIN: " ${{ github.ref == 'refs/heads/develop' }}
         
       # Publish the test report
       - name: Publish Test Report

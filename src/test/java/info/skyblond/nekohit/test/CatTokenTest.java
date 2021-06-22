@@ -1,6 +1,7 @@
 package info.skyblond.nekohit.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
@@ -44,6 +45,7 @@ public class CatTokenTest extends ContractTestFrame {
     void testOwnerHash() {
         if (isPublicChain()) {
             // TODO should be another wallet address, using GitHub Secrets
+            assertTrue(false, "This branch shouldn't be public chain");
         } else {
             // TODO wallet defined in neo-express config file
         }
