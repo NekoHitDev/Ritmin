@@ -1,12 +1,14 @@
+# TODO: develop branch should corresponding to the test-net
+#       it might need a separate work flow to update the contract on test net
 name: develop&feature CI
 
 on:
   # Triggers the workflow on push for the develop and git workflow branch
   push:
     branches: [ develop, feature/** ]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  # Also runs when pr is made to develop branch as a functional check
+  pull_request:
+    branches: [ develop ]
 
 jobs:
   contract_test:
@@ -38,14 +40,12 @@ jobs:
       - name: Start up neoxp
         run: neoxp run -i devnet.neo-express -s 1 >> neo.log &
         
-      - name: test github secret
-        env:
-          ORG_SECRET_TEST: ${{ secrets.ORG_SECRET_TEST }}
-        run: echo "$ORG_SECRET_TEST"
-        
       # Test using gradle
       - name: Unit test
         run: ./gradlew test
+        env:
+          # This is a test of GitHub Secrets feature
+          ORG_SECRET_TEST: ${{ secrets.ORG_SECRET_TEST }}
         
       # Publish the test report
       - name: Publish Test Report
