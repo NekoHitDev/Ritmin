@@ -3,6 +3,7 @@ package info.skyblond.nekohit.neo.domain;
 import static info.skyblond.nekohit.neo.helper.Utils.require;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
+import io.neow3j.devpack.Runtime;
 
 public class WCABasicInfo {
     public Hash160 owner;
@@ -10,6 +11,16 @@ public class WCABasicInfo {
     public int maxTokenSoldCount;
     public List<WCAMilestone> milestones;
     public int thresholdIndex;
+    public int coolDownInterval;
+
+    /**
+     * Indicate when the last milestone is update. Used to calculate the cool-down time.
+     */
+    public int lastUpdateTime;
+
+    /**
+     * Count current finished ms number. Updated when finishing a milestone.
+     */
     public int finishedCount;
 
     /**
@@ -23,7 +34,7 @@ public class WCABasicInfo {
 
     public WCABasicInfo(
         Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
-        List<WCAMilestone> milestones, int thresholdIndex
+        List<WCAMilestone> milestones, int thresholdIndex, int coolDownInterval
     ) throws Exception {
         this.owner = owner;
         this.stakePer100Token = stakePer100Token;
@@ -35,7 +46,10 @@ public class WCABasicInfo {
         } else {
             throw new Exception("Invalid value for thresholdIndex");
         }
+        require(coolDownInterval >= 0, "Cool down interval must be a positive number");
+        this.coolDownInterval = coolDownInterval;
 
+        lastUpdateTime = -1;
         finishedCount = 0;
         nextMilestoneIndex = 0;
         paid = false;
@@ -68,6 +82,9 @@ public class WCABasicInfo {
      * @throws Exception throws if reqiurements are not satisfied
      */
     public void finishMilestone(int index, String proofOfWork) throws Exception {
+        // check cool-down time first
+        int currentTime = Runtime.getTime();
+        require(lastUpdateTime + coolDownInterval <= currentTime, "Cool down time not met");
         require(index >= nextMilestoneIndex, "You can't finish a missed milestone");
         WCAMilestone ms = milestones.get(index);
         require(!ms.isFinished(), "You can't finish a finished milestone");
@@ -76,6 +93,7 @@ public class WCABasicInfo {
         ms.linkToResult = proofOfWork;
         nextMilestoneIndex = index + 1;
         finishedCount++;
+        lastUpdateTime = currentTime;
     }
 
     /**

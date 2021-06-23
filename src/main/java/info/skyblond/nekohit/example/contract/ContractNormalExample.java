@@ -67,7 +67,7 @@ public class ContractNormalExample {
         String trueId = ContractHelper.createWCA(
             contract, STAKE_PER_100_TOKEN, totalAmount, 
             descriptions, endTimestamps, THRESHOLD_MILESTONE_INDEX, 
-            "test_normal_operation_" + System.currentTimeMillis()
+            1, "test_normal_operation_" + System.currentTimeMillis()
         );
         logger.info("created WCA with ID: {}", trueId);
         logger.info("WCA info: {}", ContractHelper.queryWCAJson(contract, trueId));
