@@ -44,8 +44,7 @@ jobs:
       - name: Unit test
         run: ./gradlew test
         env:
-          # This is a test of GitHub Secrets feature
-          ORG_SECRET_TEST: ${{ secrets.ORG_SECRET_TEST }}
+          PUBLIC_CHAIN_CONTRACT_OWNER_WIF: ${{ secrets.PUBLIC_CHAIN_CONTRACT_OWNER_WIF }}
           PUBLIC_CHAIN: ${{ github.ref == 'refs/heads/develop' }}
         
       # Publish the test report

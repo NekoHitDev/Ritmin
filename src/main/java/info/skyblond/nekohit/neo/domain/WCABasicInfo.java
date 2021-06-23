@@ -36,7 +36,10 @@ public class WCABasicInfo {
         Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
         List<WCAMilestone> milestones, int thresholdIndex, int coolDownInterval
     ) throws Exception {
+        require(owner.isValid(), "Owner address is not a valid address.");
         this.owner = owner;
+        require(stakePer100Token > 0, "The stake amount per 100 token must be positive.");
+        require(maxTokenSoldCount > 0, "The max sell token count must be positive.");
         this.stakePer100Token = stakePer100Token;
         this.maxTokenSoldCount = maxTokenSoldCount;
         require(milestones.size() > 0, "You must have at least 1 milestone.");
@@ -46,7 +49,7 @@ public class WCABasicInfo {
         } else {
             throw new Exception("Invalid value for thresholdIndex");
         }
-        require(coolDownInterval >= 0, "Cool down interval must be a positive number");
+        require(coolDownInterval >= 0, "Cool down interval must not be negative.");
         this.coolDownInterval = coolDownInterval;
 
         lastUpdateTime = -1;

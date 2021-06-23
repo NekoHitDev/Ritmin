@@ -21,6 +21,8 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.2.3'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.+'
+    testImplementation 'commons-codec:commons-codec:1.15'
+
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.+'
 }
 
@@ -32,4 +34,8 @@ neow3jCompiler {
 
 test {
     useJUnitPlatform()
+}
+
+testlogger {
+    showFullStackTraces true
 }
