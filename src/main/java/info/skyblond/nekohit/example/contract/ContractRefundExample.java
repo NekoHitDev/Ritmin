@@ -74,7 +74,7 @@ public class ContractRefundExample {
         String trueId = ContractHelper.createWCA(
             contract, STAKE_PER_100_TOKEN, totalAmount, 
             descriptions, endTimestamps, THRESHOLD_MILESTONE_INDEX, 
-            "test_refund_" + System.currentTimeMillis()
+            1, "test_refund_" + System.currentTimeMillis()
         );
         logger.info("created WCA with ID: {}", trueId);
         logger.info("WCA info: {}", ContractHelper.queryWCAJson(contract, trueId));
