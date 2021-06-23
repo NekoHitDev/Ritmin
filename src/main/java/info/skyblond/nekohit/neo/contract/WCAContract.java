@@ -36,7 +36,7 @@ import io.neow3j.devpack.events.Event4Args;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "Something")
-@Trust(value = "f62083786c200de32b34f0e6ef04270dd9c85d6e")
+@Trust(value = "fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9")
 @Permission(contract = "*")
 public class WCAContract {
 
@@ -47,7 +47,7 @@ public class WCAContract {
     private static final StorageContext CTX = Storage.getStorageContext();
 
     // Note this is the reverse(the little endian) of CatToken Hash.
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("f62083786c200de32b34f0e6ef04270dd9c85d6e"));
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9"));
 
     // ---------- TODO Events below ----------
     @DisplayName("CreateWCA")
@@ -72,7 +72,7 @@ public class WCAContract {
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
         require(CAT_TOKEN_HASH == Runtime.getCallingScriptHash(), "Only Cat Token can invoke this function.");
-
+        require(amount > 0, "Transfer amount must be a positive number.");
         var identifier = (String) data;
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
@@ -167,9 +167,6 @@ public class WCAContract {
         String[] descriptions, int[] endTimestamps, int thresholdIndex,
         int coolDownInterval, String identifier
     ) throws Exception {
-        require(owner.isValid(), "Owner address is not a valid address.");
-        require(stakePer100Token > 0, "The stake amount per 100 token must be positive.");
-        require(maxTokenSoldCount > 0, "The max sell token count must be positive.");
         require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), "Invalid sender signature. The owner of the wca needs to be the signing account.");
         // identifier should be unique
         require(wcaBasicInfoMap.get(identifier) == null, "Duplicate identifier.");
@@ -186,9 +183,6 @@ public class WCAContract {
             milestones.add(new WCAMilestone(descriptions[i], endTimestamps[i]));
         }
 
-        // save identifier
-        insertIdentifier(owner, identifier);
-
         // create wca info obj
         WCABasicInfo info = new WCABasicInfo(
             owner, stakePer100Token, maxTokenSoldCount, 
@@ -200,6 +194,10 @@ public class WCAContract {
         // store
         wcaBasicInfoMap.put(identifier, basicData);
         wcaBuyerInfoMap.put(identifier, buyerData);
+        
+        // save identifier
+        insertIdentifier(owner, identifier);
+
         // fire event and done
         onCreateWCA.fire(owner, stakePer100Token, maxTokenSoldCount, identifier);
         return identifier;
@@ -304,7 +302,8 @@ public class WCAContract {
      */
     @OnVerification
     public static boolean verify() throws Exception {
-        return false;
+        throwIfSignerIsNotOwner();
+        return true;
     }
 
     public static Hash160 contractOwner() {
