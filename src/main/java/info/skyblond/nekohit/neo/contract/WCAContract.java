@@ -227,7 +227,10 @@ public class WCAContract {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         require(basicInfo.paid, "You can not finish an unpaid WCA.");
-        require(basicInfo.isFinished(), "You can only apply this to a ready-to-finish WCA.");
+        if (!Runtime.checkWitness(basicInfo.owner)) {
+            // only owner can finish an unfinished WCA
+            require(basicInfo.isFinished(), "You can only apply this to a ready-to-finish WCA.");
+        }
         // get wca buyer info obj
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, "Buyer info not found.");
@@ -251,6 +254,9 @@ public class WCAContract {
         if (remainTokens > 0) {
             transferTokenTo(basicInfo.owner, remainTokens, identifier);
         }
+        basicInfo.finished = true;
+        // store it back
+        wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
 
         onFinishWCA.fire(identifier, true);
     }
@@ -262,6 +268,7 @@ public class WCAContract {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         require(basicInfo.paid, "You can not refund an unpaid WCA.");
+        require(!basicInfo.isFinished(), "You can not refund a finished WCA.");
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, "Identifier not found.");
 
