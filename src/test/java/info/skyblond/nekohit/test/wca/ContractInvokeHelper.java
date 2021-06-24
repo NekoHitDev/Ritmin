@@ -11,8 +11,6 @@ import io.neow3j.wallet.Wallet;
 
 /**
  * This class offers some handy functions for invoking WCAContract.
- * 
- * TODO WCA Test: purchase, finish ms, finish wca, refund, query
  */
 public class ContractInvokeHelper {
 
@@ -56,5 +54,44 @@ public class ContractInvokeHelper {
             wallet
         );
         return appLog.getExecutions().get(0).getStack().get(0).getString();
+    }
+
+    public static String createAndPayWCA(
+        SmartContract contract, int stakePer100Token, long totalAmount,
+        String[] descriptions, Long[] endTimestamps, int thresholdIndex, 
+        long coolDownInterval, String identifier, Wallet wallet
+    ) throws Throwable {
+        var result = createWCA(
+            contract, stakePer100Token, totalAmount, descriptions, endTimestamps, 
+            thresholdIndex, coolDownInterval, identifier, wallet
+        );
+
+        // pay stake
+        ContractTestFramework.transferToken(
+            ContractTestFramework.getCatToken(), wallet, 
+            ContractTestFramework.getWcaContractAddress(), 
+            stakePer100Token * totalAmount / 100, 
+            identifier, true
+        );
+
+        return result;
+    }
+
+    public static void finishMilestone(
+        SmartContract contract, String identifier, 
+        int index, String proofOfWork, Wallet wallet
+    ) throws Throwable {
+        ContractTestFramework.invokeFunction(
+            contract, "finishMilestone", 
+            new ContractParameter[]{
+                ContractParameter.string(identifier),
+                ContractParameter.integer(index), 
+                ContractParameter.string(proofOfWork)
+            }, 
+            new Signer[] {
+                Signer.calledByEntry(wallet.getDefaultAccount())
+            }, 
+            wallet
+        );
     }
 }

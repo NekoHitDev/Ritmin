@@ -74,8 +74,9 @@ public class WCABasicInfo {
      */
     public void throwIfNotAvailableToBuy() throws Exception{
         require(paid, "You can't buy an unpaid WCA.");
-        require(!this.isFinished(), "You can't buy a finished WCA.");
         require(nextMilestoneIndex == 0, "You can't buy a WCA already started.");
+        var fisrtMs = milestones.get(0);
+        require(!fisrtMs.isExpired(), "You can't buy a WCA already started.");
     }
 
     /**
@@ -93,6 +94,7 @@ public class WCABasicInfo {
         require(!ms.isFinished(), "You can't finish a finished milestone");
         require(!ms.isExpired(), "You can't finish a expired milestone");
         // not finished nor expired, then we can modify it.
+        require(proofOfWork != null, "Proof of work must not be null");
         ms.linkToResult = proofOfWork;
         nextMilestoneIndex = index + 1;
         finishedCount++;

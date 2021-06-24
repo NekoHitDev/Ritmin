@@ -50,19 +50,19 @@ public class ContractTestFramework implements BeforeAllCallback {
     protected static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
     protected static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
 
-    protected static Hash160 getCatTokenAddress() {
+    public static Hash160 getCatTokenAddress() {
         return Objects.requireNonNull(catTokenAddress);
     }
 
-    protected static Hash160 getWcaContractAddress() {
+    public static Hash160 getWcaContractAddress() {
         return Objects.requireNonNull(wcaContractAddress);
     }
     
-    protected static FungibleToken getCatToken() {
+    public static FungibleToken getCatToken() {
         return Objects.requireNonNull(catToken);
     }
 
-    protected static SmartContract getWcaContract() {
+    public static SmartContract getWcaContract() {
         return Objects.requireNonNull(wcaContract);
     }
 
@@ -127,7 +127,7 @@ public class ContractTestFramework implements BeforeAllCallback {
      * @param wait       true will wait tx confirmed, false won't wait
      * @throws Throwable if anything goes wrong
      */
-    protected static void transferToken(
+    public static void transferToken(
         FungibleToken token, Wallet wallet, Hash160 to, long amount, String identifier, boolean wait
     ) throws Throwable {
         NeoSendRawTransaction tx = token.transferFromDefaultAccount(
