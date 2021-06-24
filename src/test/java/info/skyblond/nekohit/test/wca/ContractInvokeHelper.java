@@ -94,4 +94,20 @@ public class ContractInvokeHelper {
             wallet
         );
     }
+
+    public static void refund(
+        SmartContract contract, String identifier, Wallet buyerWallet
+    ) throws Throwable {
+        ContractTestFramework.invokeFunction(
+            contract, "refund", 
+            new ContractParameter[]{
+                ContractParameter.string(identifier),
+                ContractParameter.hash160(buyerWallet.getDefaultAccount())
+            }, 
+            new Signer[] {
+                Signer.calledByEntry(buyerWallet.getDefaultAccount())
+            }, 
+            buyerWallet
+        );
+    }
 }

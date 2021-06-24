@@ -27,10 +27,16 @@ public class WCABasicInfo {
      * Pointer to next ready to finished milestone *INDEX*(i.e. start with 0)
      */
     public int nextMilestoneIndex;
+    
     /**
      * Indicate if the stake is paid
      */
     public boolean paid;
+
+    /**
+     * If this WCA is accounted and finished.
+     */
+    public boolean finished;
 
     public WCABasicInfo(
         Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
@@ -56,6 +62,7 @@ public class WCABasicInfo {
         finishedCount = 0;
         nextMilestoneIndex = 0;
         paid = false;
+        finished = false;
     }
 
     /**
@@ -107,6 +114,8 @@ public class WCABasicInfo {
      * @return true if WCA is finished, false if not
      */
     public boolean isFinished() {
+        if (finished)
+            return true;
         WCAMilestone ms = milestones.get(milestones.size() - 1);
         if (ms.isFinished()) {
             return true;

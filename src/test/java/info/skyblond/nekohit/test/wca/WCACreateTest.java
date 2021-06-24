@@ -266,7 +266,7 @@ public class WCACreateTest extends ContractTestFramework {
                 getWcaContract(), 100, 1000, 
                 new String[]{"milestone1"}, 
                 new Long[] { System.currentTimeMillis() + 60 * 1000 }, 
-                0, 100, "test_normal_" + System.currentTimeMillis(), 
+                0, 100, "test_create_normal_" + System.currentTimeMillis(), 
                 CONTRACT_OWNER_WALLET
             )
         );
