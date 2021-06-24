@@ -89,12 +89,12 @@ public class WCABasicInfo {
         // check cool-down time first
         int currentTime = Runtime.getTime();
         require(lastUpdateTime + coolDownInterval <= currentTime, "Cool down time not met");
-        require(index >= nextMilestoneIndex, "You can't finish a missed milestone");
+        require(index >= nextMilestoneIndex, "You can't finish a passed milestone");
         WCAMilestone ms = milestones.get(index);
         require(!ms.isFinished(), "You can't finish a finished milestone");
         require(!ms.isExpired(), "You can't finish a expired milestone");
         // not finished nor expired, then we can modify it.
-        require(proofOfWork != null, "Proof of work must not be null");
+        require(proofOfWork != null && proofOfWork.length() != 0, "Proof of work must be valid.");
         ms.linkToResult = proofOfWork;
         nextMilestoneIndex = index + 1;
         finishedCount++;

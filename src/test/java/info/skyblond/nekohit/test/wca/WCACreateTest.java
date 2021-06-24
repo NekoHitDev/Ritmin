@@ -126,7 +126,7 @@ public class WCACreateTest extends ContractTestFramework {
 
     @Test
     void testDuplicateIdentifier() throws Throwable {
-        var identifier = "test_duplicate_signer_" + System.currentTimeMillis();
+        var identifier = "test_duplicate_id_" + System.currentTimeMillis();
         ContractInvokeHelper.createWCA(
             getWcaContract(), 100, 1000, 
             new String[]{"milestone"}, 
