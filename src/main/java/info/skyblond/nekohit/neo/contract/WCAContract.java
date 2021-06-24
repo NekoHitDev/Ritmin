@@ -39,7 +39,7 @@ import io.neow3j.devpack.events.Event4Args;
 // Not sure why but compile in gradle and vsc gives different result
 // f62083786c200de32b34f0e6ef04270dd9c85d6e
 // fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9
-@Trust(value = "f62083786c200de32b34f0e6ef04270dd9c85d6e")
+@Trust(value = "fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9")
 @Permission(contract = "*")
 public class WCAContract {
 
@@ -50,7 +50,7 @@ public class WCAContract {
     private static final StorageContext CTX = Storage.getStorageContext();
 
     // Note this is the reverse(the little endian) of CatToken Hash.
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("f62083786c200de32b34f0e6ef04270dd9c85d6e"));
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9"));
 
     // ---------- TODO Events below ----------
     @DisplayName("CreateWCA")
