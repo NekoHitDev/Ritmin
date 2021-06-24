@@ -36,7 +36,10 @@ import io.neow3j.devpack.events.Event4Args;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "Something")
-@Trust(value = "fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9")
+// Not sure why but compile in gradle and vsc gives different result
+// f62083786c200de32b34f0e6ef04270dd9c85d6e
+// fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9
+@Trust(value = "f62083786c200de32b34f0e6ef04270dd9c85d6e")
 @Permission(contract = "*")
 public class WCAContract {
 
@@ -47,7 +50,7 @@ public class WCAContract {
     private static final StorageContext CTX = Storage.getStorageContext();
 
     // Note this is the reverse(the little endian) of CatToken Hash.
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9"));
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("f62083786c200de32b34f0e6ef04270dd9c85d6e"));
 
     // ---------- TODO Events below ----------
     @DisplayName("CreateWCA")
@@ -80,7 +83,7 @@ public class WCAContract {
         if (basicInfo.owner.equals(from)) {
             // owner paying stake
             require(!basicInfo.paid, "You can't pay a paid WCA.");
-            require(!basicInfo.isFinished(), "You can't pay a finished WCA.");
+            require(!basicInfo.isFinished(), "You can't pay a expired WCA.");
             require(basicInfo.getTotalStake() == amount, "Amount not correct");
             // unpaid before, not finished(expired), amount is correct
             basicInfo.paid = true;
@@ -223,6 +226,7 @@ public class WCAContract {
     public static void finishWCA(String identifier) throws Exception {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
+        require(basicInfo.paid, "You can not finish an unpaid WCA.");
         require(basicInfo.isFinished(), "You can only apply this to a ready-to-finish WCA.");
         // get wca buyer info obj
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
@@ -248,12 +252,6 @@ public class WCAContract {
             transferTokenTo(basicInfo.owner, remainTokens, identifier);
         }
 
-        // remove the identifier
-        // considering user need to access the link to work after WCA is finished
-        // we shouldn't delete it immediately
-        // wcaBasicInfoMap.delete(identifier);
-        // wcaBuyerInfoMap.delete(identifier);
-        // removeIdentifier(basicInfo.owner, identifier);
         onFinishWCA.fire(identifier, true);
     }
 
@@ -263,6 +261,7 @@ public class WCAContract {
                 "Invalid sender signature. The buyer needs to be the signing account.");
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
+        require(basicInfo.paid, "You can not refund an unpaid WCA.");
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, "Identifier not found.");
 
