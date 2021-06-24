@@ -17,7 +17,7 @@ public class ContractInvokeHelper {
     /**
      * Query WCA details, return NeoVM json
      */
-    public static String queryWCAJson(SmartContract contract, String trueId) throws Throwable {
+    public static String queryWCA(SmartContract contract, String trueId) throws Throwable {
         var result = ContractTestFramework.testInvoke(
             contract, "queryWCA", 
             new ContractParameter[]{
