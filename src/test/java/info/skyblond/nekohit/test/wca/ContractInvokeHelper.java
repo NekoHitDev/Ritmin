@@ -7,6 +7,7 @@ import info.skyblond.nekohit.test.ContractTestFramework;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
+import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
 /**
@@ -26,6 +27,20 @@ public class ContractInvokeHelper {
             new Signer[0]
         );
         return result.getStack().get(0).getString();
+    }
+
+    public static BigInteger queryPurchase(
+        SmartContract contract, String identifier, Account buyer
+    ) throws Throwable {
+        var result = ContractTestFramework.testInvoke(
+            contract, "queryPurchase", 
+            new ContractParameter[]{
+                ContractParameter.string(identifier),
+                ContractParameter.hash160(buyer)
+            }, 
+            new Signer[0]
+        );
+        return result.getStack().get(0).getInteger();
     }
 
     /**
@@ -108,6 +123,21 @@ public class ContractInvokeHelper {
                 Signer.calledByEntry(buyerWallet.getDefaultAccount())
             }, 
             buyerWallet
+        );
+    }
+
+    public static void finishWCA(
+        SmartContract contract, String identifier, Wallet wallet
+    ) throws Throwable {
+        ContractTestFramework.invokeFunction(
+            contract, "finishWCA", 
+            new ContractParameter[]{
+                ContractParameter.string(identifier)
+            }, 
+            new Signer[] {
+                Signer.calledByEntry(wallet.getDefaultAccount())
+            }, 
+            wallet
         );
     }
 }

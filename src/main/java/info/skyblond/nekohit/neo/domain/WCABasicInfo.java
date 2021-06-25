@@ -113,9 +113,7 @@ public class WCABasicInfo {
      * is expired.
      * @return true if WCA is finished, false if not
      */
-    public boolean isFinished() {
-        if (finished)
-            return true;
+    public boolean isReadyToFinish() {
         WCAMilestone ms = milestones.get(milestones.size() - 1);
         if (ms.isFinished()) {
             return true;

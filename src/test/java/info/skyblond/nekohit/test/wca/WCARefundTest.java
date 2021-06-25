@@ -227,9 +227,10 @@ public class WCARefundTest extends ContractTestFramework  {
 
     @Test
     void testNormalRefundAfterThreshold() throws Throwable {
+        var stakeRate = 1_00;
         var identifier = ContractInvokeHelper.createAndPayWCA(
             // stake: 1.00 * 1.00
-            getWcaContract(), 1_00, 1000_00, 
+            getWcaContract(), stakeRate, 1000_00, 
             new String[]{"milestone1", "milestone2"}, 
             new Long[] { System.currentTimeMillis() + 60*1000, System.currentTimeMillis() + 61*1000 }, 
             0, 100, "test_normal_refund_after_threshold_" + System.currentTimeMillis(),
@@ -237,7 +238,8 @@ public class WCARefundTest extends ContractTestFramework  {
         );
 
         var purchaseAmount = 1000_00;
-        var oldBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
+        var oldBuyerBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
+        var oldCreatorBalance = getCatToken().getBalanceOf(creatorWallet.getDefaultAccount()).longValue();
         // purchase
         transferToken(
             getCatToken(), testWallet, getWcaContractAddress(), 
@@ -255,8 +257,10 @@ public class WCARefundTest extends ContractTestFramework  {
                 testWallet
             )
         );
-        var newBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
+        var newBuyerBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
+        var newCreatorBalance = getCatToken().getBalanceOf(creatorWallet.getDefaultAccount()).longValue();
         
-        assertEquals(oldBalance - purchaseAmount / 2, newBalance);
+        assertEquals(oldBuyerBalance - purchaseAmount / 2, newBuyerBalance);
+        assertEquals(oldCreatorBalance + purchaseAmount * stakeRate / 100 / 2, newCreatorBalance);
     }
 }
