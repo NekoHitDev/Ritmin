@@ -32,7 +32,7 @@ import io.neow3j.devpack.events.Event4Args;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "Something")
-@Trust(value = "62a7173fb065637cbdf0a642f083dac72ea3f97f")
+@Trust(value = "666511b186f7a4e69f1a376094e0f4bb2e56b987")
 @Permission(contract = "*")
 public class WCAContract {
 
@@ -42,7 +42,7 @@ public class WCAContract {
     private static final StorageContext CTX = Storage.getStorageContext();
 
     // Note this is the reverse(the little endian) of CatToken Hash.
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("62a7173fb065637cbdf0a642f083dac72ea3f97f"));
+    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("666511b186f7a4e69f1a376094e0f4bb2e56b987"));
 
     @DisplayName("CreateWCA")
     private static Event4Args<Hash160, Integer, Integer, String> onCreateWCA;

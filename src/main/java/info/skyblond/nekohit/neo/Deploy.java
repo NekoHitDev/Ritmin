@@ -15,13 +15,14 @@ import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
-public class Main {
+public class Deploy {
     private static final Neow3j NEOW3J = Neow3j.build(
         new HttpService("http://seed1t.neo.org:20332")
     );
 
     private static final int CONFIRM_TIME = 30;
     private static final boolean REALLY_DEPLOY_FLAG = false;
+    private static final Class<CatToken> CONTRACT_CLASS = CatToken.class;
     
     public static void main(String[] args) throws Throwable {
         Scanner scanner = new Scanner(System.in);
@@ -40,9 +41,8 @@ public class Main {
             Thread.sleep(1000);
         }
 
-        var contractClass = CatToken.class;
         System.out.println("Deploy follow contract on public net:");
-        System.out.println(contractClass.getCanonicalName());
+        System.out.println(CONTRACT_CLASS.getCanonicalName());
         System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
         System.out.println("Terminate this program to stop the process.");
         for (int i = CONFIRM_TIME; i > 0; i--) {
@@ -51,7 +51,7 @@ public class Main {
         }
         System.out.println("Compiling contract...");
 
-        var compileResult = new Compiler().compile(contractClass.getCanonicalName());
+        var compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
         var contractHash = SmartContract.calcContractHash(
             deployWallet.getDefaultAccount().getScriptHash(), 
             compileResult.getNefFile().getCheckSumAsInteger(), 
@@ -59,7 +59,7 @@ public class Main {
         );
 
         System.out.println("Deploy following contract on public net:");
-        System.out.println(contractClass.getCanonicalName());
+        System.out.println(CONTRACT_CLASS.getCanonicalName());
         System.out.println("Will deployed to 0x" + contractHash);
         System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
 
@@ -88,7 +88,7 @@ public class Main {
         }
 
         System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
-        System.out.println("Contract: " + contractClass.getCanonicalName());
+        System.out.println("Contract: " + CONTRACT_CLASS.getCanonicalName());
         System.out.println("Deployed hash: 0x" + contractHash);
         System.out.println("Little endian array: " + Hex.encodeHexString(contractHash.toLittleEndianArray(), true));
     }
