@@ -29,30 +29,21 @@ import io.neow3j.devpack.events.Event2Args;
 import io.neow3j.devpack.events.Event3Args;
 import io.neow3j.devpack.events.Event4Args;
 
-/**
- * TODO This Contract just a prototype. Not tested yet.
- * 
- */
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "Something")
-// Not sure why but compile in gradle and vsc gives different result
-// f62083786c200de32b34f0e6ef04270dd9c85d6e
-// fff5ac5dd5d8b489b750ed5e173d53ec4e7f07f9
 @Trust(value = "f62083786c200de32b34f0e6ef04270dd9c85d6e")
 @Permission(contract = "*")
 public class WCAContract {
 
-    // refers to the ContractOwner wallet defined in `devnet.neo-express`
-    // for private test net only
-    private static final Hash160 OWNER = addressToScriptHash("NVCqzVkjApBWtgKa7c7gbURrJ4dmFYLekS");
+    // for public net
+    private static final Hash160 OWNER = addressToScriptHash("NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3");
 
     private static final StorageContext CTX = Storage.getStorageContext();
 
     // Note this is the reverse(the little endian) of CatToken Hash.
     private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("f62083786c200de32b34f0e6ef04270dd9c85d6e"));
 
-    // ---------- TODO Events below ----------
     @DisplayName("CreateWCA")
     private static Event4Args<Hash160, Integer, Integer, String> onCreateWCA;
 
@@ -64,7 +55,6 @@ public class WCAContract {
 
     @DisplayName("onPayment")
     static Event3Args<Hash160, Integer, Object> onPayment;
-    // ---------- TODO Events end ----------
 
     private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
 
@@ -299,8 +289,6 @@ public class WCAContract {
         ByteString buyerData = StdLib.serialize(buyerInfo);
         wcaBuyerInfoMap.put(identifier, buyerData);
     }
-
-    // ---------- TODO ABOVE ----------
 
     private static void transferTokenTo(Hash160 target, int amount, String identifier) {
         Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.All,

@@ -31,9 +31,8 @@ import io.neow3j.devpack.events.Event3Args;
 @SupportedStandards("NEP-17")
 public class CatToken {
 
-    // refers to the ContractOwner wallet defined in `devnet.neo-express`
-    // for private test net only
-    private static final Hash160 OWNER = addressToScriptHash("NVCqzVkjApBWtgKa7c7gbURrJ4dmFYLekS");
+    // for public net
+    private static final Hash160 OWNER = addressToScriptHash("NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3");
 
     @DisplayName("Transfer")
     private static Event3Args<Hash160, Hash160, Integer> onTransfer;

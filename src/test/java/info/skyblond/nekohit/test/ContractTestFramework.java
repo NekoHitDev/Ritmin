@@ -9,7 +9,6 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import info.skyblond.nekohit.example.Constants;
 import info.skyblond.nekohit.neo.contract.CatToken;
 import info.skyblond.nekohit.neo.contract.WCAContract;
 import io.neow3j.compiler.Compiler;
@@ -17,6 +16,7 @@ import io.neow3j.contract.ContractManagement;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.GasToken;
 import io.neow3j.contract.SmartContract;
+import io.neow3j.crypto.ECKeyPair;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.core.response.InvocationResult;
 import io.neow3j.protocol.core.response.NeoApplicationLog;
@@ -47,8 +47,14 @@ public class ContractTestFramework {
 
     protected static final Class<CatToken> CAT_TOKEN_CLASS = CatToken.class;
     protected static final Class<WCAContract> WCA_CONTRACT_CLASS = WCAContract.class;
-    private static final Wallet GENESIS_WALLET = Constants.GENESIS_WALLET;
+
+    // the node address defined in `devnet.neo-express`
+    private static final Account NODE_ACCOUNT = Account.fromWIF("KxPC9enS55zgQSUz7PMkS4QWsbABUZU58TMB2kkCaW1gnCcY7GUy");
+    private static final Account GENESIS_ACCOUNT = Account.createMultiSigAccount(
+        Arrays.asList(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
+    private static final Wallet GENESIS_WALLET = Wallet.withAccounts(GENESIS_ACCOUNT, NODE_ACCOUNT);
     protected static final Wallet CONTRACT_OWNER_WALLET = getContractOwnerFromEnv();
+
     protected static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
     protected static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
 
@@ -107,7 +113,7 @@ public class ContractTestFramework {
                 throw new Exception(String.format("Deployment was not successful. Error message from neo-node was: "
                         + "'%s'\n", response.getError().getMessage()));
             } else {
-                Await.waitUntilTransactionIsExecuted(tx.getTxId(), Constants.NEOW3J);
+                Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
                 logger.info("Contract {} deployed at 0x{}, gas fee: {}", contractClass.getName(), contractHash, getGasFeeFromTx(tx));
             }
         } catch (TransactionConfigurationException e) {
@@ -142,7 +148,7 @@ public class ContractTestFramework {
         }
         
         if (wait)
-            Await.waitUntilTransactionIsExecuted(tx.getSendRawTransaction().getHash(), Constants.NEOW3J);
+            Await.waitUntilTransactionIsExecuted(tx.getSendRawTransaction().getHash(), NEOW3J);
 
         logger.info(
             "Transfer {} {} from {} to {}, tx: {}", 
@@ -193,7 +199,7 @@ public class ContractTestFramework {
             throw new Exception(String.format("Error when invoking %s: %s", function, response.getError().getMessage()));
         }
         logger.info("{} tx: {}", function, tx.getTxId());
-        Await.waitUntilTransactionIsExecuted(tx.getTxId(), Constants.NEOW3J);
+        Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
         logger.info("{} gas fee: {}", function, getGasFeeFromTx(tx));
         var appLog = tx.getApplicationLog();
         assertEquals(1, appLog.getExecutions().size());
@@ -236,10 +242,15 @@ public class ContractTestFramework {
      */
     private static Wallet getContractOwnerFromEnv() {
         var value = System.getenv("PUBLIC_CHAIN_CONTRACT_OWNER_WIF");
-        if (value == null || !isPublicChain())
-            return Constants.CONTRACT_OWNER_WALLET;
-        else
+        if (value == null || !isPublicChain()){
+            // ContractOwner defind in `devnet.neo-express`
+            Account account = new Account(ECKeyPair.create(
+                new BigInteger("95ba67afd784f405e2800a0bcb875c035c41545d4a11e8995f6f1175d95c2952", 16)
+            ));
+            return Wallet.withAccounts(account);
+        } else {
             return Wallet.withAccounts(Account.fromWIF(value));
+        }
     }
 
     public ContractTestFramework() {
