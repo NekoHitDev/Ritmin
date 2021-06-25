@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import info.skyblond.nekohit.test.ContractTestFramework;
+import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
 /**
@@ -16,6 +17,7 @@ import io.neow3j.wallet.Wallet;
  */
 @TestInstance(Lifecycle.PER_CLASS)
 public class WCAQueryTest extends ContractTestFramework  {
+    private Wallet creatorWallet = getTestWallet();
     private Wallet testWallet = getTestWallet();
 
     @Test
@@ -42,6 +44,72 @@ public class WCAQueryTest extends ContractTestFramework  {
             "", 
             assertDoesNotThrow(() -> {
                 return ContractInvokeHelper.queryWCA(getWcaContract(), identifier);
+            })
+        );
+    }
+
+    @Test
+    void testInvalidIdQueryPurchase() {
+        assertEquals(
+            0, 
+            assertDoesNotThrow(() -> {
+                return ContractInvokeHelper.queryPurchase(
+                    getWcaContract(), "some_invalid_id", Account.create()
+                ).longValue();
+            })
+        );
+    }
+
+    @Test
+    void testInvalidBuyerQueryPurchase() throws Throwable {
+        // create WCA
+        var identifier = ContractInvokeHelper.createAndPayWCA(
+            getWcaContract(), 1_00, 1_00, 
+            new String[]{"milestone1", "milestone2", "milestone3"}, 
+            new Long[] { 
+                System.currentTimeMillis() + 60 * 1000,
+                System.currentTimeMillis() + 61 * 1000,
+                System.currentTimeMillis() + 62 * 1000
+            }, 
+            0, 1, "test_invalid_query_purchase_" + System.currentTimeMillis(), 
+            creatorWallet
+        );
+        assertEquals(
+            0, 
+            assertDoesNotThrow(() -> {
+                return ContractInvokeHelper.queryPurchase(
+                    getWcaContract(), identifier, Account.create()
+                ).longValue();
+            })
+        );
+    }
+
+    @Test
+    void testValidBuyerQueryPurchase() throws Throwable {
+        var purchaseAmount = 1000_00;
+        // create WCA
+        var identifier = ContractInvokeHelper.createAndPayWCA(
+            getWcaContract(), 1_00, purchaseAmount, 
+            new String[]{"milestone1"}, 
+            new Long[] { 
+                System.currentTimeMillis() + 60 * 1000
+            }, 
+            0, 1, "test_valid_query_purchase_" + System.currentTimeMillis(), 
+            creatorWallet
+        );
+
+        transferToken(
+            getCatToken(), testWallet,
+            getWcaContractAddress(), 
+            purchaseAmount, identifier, true
+        );
+
+        assertEquals(
+            purchaseAmount, 
+            assertDoesNotThrow(() -> {
+                return ContractInvokeHelper.queryPurchase(
+                    getWcaContract(), identifier, testWallet.getDefaultAccount()
+                ).longValue();
             })
         );
     }

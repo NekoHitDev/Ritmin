@@ -8,12 +8,12 @@ import info.skyblond.nekohit.neo.helper.Pair;
 public class WCABuyerInfo {
     public Map<Hash160, Integer> purchases;
     public int remainTokenCount;
-    public int totalAmount;
+    public int totalPurchasedAmount;
 
     public WCABuyerInfo(int remainTokenCount) {
         this.purchases = new Map<>();
         this.remainTokenCount = remainTokenCount;
-        this.totalAmount = 0;
+        this.totalPurchasedAmount = 0;
     }
 
     /**
@@ -35,7 +35,7 @@ public class WCABuyerInfo {
             this.purchases.put(buyer, amount);
         }
         this.remainTokenCount -= amount;
-        this.totalAmount += amount;
+        this.totalPurchasedAmount += amount;
     }
 
     /**
@@ -60,7 +60,7 @@ public class WCABuyerInfo {
         // add to remain token
         this.remainTokenCount += buyerPurchaseAmount;
         // remove from total selled amount
-        this.totalAmount -= buyerPurchaseAmount;
+        this.totalPurchasedAmount -= buyerPurchaseAmount;
         return new Pair<Integer,Integer>(remainAmount, toCreatorAmount);
     }
 
@@ -72,7 +72,7 @@ public class WCABuyerInfo {
         // add to remain token
         this.remainTokenCount += amount;
         // remove from total selled amount
-        this.totalAmount -= amount;
+        this.totalPurchasedAmount -= amount;
         return amount;
     }
 }

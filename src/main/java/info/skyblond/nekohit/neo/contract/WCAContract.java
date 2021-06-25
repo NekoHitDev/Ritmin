@@ -66,11 +66,11 @@ public class WCAContract {
     static Event3Args<Hash160, Integer, Object> onPayment;
     // ---------- TODO Events end ----------
 
-    private static final StorageMap wcaBasicInfoMap = CTX.createMap("WCA_BASIC_INFO");
+    private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
 
-    private static final StorageMap wcaBuyerInfoMap = CTX.createMap("WCA_BUYER_INFO");
+    private static final StorageMap wcaBuyerInfoMap = CTX.createMap("BUYER_INFO");
 
-    private static final StorageMap wcaIdentifierMap = CTX.createMap("WCA_IDENTIFIERS");
+    private static final StorageMap wcaIdentifierMap = CTX.createMap("IDENTIFIER");
 
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
@@ -83,7 +83,7 @@ public class WCAContract {
         if (basicInfo.owner.equals(from)) {
             // owner paying stake
             require(!basicInfo.paid, "You can't pay a paid WCA.");
-            require(!basicInfo.isFinished(), "You can't pay a expired WCA.");
+            require(!basicInfo.isReadyToFinish(), "You can't pay a expired WCA.");
             require(basicInfo.getTotalStake() == amount, "Amount not correct");
             // unpaid before, not finished(expired), amount is correct
             basicInfo.paid = true;
@@ -150,6 +150,17 @@ public class WCAContract {
         return StdLib.jsonSerialize(result);
     }
 
+    public static int queryPurchase(String identifier, Hash160 buyer) {
+        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
+        if (buyerInfo == null) {
+            return 0;
+        }
+        if (!buyerInfo.purchases.containsKey(buyer)) {
+            return 0;
+        }
+        return buyerInfo.purchases.get(buyer);
+    }
+
     /**
      * Request to create a WCA with given params.
      * 
@@ -176,7 +187,7 @@ public class WCAContract {
         // check milestone
         require(descriptions.length == endTimestamps.length, "Cannot decide milestones count.");
 
-        // convert to object on the fly, TODO check the gas cost
+        // convert to object on the fly
         List<WCAMilestone> milestones = new List<>();
         int lastTimestamp = 0;
         for (int i = 0; i < endTimestamps.length; i++) {
@@ -218,7 +229,7 @@ public class WCAContract {
         // store it back
         wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
         // if whole WCA is finished
-        if (basicInfo.isFinished()) {
+        if (basicInfo.isReadyToFinish()) {
             finishWCA(identifier);
         }
     }
@@ -227,15 +238,16 @@ public class WCAContract {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         require(basicInfo.paid, "You can not finish an unpaid WCA.");
+        require(!basicInfo.finished, "You can not finish a WCA twice.");
         if (!Runtime.checkWitness(basicInfo.owner)) {
             // only owner can finish an unfinished WCA
-            require(basicInfo.isFinished(), "You can only apply this to a ready-to-finish WCA.");
+            require(basicInfo.isReadyToFinish(), "You can only apply this to a ready-to-finish WCA.");
         }
         // get wca buyer info obj
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, "Buyer info not found.");
 
-        int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalAmount - buyerInfo.remainTokenCount;
+        int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalPurchasedAmount;
         int totalMiletones = basicInfo.milestones.size();
         int unfinishedMilestones = totalMiletones - basicInfo.finishedCount;
 
@@ -268,7 +280,7 @@ public class WCAContract {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         require(basicInfo.paid, "You can not refund an unpaid WCA.");
-        require(!basicInfo.isFinished(), "You can not refund a finished WCA.");
+        require(!basicInfo.isReadyToFinish(), "You can not refund a finished WCA.");
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, "Identifier not found.");
 

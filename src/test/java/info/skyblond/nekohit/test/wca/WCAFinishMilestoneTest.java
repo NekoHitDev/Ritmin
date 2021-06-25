@@ -60,7 +60,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework  {
 
     @Test
     void testFinishUnpaid() throws Throwable{
-        var identifier = "test_finish_unpaid_" + System.currentTimeMillis();
+        var identifier = "test_finish_ms_unpaid_" + System.currentTimeMillis();
         // create WCA
         ContractInvokeHelper.createWCA(
             getWcaContract(), 1_00, 1_00, 

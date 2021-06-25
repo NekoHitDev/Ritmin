@@ -17,7 +17,7 @@ public class Constants {
 
     public static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
 
-    public static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0xf51826172ab130e51e1d8cc81cadb8ad790dfa8f"), Constants.NEOW3J);
+    public static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0x91dd72528619e489f886cb000f99a37aae61f069"), Constants.NEOW3J);
 
     public static final FungibleToken CAT_TOKEN = new FungibleToken(new Hash160("0xf9077f4eec533d175eed50b789b4d8d55dacf5ff"), NEOW3J);
 
