@@ -254,7 +254,7 @@ public class ContractTestFramework {
             transferToken(
                 GAS_TOKEN, GENESIS_WALLET,
                 CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
-                10000_00000000L, null, false
+                10000_00000000L, null, true
             );
         } catch (Throwable t) {
             throw new RuntimeException(t);
