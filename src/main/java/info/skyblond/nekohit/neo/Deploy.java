@@ -81,6 +81,7 @@ public class Deploy {
                 throw new Exception(String.format("Deployment was not successful. Error message from neo-node was: "
                         + "'%s'\n", response.getError().getMessage()));
             } 
+            System.out.println("Deployed tx: 0x" + tx.getTxId());
             Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
             System.out.println("Gas fee: " + getGasFeeFromTx(tx));
         } else {
