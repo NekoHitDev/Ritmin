@@ -42,13 +42,41 @@ public class CatTokenTest extends ContractTestFramework {
         assertEquals(getCatToken().getDecimals(), 2);
     }
 
-    @Test 
-    void testOwnerHash() throws Exception {
-        var actualOwnerHexString = new Hash160(Arrays.reverse(Hex.decodeHex(
-            testInvoke(getCatToken(), "contractOwner", new ContractParameter[0], new Signer[0]).getStack().get(0).getHexString()
-        )));
-        
-        assertEquals(CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(), actualOwnerHexString);
+    @Test
+    void testIsOwner() {
+        assertDoesNotThrow(
+            () -> {
+                invokeFunction(
+                    getCatToken(),
+                    "verify",
+                    new ContractParameter[0],
+                    new Signer[]{
+                        Signer.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
+                    },
+                    CONTRACT_OWNER_WALLET
+                );
+            }
+        );
+    }
+
+    @Test
+    void testNotOwner() {
+        var throwable = assertThrows(
+            TransactionConfigurationException.class,
+            () -> invokeFunction(
+                getCatToken(),
+                "verify",
+                new ContractParameter[0],
+                new Signer[]{
+                    Signer.calledByEntry(testWallet.getDefaultAccount())
+                },
+                testWallet
+            )
+        );
+        assertTrue(
+            throwable.getMessage().contains("The calling entity is not the owner of this contract."),
+            "Unknown exception: " + throwable.getMessage()
+        );
     }
 
     @Test
