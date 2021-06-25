@@ -7,16 +7,17 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.extension.ExtendWith;
 import info.skyblond.nekohit.test.ContractTestFramework;
+import io.neow3j.wallet.Wallet;
 
 /**
  * This class test query methods for WCA. 
  * Including valid response and invalid or expection handle.
  */
 @TestInstance(Lifecycle.PER_CLASS)
-@ExtendWith(ContractTestFramework.class)
 public class WCAQueryTest extends ContractTestFramework  {
+    private Wallet testWallet = getTestWallet();
+
     @Test
     void testInvalidQueryWCA() {
         assertEquals(
@@ -35,7 +36,7 @@ public class WCAQueryTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, "test_query_valid_wca_" + System.currentTimeMillis(), 
-            CONTRACT_OWNER_WALLET
+            testWallet
         );
         assertNotEquals(
             "", 

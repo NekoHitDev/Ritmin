@@ -42,4 +42,5 @@ tasks.withType(Test).configureEach {
 
 testlogger {
     showFullStackTraces true
+    slowThreshold 5000
 }

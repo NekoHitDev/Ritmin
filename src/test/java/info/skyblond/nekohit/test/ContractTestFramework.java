@@ -1,11 +1,12 @@
 package info.skyblond.nekohit.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import info.skyblond.nekohit.example.Constants;
@@ -26,6 +27,7 @@ import io.neow3j.protocol.http.HttpService;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
+import io.neow3j.types.NeoVMStateType;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
@@ -35,7 +37,7 @@ import io.neow3j.wallet.Wallet;
  * It offers functions like compile and deploy contract, 
  * set up contract address, offering some constants, etc. 
  */
-public class ContractTestFramework implements BeforeAllCallback {
+public class ContractTestFramework {
     private static final Logger logger = LoggerFactory.getLogger(ContractTestFramework.class);
 
     private static Hash160 catTokenAddress = null;
@@ -45,7 +47,7 @@ public class ContractTestFramework implements BeforeAllCallback {
 
     protected static final Class<CatToken> CAT_TOKEN_CLASS = CatToken.class;
     protected static final Class<WCAContract> WCA_CONTRACT_CLASS = WCAContract.class;
-    protected static final Wallet GENESIS_WALLET = Constants.GENESIS_WALLET;
+    private static final Wallet GENESIS_WALLET = Constants.GENESIS_WALLET;
     protected static final Wallet CONTRACT_OWNER_WALLET = getContractOwnerFromEnv();
     protected static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
     protected static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
@@ -82,6 +84,7 @@ public class ContractTestFramework implements BeforeAllCallback {
      * @param <T>           Contract Class Type
      * @param contractClass Contract class
      * @return The contract address Hash160
+     * @throws IOException
      * @throws Throwable if anything goes wrong
      */
     private static <T> Hash160 compileAndDeploy(Class<T> contractClass) throws Throwable {
@@ -149,26 +152,23 @@ public class ContractTestFramework implements BeforeAllCallback {
         );
     }
     
-    /**
-     * Transfer cat token from contract owner's wallet to a given account
-     * @param to         dest
-     * @param amount     amount in fraction
-     * @param wait       if wait tx confirmed
-     * @throws Throwable if anything goes wrong
-     */
-    protected static void prepareCatToken(Hash160 to, long amount, boolean wait) throws Throwable {
-        transferToken(catToken, CONTRACT_OWNER_WALLET, to, amount, null, wait);
-    }
-
-    /**
-     * Transfer gas from genesis's wallet to a given account
-     * @param to         dest
-     * @param amount     amount in fraction
-     * @param wait       if wait tx confirmed
-     * @throws Throwable if anything goes wrong
-     */
-    protected static void prepareGas(Hash160 to, long amount, boolean wait) throws Throwable {
-        transferToken(GAS_TOKEN, GENESIS_WALLET, to, amount, null, wait);
+    protected static Wallet getTestWallet() {
+        Wallet wallet = Wallet.create();
+        try {
+            transferToken(
+                catToken, CONTRACT_OWNER_WALLET, 
+                wallet.getDefaultAccount().getScriptHash(), 
+                10000_00, null, false
+            );
+            transferToken(
+                GAS_TOKEN, GENESIS_WALLET, 
+                wallet.getDefaultAccount().getScriptHash(), 
+                10000_00000000L, null, true
+            );
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        return wallet;
     }
 
     /**
@@ -195,7 +195,11 @@ public class ContractTestFramework implements BeforeAllCallback {
         logger.info("{} tx: {}", function, tx.getTxId());
         Await.waitUntilTransactionIsExecuted(tx.getTxId(), Constants.NEOW3J);
         logger.info("{} gas fee: {}", function, getGasFeeFromTx(tx));
-        return tx.getApplicationLog();
+        var appLog = tx.getApplicationLog();
+        assertEquals(1, appLog.getExecutions().size());
+        if (appLog.getExecutions().get(0).getState() != NeoVMStateType.HALT)
+            throw new Exception(appLog.getExecutions().get(0).getException());
+        return appLog;
     }
 
     /**
@@ -238,8 +242,7 @@ public class ContractTestFramework implements BeforeAllCallback {
             return Wallet.withAccounts(Account.fromWIF(value));
     }
 
-    @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
+    public ContractTestFramework() {
         try {
             // deploy Cat Token
             catTokenAddress = compileAndDeploy(CAT_TOKEN_CLASS);
@@ -248,9 +251,13 @@ public class ContractTestFramework implements BeforeAllCallback {
             wcaContractAddress = compileAndDeploy(WCA_CONTRACT_CLASS);
             wcaContract = new SmartContract(wcaContractAddress, NEOW3J);
             // give contract owner some gas to play with
-            prepareGas(CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(), 10_00000000, true);
+            transferToken(
+                GAS_TOKEN, GENESIS_WALLET,
+                CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
+                10000_00000000L, null, false
+            );
         } catch (Throwable t) {
-            throw new Exception(t);
+            throw new RuntimeException(t);
         }
     }
 }
