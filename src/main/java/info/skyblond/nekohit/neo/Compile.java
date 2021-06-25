@@ -1,12 +1,14 @@
 package info.skyblond.nekohit.neo;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
-
+import java.nio.file.Paths;
 import org.apache.commons.codec.binary.Hex;
 
 import info.skyblond.nekohit.neo.contract.CatToken;
 import io.neow3j.compiler.Compiler;
+import io.neow3j.contract.ContractUtils;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.wallet.Account;
 
@@ -21,6 +23,16 @@ public class Compile {
         Arrays.asList(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
     public static void main(String[] args) throws IOException {
         var compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
+        Path buildNeow3jPath = Paths.get("idea-build-result");
+        buildNeow3jPath.toFile().mkdirs();
+        ContractUtils.writeNefFile(
+            compileResult.getNefFile(), 
+            compileResult.getManifest().getName(), 
+            buildNeow3jPath
+        );
+        ContractUtils.writeContractManifestFile(
+            compileResult.getManifest(), buildNeow3jPath
+        );
         var contractHash = SmartContract.calcContractHash(
             GENESIS_ACCOUNT.getScriptHash(), 
             compileResult.getNefFile().getCheckSumAsInteger(), 
