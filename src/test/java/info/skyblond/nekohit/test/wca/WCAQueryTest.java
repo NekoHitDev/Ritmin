@@ -4,10 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+import org.bouncycastle.util.Arrays;
+import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import info.skyblond.nekohit.test.ContractTestFramework;
+import io.neow3j.transaction.Signer;
+import io.neow3j.types.ContractParameter;
+import io.neow3j.types.Hash160;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
@@ -112,5 +117,14 @@ public class WCAQueryTest extends ContractTestFramework  {
                 ).longValue();
             })
         );
+    }
+
+    @Test 
+    void testOwnerHash() throws Exception {
+        var actualOwnerHexString = new Hash160(Arrays.reverse(Hex.decodeHex(
+            testInvoke(getCatToken(), "contractOwner", new ContractParameter[0], new Signer[0]).getStack().get(0).getHexString()
+        )));
+        
+        assertEquals(CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(), actualOwnerHexString);
     }
 }
