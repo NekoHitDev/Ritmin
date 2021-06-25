@@ -1,0 +1,55 @@
+# TODO: develop branch should corresponding to the test-net
+#       it might need a separate work flow to update the contract on test net
+name: develop&feature CI
+
+on:
+  # Triggers the workflow on push for the develop and git workflow branch
+  push:
+    branches: [ develop, feature/** ]
+  # Also runs when pr is made to develop branch as a functional check
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  contract_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Install neoxp from dotnet tool
+      - name: Install neoxp
+        run: |
+          wget https://packages.microsoft.com/config/ubuntu/21.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https
+          sudo apt-get install -y dotnet-sdk-5.0
+          sudo apt-get install libsnappy-dev libc6-dev librocksdb-dev -y
+          dotnet tool install --global Neo.Express --version 2.0.39-preview
+      
+      # Set up JDK 11
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+
+      # Start up neoxp in background
+      - name: Start up neoxp
+        run: neoxp run -i devnet.neo-express -s 1 >> neo.log &
+        
+      # Test using gradle
+      - name: Unit test
+        run: ./gradlew test
+        env:
+          PUBLIC_CHAIN_CONTRACT_OWNER_WIF: ${{ secrets.PUBLIC_CHAIN_CONTRACT_OWNER_WIF }}
+          PUBLIC_CHAIN: ${{ github.ref == 'refs/heads/develop' }}
+        
+      # Publish the test report
+      - name: Publish Test Report
+        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'

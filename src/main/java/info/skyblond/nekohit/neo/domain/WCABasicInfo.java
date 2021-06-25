@@ -27,16 +27,25 @@ public class WCABasicInfo {
      * Pointer to next ready to finished milestone *INDEX*(i.e. start with 0)
      */
     public int nextMilestoneIndex;
+    
     /**
      * Indicate if the stake is paid
      */
     public boolean paid;
 
+    /**
+     * If this WCA is accounted and finished.
+     */
+    public boolean finished;
+
     public WCABasicInfo(
         Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
         List<WCAMilestone> milestones, int thresholdIndex, int coolDownInterval
     ) throws Exception {
+        require(owner.isValid(), "Owner address is not a valid address.");
         this.owner = owner;
+        require(stakePer100Token > 0, "The stake amount per 100 token must be positive.");
+        require(maxTokenSoldCount > 0, "The max sell token count must be positive.");
         this.stakePer100Token = stakePer100Token;
         this.maxTokenSoldCount = maxTokenSoldCount;
         require(milestones.size() > 0, "You must have at least 1 milestone.");
@@ -46,13 +55,14 @@ public class WCABasicInfo {
         } else {
             throw new Exception("Invalid value for thresholdIndex");
         }
-        require(coolDownInterval >= 0, "Cool down interval must be a positive number");
+        require(coolDownInterval >= 0, "Cool down interval must not be negative.");
         this.coolDownInterval = coolDownInterval;
 
         lastUpdateTime = -1;
         finishedCount = 0;
         nextMilestoneIndex = 0;
         paid = false;
+        finished = false;
     }
 
     /**
@@ -71,8 +81,9 @@ public class WCABasicInfo {
      */
     public void throwIfNotAvailableToBuy() throws Exception{
         require(paid, "You can't buy an unpaid WCA.");
-        require(!this.isFinished(), "You can't buy a finished WCA.");
         require(nextMilestoneIndex == 0, "You can't buy a WCA already started.");
+        var fisrtMs = milestones.get(0);
+        require(!fisrtMs.isExpired(), "You can't buy a WCA already started.");
     }
 
     /**
@@ -85,11 +96,12 @@ public class WCABasicInfo {
         // check cool-down time first
         int currentTime = Runtime.getTime();
         require(lastUpdateTime + coolDownInterval <= currentTime, "Cool down time not met");
-        require(index >= nextMilestoneIndex, "You can't finish a missed milestone");
+        require(index >= nextMilestoneIndex, "You can't finish a passed milestone");
         WCAMilestone ms = milestones.get(index);
         require(!ms.isFinished(), "You can't finish a finished milestone");
         require(!ms.isExpired(), "You can't finish a expired milestone");
         // not finished nor expired, then we can modify it.
+        require(proofOfWork != null && proofOfWork.length() != 0, "Proof of work must be valid.");
         ms.linkToResult = proofOfWork;
         nextMilestoneIndex = index + 1;
         finishedCount++;
@@ -101,7 +113,7 @@ public class WCABasicInfo {
      * is expired.
      * @return true if WCA is finished, false if not
      */
-    public boolean isFinished() {
+    public boolean isReadyToFinish() {
         WCAMilestone ms = milestones.get(milestones.size() - 1);
         if (ms.isFinished()) {
             return true;
