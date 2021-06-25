@@ -4,11 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.extension.ExtendWith;
 import info.skyblond.nekohit.test.ContractTestFramework;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -23,19 +21,9 @@ import io.neow3j.wallet.Wallet;
  *     normal op(one shot, multiple purchase)).
  */
 @TestInstance(Lifecycle.PER_CLASS)
-@ExtendWith(ContractTestFramework.class)
 public class WCAPurchaseTest extends ContractTestFramework  {
-    
-    private static final int TEMP_WALLET_BALANCE = 10000_00;
-
-    private Wallet testWallet = Wallet.create();
-
-    @BeforeAll
-    void prepareTestAccount() throws Throwable {
-        prepareGas(testWallet.getDefaultAccount().getScriptHash(), 10_00000000, false);
-        prepareCatToken(testWallet.getDefaultAccount().getScriptHash(), TEMP_WALLET_BALANCE, true);
-    }
-
+    private Wallet creatorWallet = getTestWallet();
+    private Wallet testWallet = getTestWallet();
 
     @Test
     void invalidCallerTest() {
@@ -67,7 +55,7 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             TransactionConfigurationException.class, 
             () -> transferToken(
                 getCatToken(), 
-                CONTRACT_OWNER_WALLET,
+                creatorWallet,
                 getWcaContractAddress(), 
                 1000,
                 "some_invalid_id",
@@ -90,13 +78,13 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] {System.currentTimeMillis() + 60 * 1000}, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // pay again
         var throwable = assertThrows(
             TransactionConfigurationException.class, 
             () -> transferToken(
-                getCatToken(), CONTRACT_OWNER_WALLET,
+                getCatToken(), creatorWallet,
                 getWcaContractAddress(), 
                 1_00, identifier, false
             )
@@ -118,7 +106,7 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] { lastEndTimestamp }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // wait for last milestone expire
         while(System.currentTimeMillis() <= lastEndTimestamp) Thread.sleep(100);
@@ -126,7 +114,7 @@ public class WCAPurchaseTest extends ContractTestFramework  {
         var throwable = assertThrows(
             TransactionConfigurationException.class, 
             () -> transferToken(
-                getCatToken(), CONTRACT_OWNER_WALLET,
+                getCatToken(), creatorWallet,
                 getWcaContractAddress(), 
                 1_00, identifier, false
             )
@@ -147,13 +135,13 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // pay
         var throwable = assertThrows(
             TransactionConfigurationException.class, 
             () -> transferToken(
-                getCatToken(), CONTRACT_OWNER_WALLET,
+                getCatToken(), creatorWallet,
                 getWcaContractAddress(), 
                 10, identifier, false
             )
@@ -174,12 +162,12 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // pay
         assertDoesNotThrow(
             () -> transferToken(
-                getCatToken(), CONTRACT_OWNER_WALLET,
+                getCatToken(), creatorWallet,
                 getWcaContractAddress(), 
                 1_00, identifier, false
             )
@@ -196,7 +184,7 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // purchase
         var throwable = assertThrows(
@@ -223,11 +211,11 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone1" , "milestone2"}, 
             new Long[] { System.currentTimeMillis() + 30*1000, System.currentTimeMillis() + 60*1000 }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // finish ms[0]
         ContractInvokeHelper.finishMilestone(
-            getWcaContract(), identifier, 0, "proofOfWork", CONTRACT_OWNER_WALLET
+            getWcaContract(), identifier, 0, "proofOfWork", creatorWallet
         );
         // purchase
         var throwable = assertThrows(
@@ -255,7 +243,7 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone1"}, 
             new Long[] { firstEndTimestamp }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // wait for first milestone expire
         while(System.currentTimeMillis() <= firstEndTimestamp) Thread.sleep(100);
@@ -284,7 +272,7 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone1"}, 
             new Long[] { System.currentTimeMillis() + 60 * 1000 }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
 
         // purchase
@@ -311,7 +299,7 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // purchase
         assertDoesNotThrow(
@@ -332,7 +320,7 @@ public class WCAPurchaseTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         // purchase
         assertDoesNotThrow(

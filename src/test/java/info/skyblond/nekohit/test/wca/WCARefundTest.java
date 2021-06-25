@@ -5,11 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.extension.ExtendWith;
+
 import info.skyblond.nekohit.test.ContractTestFramework;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -23,18 +22,9 @@ import io.neow3j.wallet.Wallet;
  * record not found, normal op(before and after threshold)
  */
 @TestInstance(Lifecycle.PER_CLASS)
-@ExtendWith(ContractTestFramework.class)
-public class WCARefundTest extends ContractTestFramework  {    
-    private static final int TEMP_WALLET_BALANCE = 10000_00;
-
-    private Wallet testWallet = Wallet.create();
-
-    @BeforeAll
-    void prepareTestAccount() throws Throwable {
-        prepareGas(testWallet.getDefaultAccount().getScriptHash(), 10_00000000, false);
-        prepareCatToken(testWallet.getDefaultAccount().getScriptHash(), TEMP_WALLET_BALANCE, true);
-    }
-
+public class WCARefundTest extends ContractTestFramework  {
+    private Wallet creatorWallet = getTestWallet();
+    private Wallet testWallet = getTestWallet();
 
     @Test
     void testInvalidId() {
@@ -43,7 +33,7 @@ public class WCARefundTest extends ContractTestFramework  {
             () -> ContractInvokeHelper.refund(
                 getWcaContract(), 
                 "some_invalid_id", 
-                CONTRACT_OWNER_WALLET
+                creatorWallet
             )
         );
         assertTrue(
@@ -63,9 +53,9 @@ public class WCARefundTest extends ContractTestFramework  {
                     ContractParameter.hash160(Account.create())
                 }, 
                 new Signer[] {
-                    Signer.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
+                    Signer.calledByEntry(creatorWallet.getDefaultAccount())
                 }, 
-                CONTRACT_OWNER_WALLET
+                creatorWallet
             )
         );
         assertTrue(
@@ -82,14 +72,14 @@ public class WCARefundTest extends ContractTestFramework  {
             new String[]{"milestone"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, "test_refund_unpaid_" + System.currentTimeMillis(),
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         var throwable = assertThrows(
             TransactionConfigurationException.class, 
             () -> ContractInvokeHelper.refund(
                 getWcaContract(), 
                 identifier, 
-                CONTRACT_OWNER_WALLET
+                creatorWallet
             )
         );
         assertTrue(
@@ -106,17 +96,17 @@ public class WCARefundTest extends ContractTestFramework  {
             new String[]{"milestone1"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, "test_refund_last_ms_finished_" + System.currentTimeMillis(),
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         ContractInvokeHelper.finishMilestone(
-            getWcaContract(), identifier, 0, "proofOfWork", CONTRACT_OWNER_WALLET
+            getWcaContract(), identifier, 0, "proofOfWork", creatorWallet
         );
         var throwable = assertThrows(
             TransactionConfigurationException.class, 
             () -> ContractInvokeHelper.refund(
                 getWcaContract(), 
                 identifier, 
-                CONTRACT_OWNER_WALLET
+                creatorWallet
             )
         );
         assertTrue(
@@ -133,7 +123,7 @@ public class WCARefundTest extends ContractTestFramework  {
             new String[]{"milestone1"}, 
             new Long[] { System.currentTimeMillis() + 3*1000 }, 
             0, 100, "test_refund_last_ms_expired_" + System.currentTimeMillis(),
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         Thread.sleep(3*1000);
         var throwable = assertThrows(
@@ -141,7 +131,7 @@ public class WCARefundTest extends ContractTestFramework  {
             () -> ContractInvokeHelper.refund(
                 getWcaContract(), 
                 identifier, 
-                CONTRACT_OWNER_WALLET
+                creatorWallet
             )
         );
         assertTrue(
@@ -158,7 +148,7 @@ public class WCARefundTest extends ContractTestFramework  {
             new String[]{"milestone1"}, 
             new Long[] { System.currentTimeMillis() + 60*1000 }, 
             0, 100, "test_record_404_before_thrshd_" + System.currentTimeMillis(),
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
 
         var throwable = assertThrows(
@@ -184,11 +174,11 @@ public class WCARefundTest extends ContractTestFramework  {
             new String[]{"milestone1", "milestone2"}, 
             new Long[] { System.currentTimeMillis() + 60*1000, System.currentTimeMillis() + 61*1000 }, 
             0, 100, "test_record_404_after_thrshd_" + System.currentTimeMillis(),
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
 
         ContractInvokeHelper.finishMilestone(
-            getWcaContract(), identifier, 0, "proofOfWork", CONTRACT_OWNER_WALLET
+            getWcaContract(), identifier, 0, "proofOfWork", creatorWallet
         );
 
         var throwable = assertThrows(
@@ -214,7 +204,7 @@ public class WCARefundTest extends ContractTestFramework  {
             new String[]{"milestone1", "milestone2"}, 
             new Long[] { System.currentTimeMillis() + 60*1000, System.currentTimeMillis() + 61*1000 }, 
             0, 100, "test_normal_refund_before_threshold_" + System.currentTimeMillis(),
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
         var oldBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
         // purchase
@@ -243,7 +233,7 @@ public class WCARefundTest extends ContractTestFramework  {
             new String[]{"milestone1", "milestone2"}, 
             new Long[] { System.currentTimeMillis() + 60*1000, System.currentTimeMillis() + 61*1000 }, 
             0, 100, "test_normal_refund_after_threshold_" + System.currentTimeMillis(),
-            CONTRACT_OWNER_WALLET
+            creatorWallet
         );
 
         var purchaseAmount = 1000_00;
@@ -255,7 +245,7 @@ public class WCARefundTest extends ContractTestFramework  {
         );
 
         ContractInvokeHelper.finishMilestone(
-            getWcaContract(), identifier, 0, "proofOfWork", CONTRACT_OWNER_WALLET
+            getWcaContract(), identifier, 0, "proofOfWork", creatorWallet
         );
 
         assertDoesNotThrow(

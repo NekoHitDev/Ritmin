@@ -8,10 +8,10 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.extension.ExtendWith;
 import info.skyblond.nekohit.test.ContractTestFramework;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.wallet.Account;
+import io.neow3j.wallet.Wallet;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 
@@ -20,8 +20,9 @@ import io.neow3j.transaction.exceptions.TransactionConfigurationException;
  * Including invalid parameter, invalid milestones, duplicate identifier, etc.
  */
 @TestInstance(Lifecycle.PER_CLASS)
-@ExtendWith(ContractTestFramework.class)
 public class WCACreateTest extends ContractTestFramework {
+    private Wallet testWallet = getTestWallet();
+    
     @Test
     void testNegativeStakeRate() throws Throwable {
         var throwable = assertThrows(
@@ -31,7 +32,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone"}, 
                 new Long[] {System.currentTimeMillis() + 60 * 1000}, 
                 0, 100, "test_negative_stake_rate_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -49,7 +50,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone"}, 
                 new Long[] {System.currentTimeMillis() + 60 * 1000}, 
                 0, 100, "test_zero_stake_rate_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -67,7 +68,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone"}, 
                 new Long[] {System.currentTimeMillis() + 60 * 1000}, 
                 0, 100, "test_negative_token_count_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -85,7 +86,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone"}, 
                 new Long[] {System.currentTimeMillis() + 60 * 1000}, 
                 0, 100, "test_zero_token_count_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -112,9 +113,9 @@ public class WCACreateTest extends ContractTestFramework {
                         ContractParameter.string("test_invalid_signer_" + System.currentTimeMillis())
                     }, 
                     new Signer[] {
-                        Signer.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
+                        Signer.calledByEntry(testWallet.getDefaultAccount())
                     }, 
-                    CONTRACT_OWNER_WALLET
+                    testWallet
                 );
             }
         );
@@ -132,7 +133,7 @@ public class WCACreateTest extends ContractTestFramework {
             new String[]{"milestone"}, 
             new Long[] {System.currentTimeMillis() + 60 * 1000}, 
             0, 100, identifier, 
-            CONTRACT_OWNER_WALLET
+            testWallet
         );
         var throwable = assertThrows(
             TransactionConfigurationException.class, 
@@ -141,7 +142,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone"}, 
                 new Long[] {System.currentTimeMillis() + 60 * 1000}, 
                 0, 100, identifier, 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -159,7 +160,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone1", "milestone2"}, 
                 new Long[] {System.currentTimeMillis() + 60 * 1000}, 
                 0, 100, "test_different_milestone_count_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -177,7 +178,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone1", "milestone2"}, 
                 new Long[] {System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 59 * 1000}, 
                 0, 100, "test_decrease_end_timestamp_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -196,7 +197,7 @@ public class WCACreateTest extends ContractTestFramework {
                 // definitely a expired timestamp
                 new Long[] { 12345L }, 
                 0, 100, "test_expired_end_timestamp_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -217,7 +218,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone1"}, 
                 new Long[] { System.currentTimeMillis() + 60 * 1000 }, 
                 -1, 100, "test_invalid_threshold_milestone_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -232,7 +233,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone1"}, 
                 new Long[] { System.currentTimeMillis() + 60 * 1000 }, 
                 1, 100, "test_invalid_threshold_milestone_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -250,7 +251,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone1"}, 
                 new Long[] { System.currentTimeMillis() + 60 * 1000 }, 
                 0, -100, "test_invalid_cool_down_interval_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
         assertTrue(
@@ -267,7 +268,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone1"}, 
                 new Long[] { System.currentTimeMillis() + 60 * 1000 }, 
                 0, 100, "test_create_normal_" + System.currentTimeMillis(), 
-                CONTRACT_OWNER_WALLET
+                testWallet
             )
         );
     }
