@@ -1,7 +1,12 @@
 package info.skyblond.nekohit.neo;
 
+import java.math.BigInteger;
 import java.util.Scanner;
 
+import io.neow3j.contract.FungibleToken;
+import io.neow3j.protocol.core.response.NeoSendRawTransaction;
+import io.neow3j.types.ContractParameter;
+import io.neow3j.types.Hash160;
 import org.apache.commons.codec.binary.Hex;
 import info.skyblond.nekohit.neo.contract.CatToken;
 import io.neow3j.compiler.Compiler;
@@ -90,8 +95,29 @@ public class Deploy {
 
         System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
         System.out.println("Contract: " + CONTRACT_CLASS.getCanonicalName());
+        System.out.println("Deployed address: " + contractHash.toAddress());
         System.out.println("Deployed hash: 0x" + contractHash);
-        System.out.println("Little endian array: " + Hex.encodeHexString(contractHash.toLittleEndianArray(), true));
+        System.out.println("Little endian: 0x" + Hex.encodeHexString(contractHash.toLittleEndianArray(), true));
+
+        FungibleToken token = new FungibleToken(contractHash, NEOW3J);
+        transferToken(token, deployWallet, deployWallet.getDefaultAccount().getScriptHash(), 1_00, null);
+        System.out.println(token.getBalanceOf(deployWallet.getDefaultAccount()));
+
+    }
+
+    public static void transferToken(
+            FungibleToken token, Wallet wallet, Hash160 to, long amount, String identifier
+    ) throws Throwable {
+        NeoSendRawTransaction tx = token.transferFromDefaultAccount(
+                wallet, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
+        ).signers(Signer.calledByEntry(wallet.getDefaultAccount())).sign().send();
+
+        if (tx.hasError()) {
+            throw new Exception(tx.getError().getMessage());
+        }
+
+        Await.waitUntilTransactionIsExecuted(tx.getSendRawTransaction().getHash(), NEOW3J);
+        System.out.println("Transfer tx: 0x" + tx.getSendRawTransaction().getHash());
     }
 
     private static double getGasFeeFromTx(Transaction tx) {
