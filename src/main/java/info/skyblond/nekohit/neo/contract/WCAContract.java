@@ -25,14 +25,14 @@ import io.neow3j.devpack.annotations.OnVerification;
 import io.neow3j.devpack.annotations.Permission;
 import io.neow3j.devpack.annotations.Trust;
 import io.neow3j.devpack.contracts.StdLib;
-import io.neow3j.devpack.events.Event2Args;
+import io.neow3j.devpack.events.Event1Arg;
 import io.neow3j.devpack.events.Event3Args;
 import io.neow3j.devpack.events.Event4Args;
 
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "Something")
-@Trust(value = "dbdbe562308b04900ad1ce6573700f8bca1b0b44")
+@Trust(value = "*")
 @Permission(contract = "*")
 public class WCAContract {
 
@@ -44,23 +44,35 @@ public class WCAContract {
     // Note this is the reverse(the little endian) of CatToken Hash.
     private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("dbdbe562308b04900ad1ce6573700f8bca1b0b44"));
 
+    // creator, identifier, milestone count
     @DisplayName("CreateWCA")
-    private static Event4Args<Hash160, Integer, Integer, String> onCreateWCA;
+    private static Event3Args<Hash160, String, Integer> onCreateWCA;
 
+    // owner, identifier, amount
+    @DisplayName("PayWCA")
+    static Event3Args<Hash160, String, Integer> onPayWCA;
+
+    // buyer, identifier, deal amount
     @DisplayName("BuyWCA")
     private static Event3Args<Hash160, String, Integer> onBuyWCA;
 
-    @DisplayName("FinishWCA")
-    private static Event2Args<String, Boolean> onFinishWCA;
+    // identifier, milestone index, proof of work
+    @DisplayName("FinishMilestone")
+    private static Event3Args<String, Integer, String> onFinishMilestone;
 
-    @DisplayName("onPayment")
-    static Event3Args<Hash160, Integer, Object> onPayment;
+    // identifier
+    @DisplayName("FinishWCA")
+    private static Event1Arg<String> onFinishWCA;
+
+    // buyer, identifier, return to buyer amount, return to creator amount
+    @DisplayName("Refund")
+    private static Event4Args<Hash160, String, Integer, Integer> onRefund;
+
 
     private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
-
     private static final StorageMap wcaBuyerInfoMap = CTX.createMap("BUYER_INFO");
-
     private static final StorageMap wcaIdentifierMap = CTX.createMap("IDENTIFIER");
+
 
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
@@ -78,18 +90,16 @@ public class WCAContract {
             // unpaid before, not finished(expired), amount is correct
             basicInfo.paid = true;
             wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
+            onPayWCA.fire(from, identifier, amount);
         } else {
             // buyer want to buy a WCA
             basicInfo.throwIfNotAvailableToBuy();
             WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
             require(buyerInfo != null, "Buyer info not found.");
-            // This line caused: Specified cast is not valid.
             buyerInfo.recordPurchase(from, amount);
             wcaBuyerInfoMap.put(identifier, StdLib.serialize(buyerInfo));
             onBuyWCA.fire(from, identifier, amount);
         }
-
-        onPayment.fire(from, amount, data);
     }
 
     private static WCABasicInfo getWCABasicInfo(String identifier) {
@@ -203,7 +213,7 @@ public class WCAContract {
         insertIdentifier(owner, identifier);
 
         // fire event and done
-        onCreateWCA.fire(owner, stakePer100Token, maxTokenSoldCount, identifier);
+        onCreateWCA.fire(owner, identifier, milestones.size());
         return identifier;
     }
 
@@ -218,6 +228,9 @@ public class WCAContract {
         basicInfo.finishMilestone(index, proofOfWork);
         // store it back
         wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
+
+        onFinishMilestone.fire(identifier, index, proofOfWork);
+
         // if whole WCA is finished
         if (basicInfo.isReadyToFinish()) {
             finishWCA(identifier);
@@ -260,7 +273,7 @@ public class WCAContract {
         // store it back
         wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
 
-        onFinishWCA.fire(identifier, true);
+        onFinishWCA.fire(identifier);
     }
 
     public static void refund(String identifier, Hash160 buyer) throws Exception {
@@ -279,10 +292,12 @@ public class WCAContract {
             Pair<Integer, Integer> buyerAndCreator = buyerInfo.partialRefund(basicInfo, buyer);
             transferTokenTo(buyer, buyerAndCreator.first, identifier);
             transferTokenTo(basicInfo.owner, buyerAndCreator.second, identifier);
+            onRefund.fire(buyer, identifier, buyerAndCreator.first, buyerAndCreator.second);
         } else {
             // full refund
             int amount = buyerInfo.fullRefund(buyer);
             transferTokenTo(buyer, amount, identifier);
+            onRefund.fire(buyer, identifier, amount, 0);
         }
 
         // update buyer info
@@ -303,9 +318,6 @@ public class WCAContract {
         ContractManagement.update(script, manifest);
     }
 
-    /**
-     * I don't know why, but set it to false make it work properly
-     */
     @OnVerification
     public static boolean verify() throws Exception {
         throwIfSignerIsNotOwner();
