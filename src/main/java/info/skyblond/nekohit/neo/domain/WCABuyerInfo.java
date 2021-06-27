@@ -50,7 +50,7 @@ public class WCABuyerInfo {
         Integer buyerPurchaseAmount = this.purchases.get(buyer);
         require(buyerPurchaseAmount != null, "Purchase found but amount is null");
 
-        int totalMiletones = basicInfo.milestones.size();
+        int totalMiletones = basicInfo.milestoneCount;
         // finished milestone belongs to creator
         int toCreatorAmount = buyerPurchaseAmount * basicInfo.finishedCount / totalMiletones;
         // rest of them goes back to buyer

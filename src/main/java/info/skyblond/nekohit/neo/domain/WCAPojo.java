@@ -17,15 +17,15 @@ public class WCAPojo {
     public int remainTokenCount;
     public int buyerCount;
 
-    public WCAPojo(WCABasicInfo basicInfo, WCABuyerInfo buyerInfo) {
+    public WCAPojo(WCABasicInfo basicInfo, List<WCAMilestone> milestones, WCABuyerInfo buyerInfo) {
         // This is a workaround since Hash160 convert to int is too big for
         // StdLib.jsonSerialize, so encoded by Base64 first
         this.ownerBase64 = StdLib.base64Encode(basicInfo.owner.toByteString());
         this.stakePer100Token = basicInfo.stakePer100Token;
         this.maxTokenSoldCount = basicInfo.maxTokenSoldCount;
         this.stakePaid = basicInfo.paid;
-        this.milestonesCount = basicInfo.milestones.size();
-        this.milestones = basicInfo.milestones;
+        this.milestonesCount = basicInfo.milestoneCount;
+        this.milestones = milestones;
         this.thresholdMilestoneIndex = basicInfo.thresholdIndex;
         this.coolDownInterval = basicInfo.coolDownInterval;
         this.lastUpdateTimestamp = basicInfo.lastUpdateTime;

@@ -261,11 +261,11 @@ Or you can manually invoke the methods. Here is the procedure：
    + 50 milestones with each has 60 bytes description will cost 4.7027549GAS
    + 250 milestones with each has 60 bytes description will cost 22.1284049GAS
 
-3. Pay the stake, by transfer the correct amount Cat Token to WCA Contract. Address can be found in `Basic Info` section. This will rewrite all milestone data again, but with 75% discount. Also you have to pay for instructions that handle this transaction.
+3. Pay the stake, by transfer the correct amount Cat Token to WCA Contract. Address can be found in `Basic Info` section. This usually costs less than 0.5GAS.
 4. Let buyer make the purchase, by transfer the correct amount Cat Token to WCA Contract. Address can be found in `Basic Info` section. This will rewrite all purchase record again, but with 75% discount. Also you have to pay for instructions that handle this transaction, and the fee to write your purchase data into storage. 
-   + Each record consist of a Hash160 and a integer, Let's assume this take 32 bytes, plus two integer, take that as 32 too. Say we have 1000 buyers, then old data is 3232 bytes, this will charge you 0.808GAS, then your  new data is 32 bytes, cost 0.032GAS, so 0.84GAS in total.
-5. Finish milestones, by calling the `finishMilestone` method. This will rewrite all milestone data again, but with 75% discount. Also you have to pay for instructions that handle this transaction, and the fee to write your `proofOfWork` into storage.
-6. Finish the WCA. This will rewrite all milestone data again, but with 75% discount. Also you have to pay for instructions that handle this transaction, and the fee to transfer tokens.
+   + Each record consist of a Hash160 and a integer, Let's assume they take 32 bytes, plus two integer, take that as 32 too. If we have 1000 buyers, then old data is 3232 bytes, this will charge you 0.808GAS, then your new data is 32 bytes, cost 0.032GAS, so 0.84GAS in total.
+5. Finish milestones, by calling the `finishMilestone` method. This will rewrite all milestone data again, but with 75% discount. Also you have to pay for instructions that handle this transaction, and the fee to write your `proofOfWork` into storage. If your are finishing the last milestone, then you have to cover the fee for finish the WCA, aka the step 6.
+6. Finish the WCA. Most of fees are used to pay for instructions that transfer tokens. This is based on how many buyers, each transaction cost less than 0.15GAS.
 
 
 
