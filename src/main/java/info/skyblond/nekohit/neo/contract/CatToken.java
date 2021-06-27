@@ -33,7 +33,7 @@ public class CatToken {
 
     // public net owner: NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3
     // private net owner: NVCqzVkjApBWtgKa7c7gbURrJ4dmFYLekS
-    private static final Hash160 OWNER = addressToScriptHash("NVCqzVkjApBWtgKa7c7gbURrJ4dmFYLekS");
+    private static final Hash160 OWNER = addressToScriptHash("NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3");
 
     @DisplayName("Transfer")
     private static Event3Args<Hash160, Hash160, Integer> onTransfer;
