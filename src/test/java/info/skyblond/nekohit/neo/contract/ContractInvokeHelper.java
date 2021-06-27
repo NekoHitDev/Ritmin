@@ -1,9 +1,7 @@
-package info.skyblond.nekohit.test.wca;
+package info.skyblond.nekohit.neo.contract;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-
-import info.skyblond.nekohit.test.ContractTestFramework;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;

@@ -1,4 +1,4 @@
-package info.skyblond.nekohit.test;
+package info.skyblond.nekohit.neo.contract;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,7 +10,6 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-
 import io.neow3j.contract.exceptions.UnexpectedReturnTypeException;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -24,6 +23,17 @@ import io.neow3j.wallet.Wallet;
 @TestInstance(Lifecycle.PER_CLASS)
 public class CatTokenTest extends ContractTestFramework {
     private Wallet testWallet = getTestWallet();
+
+    @Test
+    void testContractHash() {
+        if (isPublicChain()) {
+            assertEquals(
+                getCatTokenAddress().toAddress(), 
+                "NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH",
+                "Wrong CAT Address: " + getCatTokenAddress().toAddress()
+            );
+        }
+    }
 
     @Test
     void testSymbol() throws UnexpectedReturnTypeException, IOException {

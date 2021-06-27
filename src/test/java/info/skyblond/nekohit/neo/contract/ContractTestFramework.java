@@ -1,4 +1,4 @@
-package info.skyblond.nekohit.test;
+package info.skyblond.nekohit.neo.contract;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -9,8 +9,6 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import info.skyblond.nekohit.neo.contract.CatToken;
-import info.skyblond.nekohit.neo.contract.WCAContract;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractManagement;
 import io.neow3j.contract.FungibleToken;
