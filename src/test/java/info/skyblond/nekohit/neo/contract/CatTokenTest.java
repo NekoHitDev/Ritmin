@@ -25,17 +25,6 @@ public class CatTokenTest extends ContractTestFramework {
     private Wallet testWallet = getTestWallet();
 
     @Test
-    void testContractHash() {
-        if (isPublicChain()) {
-            assertEquals(
-                getCatTokenAddress().toAddress(), 
-                "NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH",
-                "Wrong CAT Address: " + getCatTokenAddress().toAddress()
-            );
-        }
-    }
-
-    @Test
     void testSymbol() throws UnexpectedReturnTypeException, IOException {
         assertEquals(getCatToken().getSymbol(), "CAT");
     }
