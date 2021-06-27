@@ -82,14 +82,6 @@ public class ContractTestFramework {
         return fraction / Math.pow(10, 8);
     }
 
-    private static Wallet getDeployWallet() {
-        if (isPublicChain()) {
-            return CONTRACT_OWNER_WALLET;
-        } else {
-            return GENESIS_WALLET;
-        }
-    }
-
     /**
      * Compile the given contract class and try to deploy it with GENESIS account. 
      * 
@@ -108,13 +100,11 @@ public class ContractTestFramework {
             compileResult.getManifest().getName()
         );
 
-        var deployWallet = getDeployWallet();
-
         try {
             var tx = new ContractManagement(NEOW3J)
             .deploy(compileResult.getNefFile(), compileResult.getManifest())
-            .signers(Signer.global(deployWallet.getDefaultAccount().getScriptHash()))
-            .wallet(deployWallet)
+            .signers(Signer.global(GENESIS_WALLET.getDefaultAccount().getScriptHash()))
+            .wallet(GENESIS_WALLET)
             .sign();
             var response = tx.send();
             if (response.hasError()) {

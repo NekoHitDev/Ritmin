@@ -23,22 +23,23 @@ public class Compile {
         Arrays.asList(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
     public static void main(String[] args) throws IOException {
         var compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
-        Path buildNeow3jPath = Paths.get("idea-build-result");
-        buildNeow3jPath.toFile().mkdirs();
-        ContractUtils.writeNefFile(
-            compileResult.getNefFile(), 
-            compileResult.getManifest().getName(), 
-            buildNeow3jPath
-        );
-        ContractUtils.writeContractManifestFile(
-            compileResult.getManifest(), buildNeow3jPath
-        );
+        // Path buildNeow3jPath = Paths.get("idea-build-result");
+        // buildNeow3jPath.toFile().mkdirs();
+        // ContractUtils.writeNefFile(
+        //     compileResult.getNefFile(), 
+        //     compileResult.getManifest().getName(), 
+        //     buildNeow3jPath
+        // );
+        // ContractUtils.writeContractManifestFile(
+        //     compileResult.getManifest(), buildNeow3jPath
+        // );
         var contractHash = SmartContract.calcContractHash(
             GENESIS_ACCOUNT.getScriptHash(), 
             compileResult.getNefFile().getCheckSumAsInteger(), 
             compileResult.getManifest().getName()
         );
         System.out.println(contractHash);
+        System.out.println(contractHash.toAddress());
         System.out.println(Hex.encodeHexString(contractHash.toLittleEndianArray(), true));
     }
 }
