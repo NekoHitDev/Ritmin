@@ -2,14 +2,12 @@ package info.skyblond.nekohit.neo.domain;
 
 import static info.skyblond.nekohit.neo.helper.Utils.require;
 import io.neow3j.devpack.Hash160;
-import io.neow3j.devpack.List;
-import io.neow3j.devpack.Runtime;
 
 public class WCABasicInfo {
     public Hash160 owner;
     public int stakePer100Token;
     public int maxTokenSoldCount;
-    public List<WCAMilestone> milestones;
+    public int milestoneCount;
     public int thresholdIndex;
     public int coolDownInterval;
 
@@ -40,7 +38,7 @@ public class WCABasicInfo {
 
     public WCABasicInfo(
         Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
-        List<WCAMilestone> milestones, int thresholdIndex, int coolDownInterval
+        int milestoneCount, int thresholdIndex, int coolDownInterval
     ) throws Exception {
         require(owner.isValid(), "Owner address is not a valid address.");
         this.owner = owner;
@@ -48,9 +46,9 @@ public class WCABasicInfo {
         require(maxTokenSoldCount > 0, "The max sell token count must be positive.");
         this.stakePer100Token = stakePer100Token;
         this.maxTokenSoldCount = maxTokenSoldCount;
-        require(milestones.size() > 0, "You must have at least 1 milestone.");
-        this.milestones = milestones;
-        if (thresholdIndex >= 0 && thresholdIndex < this.milestones.size()) {
+        require(milestoneCount > 0, "You must have at least 1 milestone.");
+        this.milestoneCount = milestoneCount;
+        if (thresholdIndex >= 0 && thresholdIndex < this.milestoneCount) {
             this.thresholdIndex = thresholdIndex;
         } else {
             throw new Exception("Invalid value for thresholdIndex");
@@ -71,69 +69,5 @@ public class WCABasicInfo {
      */
     public int getTotalStake() {
         return stakePer100Token * maxTokenSoldCount / 100;
-    }
-
-    /**
-     * Check if this WCA is satisfied the basic needs. 
-     * Such as if the stake is paid, the milestone is started. 
-     * If pass, then {@link WCABuyerInfo#throwIfNotAvailableToBuy(int)} 
-     * @throws Exception if not satified the requirements
-     */
-    public void throwIfNotAvailableToBuy() throws Exception{
-        require(paid, "You can't buy an unpaid WCA.");
-        require(nextMilestoneIndex == 0, "You can't buy a WCA already started.");
-        var fisrtMs = milestones.get(0);
-        require(!fisrtMs.isExpired(), "You can't buy a WCA already started.");
-    }
-
-    /**
-     * Finish a milestone by given index.
-     * @param index index(start from 0) of the milestone you want finish
-     * @param proofOfWork a link to your work to let buyers review the work
-     * @throws Exception throws if reqiurements are not satisfied
-     */
-    public void finishMilestone(int index, String proofOfWork) throws Exception {
-        // check cool-down time first
-        int currentTime = Runtime.getTime();
-        require(lastUpdateTime + coolDownInterval <= currentTime, "Cool down time not met");
-        require(index >= nextMilestoneIndex, "You can't finish a passed milestone");
-        WCAMilestone ms = milestones.get(index);
-        require(!ms.isFinished(), "You can't finish a finished milestone");
-        require(!ms.isExpired(), "You can't finish a expired milestone");
-        // not finished nor expired, then we can modify it.
-        require(proofOfWork != null && proofOfWork.length() != 0, "Proof of work must be valid.");
-        ms.linkToResult = proofOfWork;
-        nextMilestoneIndex = index + 1;
-        finishedCount++;
-        lastUpdateTime = currentTime;
-    }
-
-    /**
-     * WCA is finished if last milestone is finished, or last milestone 
-     * is expired.
-     * @return true if WCA is finished, false if not
-     */
-    public boolean isReadyToFinish() {
-        WCAMilestone ms = milestones.get(milestones.size() - 1);
-        if (ms.isFinished()) {
-            return true;
-        } else if (ms.isExpired()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public boolean thresholdMet() {
-        if (this.nextMilestoneIndex > this.thresholdIndex) {
-            // next milestone include the threshold
-            return true;
-        } else if (this.milestones.get(this.thresholdIndex).isExpired()) {
-            // not met the threshold, but threshold ms is expired
-            return true;
-        } else {
-            // really not met the threshold ms
-            return false;
-        }
     }
 }
