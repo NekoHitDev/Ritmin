@@ -3,6 +3,7 @@ package info.skyblond.nekohit.neo;
 import java.math.BigInteger;
 import java.util.Scanner;
 
+import info.skyblond.nekohit.neo.contract.WCAContract;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.types.ContractParameter;
@@ -27,7 +28,7 @@ public class DeployContract {
 
     private static final int CONFIRM_TIME = 30;
     private static final boolean REALLY_DEPLOY_FLAG = false;
-    private static final Class<CatToken> CONTRACT_CLASS = CatToken.class;
+    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
     
     public static void main(String[] args) throws Throwable {
         Scanner scanner = new Scanner(System.in);
@@ -99,7 +100,7 @@ public class DeployContract {
         System.out.println("Deployed hash: 0x" + contractHash);
         System.out.println("Little endian: 0x" + Hex.encodeHexString(contractHash.toLittleEndianArray(), true));
 
-        if (CONTRACT_CLASS == CatToken.class) {
+        if (REALLY_DEPLOY_FLAG && CONTRACT_CLASS == CatToken.class) {
             FungibleToken token = new FungibleToken(contractHash, NEOW3J);
             transferToken(token, deployWallet, deployWallet.getDefaultAccount().getScriptHash(), 1_00, null);
             System.out.println(token.getBalanceOf(deployWallet.getDefaultAccount()));
