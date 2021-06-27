@@ -37,7 +37,7 @@ test {
 }
 
 tasks.withType(Test).configureEach {
-    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 2
 }
 
 testlogger {

@@ -206,6 +206,7 @@ public class WCAContract {
         updateMilestone(basicInfo, milestones, index, proofOfWork);
         // store it back
         wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
+        wcaMilestonesMap.put(identifier, StdLib.serialize(milestones));
 
         onFinishMilestone.fire(identifier, index, proofOfWork);
 
