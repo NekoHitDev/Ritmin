@@ -82,6 +82,14 @@ public class ContractTestFramework {
         return fraction / Math.pow(10, 8);
     }
 
+    private static Wallet getDeployWallet() {
+        if (isPublicChain()) {
+            return CONTRACT_OWNER_WALLET;
+        } else {
+            return GENESIS_WALLET;
+        }
+    }
+
     /**
      * Compile the given contract class and try to deploy it with GENESIS account. 
      * 
@@ -100,11 +108,13 @@ public class ContractTestFramework {
             compileResult.getManifest().getName()
         );
 
+        var deployWallet = getDeployWallet();
+
         try {
             var tx = new ContractManagement(NEOW3J)
             .deploy(compileResult.getNefFile(), compileResult.getManifest())
-            .signers(Signer.global(GENESIS_WALLET.getDefaultAccount().getScriptHash()))
-            .wallet(GENESIS_WALLET)
+            .signers(Signer.global(deployWallet.getDefaultAccount().getScriptHash()))
+            .wallet(deployWallet)
             .sign();
             var response = tx.send();
             if (response.hasError()) {
@@ -253,18 +263,18 @@ public class ContractTestFramework {
 
     public ContractTestFramework() {
         try {
+            // give contract owner some gas to play with
+            transferToken(
+                    GAS_TOKEN, GENESIS_WALLET,
+                    CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
+                    10000_00000000L, null, true
+            );
             // deploy Cat Token
             catTokenAddress = compileAndDeploy(CAT_TOKEN_CLASS);
             catToken = new FungibleToken(catTokenAddress, NEOW3J);
             // deploy WCA Contract
             wcaContractAddress = compileAndDeploy(WCA_CONTRACT_CLASS);
             wcaContract = new SmartContract(wcaContractAddress, NEOW3J);
-            // give contract owner some gas to play with
-            transferToken(
-                GAS_TOKEN, GENESIS_WALLET,
-                CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
-                10000_00000000L, null, true
-            );
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
