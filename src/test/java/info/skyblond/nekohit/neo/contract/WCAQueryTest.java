@@ -1,4 +1,4 @@
-package info.skyblond.nekohit.test.wca;
+package info.skyblond.nekohit.neo.contract;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,7 +9,6 @@ import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import info.skyblond.nekohit.test.ContractTestFramework;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
