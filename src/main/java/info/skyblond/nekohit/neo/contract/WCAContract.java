@@ -39,7 +39,7 @@ public class WCAContract {
     // For private test net deploy by genesis(gradle): NiMNN2ZXML7C9uNEnp66U3VNp38FLBcJQi
     // For private test net deploy by genesis(vsc): NjFMoMSoukNBetDZYPsGKzpLrUA1zgkMNM
     // For public net deploy by NV5C...jTm3: NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH
-    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NiMNN2ZXML7C9uNEnp66U3VNp38FLBcJQi");
+    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH");
 
     private static final StorageContext CTX = Storage.getStorageContext();
     private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
