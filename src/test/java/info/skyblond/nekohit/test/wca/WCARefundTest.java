@@ -121,7 +121,7 @@ public class WCARefundTest extends ContractTestFramework  {
             // stake: 1.00 * 1.00
             getWcaContract(), 1_00, 1_00, 
             new String[]{"milestone1"}, 
-            new Long[] { System.currentTimeMillis() + 3*1000 }, 
+            new Long[] { System.currentTimeMillis() + 2 * 1000 }, 
             0, 100, "test_refund_last_ms_expired_" + System.currentTimeMillis(),
             creatorWallet
         );

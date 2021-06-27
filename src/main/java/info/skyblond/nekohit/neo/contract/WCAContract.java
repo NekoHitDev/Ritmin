@@ -1,16 +1,12 @@
 package info.skyblond.nekohit.neo.contract;
 
-import static io.neow3j.devpack.StringLiteralHelper.hexToBytes;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 import static info.skyblond.nekohit.neo.helper.Utils.require;
-import info.skyblond.nekohit.neo.domain.WCABasicInfo;
-import info.skyblond.nekohit.neo.domain.WCABuyerInfo;
-import info.skyblond.nekohit.neo.domain.WCAMilestone;
-import info.skyblond.nekohit.neo.domain.WCAPojo;
+import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.*;
+import info.skyblond.nekohit.neo.domain.*;
 import info.skyblond.nekohit.neo.helper.Pair;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.ByteString;
-import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.Contract;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
@@ -24,6 +20,7 @@ import io.neow3j.devpack.annotations.OnNEP17Payment;
 import io.neow3j.devpack.annotations.OnVerification;
 import io.neow3j.devpack.annotations.Permission;
 import io.neow3j.devpack.annotations.Trust;
+import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.StdLib;
 import io.neow3j.devpack.events.Event1Arg;
 import io.neow3j.devpack.events.Event3Args;
@@ -31,18 +28,24 @@ import io.neow3j.devpack.events.Event4Args;
 
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
-@ManifestExtra(key = "author", value = "Something")
+@ManifestExtra(key = "author", value = "NekoHitDev")
 @Trust(value = "*")
 @Permission(contract = "*")
 public class WCAContract {
-
     // for public net
-    private static final Hash160 OWNER = addressToScriptHash("NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3");
+    static final Hash160 OWNER = addressToScriptHash("NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3");
+
+    // address of CatToken Hash.
+    // For private test net deploy by genesis(gradle): NiMNN2ZXML7C9uNEnp66U3VNp38FLBcJQi
+    // For private test net deploy by genesis(vsc): NjFMoMSoukNBetDZYPsGKzpLrUA1zgkMNM
+    // For public net deploy by NV5C...jTm3: NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH
+    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NiMNN2ZXML7C9uNEnp66U3VNp38FLBcJQi");
 
     private static final StorageContext CTX = Storage.getStorageContext();
-
-    // Note this is the reverse(the little endian) of CatToken Hash.
-    private static final Hash160 CAT_TOKEN_HASH = new Hash160(hexToBytes("dbdbe562308b04900ad1ce6573700f8bca1b0b44"));
+    private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
+    private static final StorageMap wcaMilestonesMap = CTX.createMap("MILESTONES");
+    private static final StorageMap wcaBuyerInfoMap = CTX.createMap("BUYER_INFO");
+    private static final StorageMap wcaIdentifierMap = CTX.createMap("IDENTIFIER");
 
     // creator, identifier, milestone count
     @DisplayName("CreateWCA")
@@ -50,7 +53,7 @@ public class WCAContract {
 
     // owner, identifier, amount
     @DisplayName("PayWCA")
-    static Event3Args<Hash160, String, Integer> onPayWCA;
+    private static Event3Args<Hash160, String, Integer> onPayWCA;
 
     // buyer, identifier, deal amount
     @DisplayName("BuyWCA")
@@ -69,11 +72,6 @@ public class WCAContract {
     private static Event4Args<Hash160, String, Integer, Integer> onRefund;
 
 
-    private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
-    private static final StorageMap wcaBuyerInfoMap = CTX.createMap("BUYER_INFO");
-    private static final StorageMap wcaIdentifierMap = CTX.createMap("IDENTIFIER");
-
-
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
         require(CAT_TOKEN_HASH == Runtime.getCallingScriptHash(), "Only Cat Token can invoke this function.");
@@ -81,11 +79,13 @@ public class WCAContract {
         var identifier = (String) data;
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
+        List<WCAMilestone> milestones = getWCAMilestones(identifier);
+        require(milestones != null, "Identifier not found.");
 
         if (basicInfo.owner.equals(from)) {
             // owner paying stake
             require(!basicInfo.paid, "You can't pay a paid WCA.");
-            require(!basicInfo.isReadyToFinish(), "You can't pay a expired WCA.");
+            require(!checkIfReadyToFinish(milestones), "You can't pay a expired WCA.");
             require(basicInfo.getTotalStake() == amount, "Amount not correct");
             // unpaid before, not finished(expired), amount is correct
             basicInfo.paid = true;
@@ -93,45 +93,13 @@ public class WCAContract {
             onPayWCA.fire(from, identifier, amount);
         } else {
             // buyer want to buy a WCA
-            basicInfo.throwIfNotAvailableToBuy();
+            throwIfNotAvailableToBuy(basicInfo, milestones);
             WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
             require(buyerInfo != null, "Buyer info not found.");
             buyerInfo.recordPurchase(from, amount);
             wcaBuyerInfoMap.put(identifier, StdLib.serialize(buyerInfo));
             onBuyWCA.fire(from, identifier, amount);
         }
-    }
-
-    private static WCABasicInfo getWCABasicInfo(String identifier) {
-        ByteString data = wcaBasicInfoMap.get(identifier);
-        if (data == null) {
-            return null;
-        }
-        return (WCABasicInfo) StdLib.deserialize(data);
-    }
-
-    private static WCABuyerInfo getWCABuyerInfo(String identifier) {
-        ByteString data = wcaBuyerInfoMap.get(identifier);
-        if (data == null) {
-            return null;
-        }
-        return (WCABuyerInfo) StdLib.deserialize(data);
-    }
-
-    private static List<String> queryIdentifiers(Hash160 owner) {
-        var rawData = wcaIdentifierMap.get(owner.toByteString());
-        if (rawData == null)
-            return null;
-        return (List<String>) StdLib.deserialize(rawData);
-    }
-
-    private static void insertIdentifier(Hash160 owner, String identifier) {
-        List<String> identifiers = queryIdentifiers(owner);
-        if (identifiers == null) {
-            identifiers = new List<>();
-        }
-        identifiers.add(identifier);
-        wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
     }
 
     public static String queryWCA(String identifier) {
@@ -145,7 +113,12 @@ public class WCAContract {
             return "";
         }
 
-        WCAPojo result = new WCAPojo(basicInfo, buyerInfo);
+        List<WCAMilestone> milestones = getWCAMilestones(identifier);
+        if (milestones == null) {
+            return "";
+        }
+
+        WCAPojo result = new WCAPojo(basicInfo, milestones, buyerInfo);
 
         return StdLib.jsonSerialize(result);
     }
@@ -200,13 +173,16 @@ public class WCAContract {
         // create wca info obj
         WCABasicInfo info = new WCABasicInfo(
             owner, stakePer100Token, maxTokenSoldCount, 
-            milestones, thresholdIndex, coolDownInterval
+            milestones.size(), thresholdIndex, coolDownInterval
         );
+
         ByteString basicData = StdLib.serialize(info);
+        ByteString milestoneData = StdLib.serialize(milestones);
         ByteString buyerData = StdLib.serialize(new WCABuyerInfo(maxTokenSoldCount));
 
         // store
         wcaBasicInfoMap.put(identifier, basicData);
+        wcaMilestonesMap.put(identifier, milestoneData);
         wcaBuyerInfoMap.put(identifier, buyerData);
         
         // save identifier
@@ -224,15 +200,18 @@ public class WCAContract {
         require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(),
                 "Invalid caller signature. The caller needs to be the owner account.");
         require(basicInfo.paid, "You can't finish an unpaid WCA.");
+        List<WCAMilestone> milestones = getWCAMilestones(identifier);
+        require(basicInfo != null, "Identifier not found.");
 
-        basicInfo.finishMilestone(index, proofOfWork);
+        updateMilestone(basicInfo, milestones, index, proofOfWork);
         // store it back
         wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
+        wcaMilestonesMap.put(identifier, StdLib.serialize(milestones));
 
         onFinishMilestone.fire(identifier, index, proofOfWork);
 
         // if whole WCA is finished
-        if (basicInfo.isReadyToFinish()) {
+        if (checkIfReadyToFinish(milestones)) {
             finishWCA(identifier);
         }
     }
@@ -242,16 +221,19 @@ public class WCAContract {
         require(basicInfo != null, "Identifier not found.");
         require(basicInfo.paid, "You can not finish an unpaid WCA.");
         require(!basicInfo.finished, "You can not finish a WCA twice.");
+        List<WCAMilestone> milestones = getWCAMilestones(identifier);
+        require(milestones != null, "Identifier not found.");
+
         if (!Runtime.checkWitness(basicInfo.owner)) {
             // only owner can finish an unfinished WCA
-            require(basicInfo.isReadyToFinish(), "You can only apply this to a ready-to-finish WCA.");
+            require(checkIfReadyToFinish(milestones), "You can only apply this to a ready-to-finish WCA.");
         }
         // get wca buyer info obj
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, "Buyer info not found.");
 
         int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalPurchasedAmount;
-        int totalMiletones = basicInfo.milestones.size();
+        int totalMiletones = basicInfo.milestoneCount;
         int unfinishedMilestones = totalMiletones - basicInfo.finishedCount;
 
         // for each buyer, return their token based on unfinished ms count
@@ -283,11 +265,14 @@ public class WCAContract {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         require(basicInfo.paid, "You can not refund an unpaid WCA.");
-        require(!basicInfo.isReadyToFinish(), "You can not refund a finished WCA.");
+        require(!basicInfo.finished, "You can not refund a finished WCA.");
+        List<WCAMilestone> milestones = getWCAMilestones(identifier);
+        require(milestones != null, "Identifier not found.");
+        require(!checkIfReadyToFinish(milestones), "You can not refund a finished WCA.");
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, "Identifier not found.");
 
-        if (basicInfo.thresholdMet()) {
+        if (checkIfThresholdMet(basicInfo, milestones)) {
             // after the threshold
             Pair<Integer, Integer> buyerAndCreator = buyerInfo.partialRefund(basicInfo, buyer);
             transferTokenTo(buyer, buyerAndCreator.first, identifier);
@@ -305,13 +290,8 @@ public class WCAContract {
         wcaBuyerInfoMap.put(identifier, buyerData);
     }
 
-    private static void transferTokenTo(Hash160 target, int amount, String identifier) {
-        Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.All,
-                new Object[] { Runtime.getExecutingScriptHash(), target, amount, identifier });
-    }
-
     public static void update(ByteString script, String manifest) throws Exception {
-        throwIfSignerIsNotOwner();
+        require(Runtime.checkWitness(OWNER), "The calling entity is not the owner of this contract.");
         if (script.length() == 0 && manifest.length() == 0) {
             throw new Exception("The new contract script and manifest must not be empty.");
         }
@@ -320,7 +300,7 @@ public class WCAContract {
 
     @OnVerification
     public static boolean verify() throws Exception {
-        throwIfSignerIsNotOwner();
+        require(Runtime.checkWitness(OWNER), "The calling entity is not the owner of this contract.");
         return true;
     }
 
@@ -328,9 +308,50 @@ public class WCAContract {
         return OWNER;
     }
 
-    private static void throwIfSignerIsNotOwner() throws Exception {
-        if (!Runtime.checkWitness(OWNER)) {
-            throw new Exception("The calling entity is not the owner of this contract.");
+    // ---------- Auxiliary functions ----------
+    // Currently due to neow3j/neow3j#601, they won't work if they are outside of this contract.
+    private static void transferTokenTo(Hash160 target, int amount, String identifier) {
+        Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.All,
+                new Object[] { Runtime.getExecutingScriptHash(), target, amount, identifier });
+    }
+
+    private static List<String> queryIdentifiers(Hash160 owner) {
+        var rawData = wcaIdentifierMap.get(owner.toByteString());
+        if (rawData == null)
+            return null;
+        return (List<String>) StdLib.deserialize(rawData);
+    }
+
+    private static void insertIdentifier(Hash160 owner, String identifier) {
+        List<String> identifiers = queryIdentifiers(owner);
+        if (identifiers == null) {
+            identifiers = new List<>();
         }
+        identifiers.add(identifier);
+        wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
+    }
+
+    private static WCABasicInfo getWCABasicInfo(String identifier) {
+        ByteString data = wcaBasicInfoMap.get(identifier);
+        if (data == null) {
+            return null;
+        }
+        return (WCABasicInfo) StdLib.deserialize(data);
+    }
+
+    private static WCABuyerInfo getWCABuyerInfo(String identifier) {
+        ByteString data = wcaBuyerInfoMap.get(identifier);
+        if (data == null) {
+            return null;
+        }
+        return (WCABuyerInfo) StdLib.deserialize(data);
+    }
+
+    private static List<WCAMilestone> getWCAMilestones(String identifier) {
+        ByteString data = wcaMilestonesMap.get(identifier);
+        if (data == null) {
+            return null;
+        }
+        return (List<WCAMilestone>) StdLib.deserialize(data);
     }
 }

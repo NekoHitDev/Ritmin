@@ -20,7 +20,7 @@ import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
-public class Deploy {
+public class DeployContract {
     private static final Neow3j NEOW3J = Neow3j.build(
         new HttpService("http://seed1t.neo.org:20332")
     );
@@ -99,9 +99,11 @@ public class Deploy {
         System.out.println("Deployed hash: 0x" + contractHash);
         System.out.println("Little endian: 0x" + Hex.encodeHexString(contractHash.toLittleEndianArray(), true));
 
-        FungibleToken token = new FungibleToken(contractHash, NEOW3J);
-        transferToken(token, deployWallet, deployWallet.getDefaultAccount().getScriptHash(), 1_00, null);
-        System.out.println(token.getBalanceOf(deployWallet.getDefaultAccount()));
+        if (CONTRACT_CLASS == CatToken.class) {
+            FungibleToken token = new FungibleToken(contractHash, NEOW3J);
+            transferToken(token, deployWallet, deployWallet.getDefaultAccount().getScriptHash(), 1_00, null);
+            System.out.println(token.getBalanceOf(deployWallet.getDefaultAccount()));
+        }
 
     }
 
