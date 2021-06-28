@@ -31,6 +31,11 @@ public class DeployContract {
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
     
     public static void main(String[] args) throws Throwable {
+        // compile contract
+        var compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
+        System.out.println("Contract compiled:");
+        System.out.println(CONTRACT_CLASS.getCanonicalName());
+
         Scanner scanner = new Scanner(System.in);
         System.out.println("Paste deploy account WIF:");
         var walletWIF = scanner.nextLine();
@@ -38,36 +43,26 @@ public class DeployContract {
         for (int i = 0; i < 1000; i++) {
             System.out.println();
         }
-        scanner.close();
         var deployWallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
-        System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
-        System.out.println("Terminate this program to stop the process.");
-        for (int i = CONFIRM_TIME; i > 0; i--) {
-            if (i % 10 == 0 || i <= 5) System.out.println("In " + i + " second(s)...");
-            Thread.sleep(1000);
-        }
 
-        System.out.println("Deploy follow contract on public net:");
-        System.out.println(CONTRACT_CLASS.getCanonicalName());
-        System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
-        System.out.println("Terminate this program to stop the process.");
-        for (int i = CONFIRM_TIME; i > 0; i--) {
-            if (i % 10 == 0 || i <= 5) System.out.println("In " + i + " second(s)...");
-            Thread.sleep(1000);
-        }
-        System.out.println("Compiling contract...");
-
-        var compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
         var contractHash = SmartContract.calcContractHash(
-            deployWallet.getDefaultAccount().getScriptHash(), 
-            compileResult.getNefFile().getCheckSumAsInteger(), 
-            compileResult.getManifest().getName()
+                deployWallet.getDefaultAccount().getScriptHash(),
+                compileResult.getNefFile().getCheckSumAsInteger(),
+                compileResult.getManifest().getName()
         );
 
-        System.out.println("Deploy following contract on public net:");
+        System.out.println("Deploy following contract to public net:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
         System.out.println("Will deployed to 0x" + contractHash);
         System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
+
+        System.out.println("Type 'confirmed' to continue...");
+        var line = scanner.nextLine();
+        scanner.close();
+        if (!line.toLowerCase().trim().equals("confirmed")){
+            System.out.println("Canceled.");
+            return;
+        }
 
         System.out.println("This is the last chance to stop the process.");
         for (int i = CONFIRM_TIME; i > 0; i--) {

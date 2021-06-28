@@ -2,7 +2,7 @@ package info.skyblond.nekohit.neo.helper;
 
 public class Utils {
     /**
-     * Similar to kotlin's reqiure function. If condition is false, then exception is thrown
+     * Similar to kotlin's require function. If condition is false, then exception is thrown
      * @param condition the condition required to check
      * @param message if condition is false, the message for exception
      * @throws Exception
