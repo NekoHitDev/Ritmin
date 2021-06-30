@@ -11,11 +11,20 @@ import io.neow3j.devpack.Runtime;
  * This class contains some helper function specific to WCAContract.class
  */
 public class WCAAuxiliary {
+    static boolean availableToPurchase(WCABasicInfo basicInfo, List<WCAMilestone> milestones) {
+        if(!basicInfo.paid)
+            return false;
+        if (basicInfo.nextMilestoneIndex != 0)
+            return false;
+        var firstMs = milestones.get(0);
+        return !firstMs.isExpired();
+    }
+
     static void throwIfNotAvailableToBuy(WCABasicInfo basicInfo, List<WCAMilestone> milestones) throws Exception {
         require(basicInfo.paid, "You can't buy an unpaid WCA.");
         require(basicInfo.nextMilestoneIndex == 0, "You can't buy a WCA already started.");
-        var fisrtMs = milestones.get(0);
-        require(!fisrtMs.isExpired(), "You can't buy a WCA already started.");
+        var firstMs = milestones.get(0);
+        require(!firstMs.isExpired(), "You can't buy a WCA already started.");
     }
 
     static void updateMilestone(
