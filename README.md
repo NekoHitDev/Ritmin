@@ -240,6 +240,14 @@ Note:
 
   Query the total purchase amount of a given WCA and buyer address. This is required since the underlaying structure is a block of data, so **only one modification (one purchase) is accepted per block, rest of them are discarded.** You can use this method to check if your purchase is accepted.
 
+  
+
++ `advanceQuery(creator: Hash160, buyer: Hash160, unpaid: boolean, canPurchase: boolean, onGoing: boolean, finished: boolean, page: Integer, size: Integer): Json`
+
+  This query function offers a more advanced filter, which allow you specific list all WCA satisfied those filters. `creator` can be used filter all WCA created by specific owner, `buyer` can filter all WCA which the given buyer made a purchase, `unpaid` selects all unpaid WCAs, `canPurchase` list all WCAs currently you can buy(not started, and have remain tokens to sell), `onGoing` list all WCAs currently is on going(started but not finished), then `finished` list all finished WCAs(tokens are accounted and transferred). `page` and `size` are used to control how many identifiers are returned, so you can have a easy paging. **This function only returns List of identifiers (String) in JSON.**
+
+  
+
 ### How to use
 
 You can use our client to do that, see [NekoHitDev/ritmin-frontend](https://github.com/NekoHitDev/ritmin-frontend).

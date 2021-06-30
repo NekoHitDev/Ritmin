@@ -126,4 +126,62 @@ public class WCAQueryTest extends ContractTestFramework  {
         
         assertEquals(CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(), actualOwnerHexString);
     }
+
+    @Test
+    void testAdvancedQuery() throws Throwable {
+        var buyerWallet = getTestWallet();
+        var unpaidWCA = ContractInvokeHelper.createWCA(
+                getWcaContract(), 1_00, 1_00,
+                new String[]{"milestone1", "milestone2", "milestone3"},
+                new Long[] {
+                        System.currentTimeMillis() + 60 * 1000,
+                        System.currentTimeMillis() + 61 * 1000,
+                        System.currentTimeMillis() + 62 * 1000
+                },
+                0, 1, "test_advanced_unpaid_" + System.currentTimeMillis(),
+                creatorWallet
+        );
+        var canPurchaseWCA = ContractInvokeHelper.createAndPayWCA(
+                getWcaContract(), 1_00, 2_00,
+                new String[]{"milestone1", "milestone2", "milestone3"},
+                new Long[] {
+                        System.currentTimeMillis() + 60 * 1000,
+                        System.currentTimeMillis() + 61 * 1000,
+                        System.currentTimeMillis() + 62 * 1000
+                },
+                0, 1, "test_advanced_can_buy_" + System.currentTimeMillis(),
+                creatorWallet
+        );
+        transferToken(getCatToken(), buyerWallet, getWcaContractAddress(), 1_00, canPurchaseWCA, false);
+        var onGoingWCA = ContractInvokeHelper.createAndPayWCA(
+                getWcaContract(), 1_00, 1_00,
+                new String[]{"milestone1", "milestone2", "milestone3"},
+                new Long[] {
+                        System.currentTimeMillis() + 60 * 1000,
+                        System.currentTimeMillis() + 61 * 1000,
+                        System.currentTimeMillis() + 62 * 1000
+                },
+                0, 1, "test_advanced_going_" + System.currentTimeMillis(),
+                creatorWallet
+        );
+        ContractInvokeHelper.finishMilestone(getWcaContract(), onGoingWCA, 0, "123", creatorWallet);
+        var finishedWCA = ContractInvokeHelper.createAndPayWCA(
+                getWcaContract(), 1_00, 1_00,
+                new String[]{"milestone1"},
+                new Long[] {
+                        System.currentTimeMillis() + 60 * 1000
+                },
+                0, 1, "test_advanced_finished_" + System.currentTimeMillis(),
+                creatorWallet
+        );
+        ContractInvokeHelper.finishMilestone(getWcaContract(), finishedWCA, 0, "123", creatorWallet);
+
+        // TODO toggle those to test
+        System.out.println(assertDoesNotThrow(() -> ContractInvokeHelper.advanceQuery(
+                getWcaContract(),
+                creatorWallet.getDefaultAccount().getScriptHash(), Hash160.ZERO,
+                false, false, false, true,
+                1, 20
+        )));
+    }
 }
