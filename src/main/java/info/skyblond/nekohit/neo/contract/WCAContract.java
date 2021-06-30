@@ -5,15 +5,10 @@ import static info.skyblond.nekohit.neo.helper.Utils.require;
 import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.*;
 import info.skyblond.nekohit.neo.domain.*;
 import info.skyblond.nekohit.neo.helper.Pair;
-import io.neow3j.devpack.contracts.ContractManagement;
-import io.neow3j.devpack.ByteString;
-import io.neow3j.devpack.Contract;
-import io.neow3j.devpack.Hash160;
-import io.neow3j.devpack.List;
+import io.neow3j.devpack.*;
 import io.neow3j.devpack.Runtime;
-import io.neow3j.devpack.Storage;
-import io.neow3j.devpack.StorageContext;
-import io.neow3j.devpack.StorageMap;
+import io.neow3j.devpack.constants.FindOptions;
+import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.annotations.DisplayName;
 import io.neow3j.devpack.annotations.ManifestExtra;
 import io.neow3j.devpack.annotations.OnNEP17Payment;
@@ -40,13 +35,12 @@ public class WCAContract {
     // For private test net deploy by genesis(vsc): NjFMoMSoukNBetDZYPsGKzpLrUA1zgkMNM
     // For develop branch unit test: NfxUbQnAeqYUp3qVq4BQ7Bsh1wFPpsZyga
     // For public net deploy by NV5C...jTm3: NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH
-    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH");
+    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NfxUbQnAeqYUp3qVq4BQ7Bsh1wFPpsZyga");
 
     private static final StorageContext CTX = Storage.getStorageContext();
     private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
     private static final StorageMap wcaMilestonesMap = CTX.createMap("MILESTONES");
     private static final StorageMap wcaBuyerInfoMap = CTX.createMap("BUYER_INFO");
-    private static final StorageMap wcaIdentifierMap = CTX.createMap("IDENTIFIER");
 
     // creator, identifier, milestone count
     @DisplayName("CreateWCA")
@@ -135,6 +129,63 @@ public class WCAContract {
         return buyerInfo.purchases.get(buyer);
     }
 
+    public static String advanceQuery(
+        Hash160 creator, Hash160 buyer,
+        boolean unpaid, boolean canPurchase, boolean onGoing, boolean finished,
+        int page, int size
+    ) throws Exception {
+        require(page >= 1, "Page must bigger than 0");
+        require(size >= 1, "Size must bigger than 0");
+        int offset = (page - 1) * size;
+        int count = 0;
+        List<String> result = new List<>();
+        var iter = Storage.find(CTX, "BASIC_INFO", FindOptions.RemovePrefix);
+        while (result.size() < size && iter.next()) {
+            var identifier = ((Iterator.Struct<ByteString, ByteString>)iter.get()).key.toString();
+            var basicInfo = getWCABasicInfo(identifier);
+            var milestonesInfo = getWCAMilestones(identifier);
+            var buyerInfo = getWCABuyerInfo(identifier);
+
+            if (creator != null && creator != Hash160.zero()) {
+                // filter creator
+                if (basicInfo.owner != creator)
+                    continue;
+            }
+            if (buyer != null && buyer != Hash160.zero()) {
+                // filter buyer
+                if (!buyerInfo.purchases.containsKey(buyer))
+                    continue;
+            }
+            if (unpaid) {
+                // filter, unpaid wca only
+                if (basicInfo.paid)
+                    continue;
+            }
+            if (canPurchase) {
+                // filter, can purchase only
+                if (!availableToPurchase(basicInfo, milestonesInfo) || buyerInfo.remainTokenCount == 0)
+                    continue;
+            }
+            if (onGoing) {
+                // filter, on going only(next ms > 0 and not finished)
+                if (basicInfo.nextMilestoneIndex == 0 || basicInfo.finished)
+                    continue;
+            }
+            if (finished) {
+                // filter, finished only
+                if (!basicInfo.finished)
+                    continue;
+            }
+
+            if (count >= offset) {
+                // add filtered id to result list
+                result.add(identifier);
+            }
+            count++;
+        }
+        return StdLib.jsonSerialize(result);
+    }
+
     /**
      * Request to create a WCA with given params.
      * 
@@ -185,9 +236,6 @@ public class WCAContract {
         wcaBasicInfoMap.put(identifier, basicData);
         wcaMilestonesMap.put(identifier, milestoneData);
         wcaBuyerInfoMap.put(identifier, buyerData);
-        
-        // save identifier
-        insertIdentifier(owner, identifier);
 
         // fire event and done
         onCreateWCA.fire(owner, identifier, milestones.size());
@@ -201,8 +249,9 @@ public class WCAContract {
         require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(),
                 "Invalid caller signature. The caller needs to be the owner account.");
         require(basicInfo.paid, "You can't finish an unpaid WCA.");
+        require(!basicInfo.finished, "You can't finish an finished WCA.");
         List<WCAMilestone> milestones = getWCAMilestones(identifier);
-        require(basicInfo != null, "Identifier not found.");
+        require(milestones != null, "Identifier not found.");
 
         updateMilestone(basicInfo, milestones, index, proofOfWork);
         // store it back
@@ -234,8 +283,8 @@ public class WCAContract {
         require(buyerInfo != null, "Buyer info not found.");
 
         int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalPurchasedAmount;
-        int totalMiletones = basicInfo.milestoneCount;
-        int unfinishedMilestones = totalMiletones - basicInfo.finishedCount;
+        int totalMilestones = basicInfo.milestoneCount;
+        int unfinishedMilestones = totalMilestones - basicInfo.finishedCount;
 
         // for each buyer, return their token based on unfinished ms count
         // also remove stakes for that unfinished one
@@ -243,11 +292,11 @@ public class WCAContract {
         for (int i = 0; i < buyers.length; i++) {
             var purchaseAmount = buyerInfo.purchases.get(buyers[i]);
             var totalAmount = purchaseAmount + purchaseAmount * basicInfo.stakePer100Token / 100;
-            var returnAmount = totalAmount * unfinishedMilestones / totalMiletones;
+            var returnAmount = totalAmount * unfinishedMilestones / totalMilestones;
             transferTokenTo(buyers[i], returnAmount, identifier);
             remainTokens -= returnAmount;
         }
-        // considering all dicimals are floored, so totalTokens > 0
+        // considering all decimals are floored, so totalTokens > 0
         // return the reset of total tokens to creator
         if (remainTokens > 0) {
             transferTokenTo(basicInfo.owner, remainTokens, identifier);
@@ -314,22 +363,6 @@ public class WCAContract {
     private static void transferTokenTo(Hash160 target, int amount, String identifier) {
         Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.All,
                 new Object[] { Runtime.getExecutingScriptHash(), target, amount, identifier });
-    }
-
-    private static List<String> queryIdentifiers(Hash160 owner) {
-        var rawData = wcaIdentifierMap.get(owner.toByteString());
-        if (rawData == null)
-            return null;
-        return (List<String>) StdLib.deserialize(rawData);
-    }
-
-    private static void insertIdentifier(Hash160 owner, String identifier) {
-        List<String> identifiers = queryIdentifiers(owner);
-        if (identifiers == null) {
-            identifiers = new List<>();
-        }
-        identifiers.add(identifier);
-        wcaIdentifierMap.put(owner.toByteString(), StdLib.serialize(identifiers));
     }
 
     private static WCABasicInfo getWCABasicInfo(String identifier) {

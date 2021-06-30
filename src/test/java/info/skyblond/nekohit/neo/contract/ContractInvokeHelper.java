@@ -2,9 +2,11 @@ package info.skyblond.nekohit.neo.contract;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+
 import io.neow3j.contract.SmartContract;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
+import io.neow3j.types.Hash160;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
@@ -39,6 +41,28 @@ public class ContractInvokeHelper {
             new Signer[0]
         );
         return result.getStack().get(0).getInteger();
+    }
+
+    public static String advanceQuery(
+            SmartContract contract, Hash160 creator, Hash160 buyer,
+            boolean unpaid, boolean canPurchase, boolean onGoing, boolean finished,
+            int page, int size
+    ) throws Throwable {
+        var result = ContractTestFramework.testInvoke(
+                contract, "advanceQuery",
+                new ContractParameter[]{
+                        ContractParameter.hash160(creator),
+                        ContractParameter.hash160(buyer),
+                        ContractParameter.bool(unpaid),
+                        ContractParameter.bool(canPurchase),
+                        ContractParameter.bool(onGoing),
+                        ContractParameter.bool(finished),
+                        ContractParameter.integer(page),
+                        ContractParameter.integer(size)
+                },
+                new Signer[0]
+        );
+        return result.getStack().get(0).getString();
     }
 
     /**
