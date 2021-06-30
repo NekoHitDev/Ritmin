@@ -2,7 +2,6 @@ package info.skyblond.nekohit.neo.contract;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.List;
 
 import io.neow3j.contract.SmartContract;
 import io.neow3j.transaction.Signer;
