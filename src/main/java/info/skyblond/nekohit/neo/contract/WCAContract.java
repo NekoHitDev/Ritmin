@@ -156,32 +156,36 @@ public class WCAContract {
                 if (!buyerInfo.purchases.containsKey(buyer))
                     continue;
             }
-            if (unpaid) {
-                // filter, unpaid wca only
-                if (basicInfo.paid)
-                    continue;
-            }
-            if (canPurchase) {
-                // filter, can purchase only
-                if (!availableToPurchase(basicInfo, milestonesInfo) || buyerInfo.remainTokenCount == 0)
-                    continue;
-            }
-            if (onGoing) {
-                // filter, on going only(next ms > 0 and not finished)
-                if (basicInfo.nextMilestoneIndex == 0 || basicInfo.finished)
-                    continue;
-            }
-            if (finished) {
-                // filter, finished only
-                if (!basicInfo.finished)
-                    continue;
-            }
 
-            if (count >= offset) {
-                // add filtered id to result list
-                result.add(identifier);
+            boolean markup = false;
+
+            if (unpaid) {
+                // select unpaid wca
+                if (!basicInfo.paid)
+                    markup = true;
             }
-            count++;
+            if (!markup && canPurchase) {
+                // select can purchased
+                if (availableToPurchase(basicInfo, milestonesInfo) && buyerInfo.remainTokenCount != 0)
+                    markup = true;
+            }
+            if (!markup && onGoing) {
+                // select on going (next ms > 0 and not finished)
+                if (basicInfo.nextMilestoneIndex > 0 && !basicInfo.finished)
+                    markup = true;
+            }
+            if (!markup && finished) {
+                // select finished
+                if (basicInfo.finished)
+                    markup = true;
+            }
+            if (markup) {
+                if (count >= offset) {
+                    // add filtered id to result list
+                    result.add(identifier);
+                }
+                count++;
+            }
         }
         return StdLib.jsonSerialize(result);
     }
