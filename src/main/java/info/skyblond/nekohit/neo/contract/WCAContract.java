@@ -92,25 +92,23 @@ public class WCAContract {
         }
     }
 
-    public static String queryWCA(String identifier) {
+    public static WCAPojo queryWCA(String identifier) {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         if (basicInfo == null) {
-            return "";
+            return null;
         }
 
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         if (buyerInfo == null) {
-            return "";
+            return null;
         }
 
         List<WCAMilestone> milestones = getWCAMilestones(identifier);
         if (milestones == null) {
-            return "";
+            return null;
         }
 
-        WCAPojo result = new WCAPojo(identifier, basicInfo, milestones, buyerInfo);
-
-        return StdLib.jsonSerialize(result);
+        return new WCAPojo(identifier, basicInfo, milestones, buyerInfo);
     }
 
     public static int queryPurchase(String identifier, Hash160 buyer) {
@@ -124,7 +122,7 @@ public class WCAContract {
         return buyerInfo.purchases.get(buyer);
     }
 
-    public static String advanceQuery(
+    public static List<WCAPojo> advanceQuery(
         Hash160 creator, Hash160 buyer, int page, int size
     ) throws Exception {
         require(page >= 1, "Page must bigger than 0");
@@ -156,7 +154,7 @@ public class WCAContract {
                 result.add(pojo);
             count++;
         }
-        return StdLib.jsonSerialize(result);
+        return result;
     }
 
     public static String createWCA(
