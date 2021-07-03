@@ -7,14 +7,9 @@ import info.skyblond.nekohit.neo.domain.*;
 import info.skyblond.nekohit.neo.helper.Pair;
 import io.neow3j.devpack.*;
 import io.neow3j.devpack.Runtime;
+import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.FindOptions;
 import io.neow3j.devpack.contracts.ContractManagement;
-import io.neow3j.devpack.annotations.DisplayName;
-import io.neow3j.devpack.annotations.ManifestExtra;
-import io.neow3j.devpack.annotations.OnNEP17Payment;
-import io.neow3j.devpack.annotations.OnVerification;
-import io.neow3j.devpack.annotations.Permission;
-import io.neow3j.devpack.annotations.Trust;
 import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.StdLib;
 import io.neow3j.devpack.events.Event1Arg;
@@ -113,7 +108,7 @@ public class WCAContract {
             return "";
         }
 
-        WCAPojo result = new WCAPojo(basicInfo, milestones, buyerInfo);
+        WCAPojo result = new WCAPojo(identifier, basicInfo, milestones, buyerInfo);
 
         return StdLib.jsonSerialize(result);
     }
@@ -130,21 +125,21 @@ public class WCAContract {
     }
 
     public static String advanceQuery(
-        Hash160 creator, Hash160 buyer,
-        boolean unpaid, boolean canPurchase, boolean onGoing, boolean finished,
-        int page, int size
+        Hash160 creator, Hash160 buyer, int page, int size
     ) throws Exception {
         require(page >= 1, "Page must bigger than 0");
         require(size >= 1, "Size must bigger than 0");
         int offset = (page - 1) * size;
         int count = 0;
-        List<String> result = new List<>();
+        List<WCAPojo> result = new List<>();
         var iter = Storage.find(CTX, "BASIC_INFO", FindOptions.RemovePrefix);
         while (result.size() < size && iter.next()) {
             var identifier = ((Iterator.Struct<ByteString, ByteString>)iter.get()).key.toString();
             var basicInfo = getWCABasicInfo(identifier);
             var milestonesInfo = getWCAMilestones(identifier);
             var buyerInfo = getWCABuyerInfo(identifier);
+
+            if (!basicInfo.bePublic) continue;;
 
             if (creator != null && creator != Hash160.zero()) {
                 // filter creator
@@ -156,65 +151,27 @@ public class WCAContract {
                 if (!buyerInfo.purchases.containsKey(buyer))
                     continue;
             }
-
-            boolean markup = false;
-
-            if (unpaid) {
-                // select unpaid wca
-                if (!basicInfo.paid)
-                    markup = true;
-            }
-            if (!markup && canPurchase) {
-                // select can purchased
-                if (availableToPurchase(basicInfo, milestonesInfo) && buyerInfo.remainTokenCount != 0)
-                    markup = true;
-            }
-            if (!markup && onGoing) {
-                // select on going (next ms > 0 and not finished)
-                if (basicInfo.nextMilestoneIndex > 0 && !basicInfo.finished)
-                    markup = true;
-            }
-            if (!markup && finished) {
-                // select finished
-                if (basicInfo.finished)
-                    markup = true;
-            }
-            if (markup) {
-                if (count >= offset) {
-                    // add filtered id to result list
-                    result.add(identifier);
-                }
-                count++;
-            }
+            var pojo = new WCAPojo(identifier, basicInfo, milestonesInfo, buyerInfo);
+            if (count >= offset)
+                result.add(pojo);
+            count++;
         }
         return StdLib.jsonSerialize(result);
     }
 
-    /**
-     * Request to create a WCA with given params.
-     * 
-     * @param owner             ScriptHash of WCA owner, need to be the signer of
-     *                          this tx
-     * @param stakePer100Token  stake price for 1.00 token, represent in fraction
-     * @param maxTokenSoldCount total tokens for buyer
-     * @param descriptions      descriptions for milestone
-     * @param endTimestamps     endTimestamps for each milestone
-     * @param thresholdIndex    the index of threshold milestone
-     * @param coolDownInterval  cool down time between finish two milestones, miliseconds
-     * @param identifier        the name of this WCA
-     * 
-     * @return the global unique id for this WCA
-     */
     public static String createWCA(
-        Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
-        String[] descriptions, int[] endTimestamps, int thresholdIndex,
-        int coolDownInterval, String identifier
+        Hash160 owner, String wcaDescription,
+        int stakePer100Token, int maxTokenSoldCount,
+        String[] milestoneTitles, String[] milestoneDescriptions, int[] endTimestamps,
+        int thresholdIndex, int coolDownInterval,
+        boolean bePublic, String identifier
     ) throws Exception {
         require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), "Invalid sender signature. The owner of the wca needs to be the signing account.");
         // identifier should be unique
         require(wcaBasicInfoMap.get(identifier) == null, "Duplicate identifier.");
         // check milestone
-        require(descriptions.length == endTimestamps.length, "Cannot decide milestones count.");
+        require(milestoneTitles.length == milestoneDescriptions.length, "Cannot decide milestones count.");
+        require(milestoneDescriptions.length == endTimestamps.length, "Cannot decide milestones count.");
 
         // convert to object on the fly
         List<WCAMilestone> milestones = new List<>();
@@ -223,13 +180,13 @@ public class WCAContract {
             require(lastTimestamp < endTimestamps[i], "The end timestamp should increase.");
             require(endTimestamps[i] > Runtime.getTime(), "The end timestamp is already expired.");
             lastTimestamp = endTimestamps[i];
-            milestones.add(new WCAMilestone(descriptions[i], endTimestamps[i]));
+            milestones.add(new WCAMilestone(milestoneTitles[i], milestoneDescriptions[i], endTimestamps[i]));
         }
 
         // create wca info obj
         WCABasicInfo info = new WCABasicInfo(
-            owner, stakePer100Token, maxTokenSoldCount, 
-            milestones.size(), thresholdIndex, coolDownInterval
+            owner, wcaDescription, stakePer100Token, maxTokenSoldCount,
+            milestones.size(), thresholdIndex, coolDownInterval, bePublic
         );
 
         ByteString basicData = StdLib.serialize(info);
@@ -306,6 +263,7 @@ public class WCAContract {
             transferTokenTo(basicInfo.owner, remainTokens, identifier);
         }
         basicInfo.finished = true;
+        basicInfo.lastUpdateTime = Runtime.getTime();
         // store it back
         wcaBasicInfoMap.put(identifier, StdLib.serialize(basicInfo));
 
