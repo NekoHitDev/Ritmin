@@ -2,14 +2,18 @@ package info.skyblond.nekohit.neo.domain;
 
 import static info.skyblond.nekohit.neo.helper.Utils.require;
 import io.neow3j.devpack.Hash160;
+import io.neow3j.devpack.Runtime;
 
 public class WCABasicInfo {
     public Hash160 owner;
+    public String description;
     public int stakePer100Token;
     public int maxTokenSoldCount;
     public int milestoneCount;
     public int thresholdIndex;
     public int coolDownInterval;
+    public int creationTimestamp;
+    public boolean bePublic;
 
     /**
      * Indicate when the last milestone is update. Used to calculate the cool-down time.
@@ -37,11 +41,14 @@ public class WCABasicInfo {
     public boolean finished;
 
     public WCABasicInfo(
-        Hash160 owner, int stakePer100Token, int maxTokenSoldCount, 
-        int milestoneCount, int thresholdIndex, int coolDownInterval
+        Hash160 owner, String description,
+        int stakePer100Token, int maxTokenSoldCount,
+        int milestoneCount, int thresholdIndex, int coolDownInterval, boolean bePublic
     ) throws Exception {
         require(owner.isValid(), "Owner address is not a valid address.");
         this.owner = owner;
+        require(description != null, "Description can be empty, but not null.");
+        this.description = description;
         require(stakePer100Token > 0, "The stake amount per 100 token must be positive.");
         require(maxTokenSoldCount > 0, "The max sell token count must be positive.");
         this.stakePer100Token = stakePer100Token;
@@ -55,7 +62,9 @@ public class WCABasicInfo {
         }
         require(coolDownInterval >= 0, "Cool down interval must not be negative.");
         this.coolDownInterval = coolDownInterval;
+        this.bePublic = bePublic;
 
+        creationTimestamp = Runtime.getTime();
         lastUpdateTime = -1;
         finishedCount = 0;
         nextMilestoneIndex = 0;

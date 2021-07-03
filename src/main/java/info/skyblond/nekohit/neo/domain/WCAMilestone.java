@@ -2,11 +2,13 @@ package info.skyblond.nekohit.neo.domain;
 import io.neow3j.devpack.Runtime;
 
 public class WCAMilestone {
+    public String title;
     public String description;
     public int endTimestamp;
     public String linkToResult;
 
-    public WCAMilestone(String description, int endTimestamp) {
+    public WCAMilestone(String title, String description, int endTimestamp) {
+        this.title = title;
         this.description = description;
         this.endTimestamp = endTimestamp;
         linkToResult = null;

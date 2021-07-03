@@ -11,20 +11,11 @@ import io.neow3j.devpack.Runtime;
  * This class contains some helper function specific to WCAContract.class
  */
 public class WCAAuxiliary {
-    static boolean availableToPurchase(WCABasicInfo basicInfo, List<WCAMilestone> milestones) {
-        if(!basicInfo.paid)
-            return false;
-        if (basicInfo.nextMilestoneIndex != 0)
-            return false;
-        var firstMs = milestones.get(0);
-        return !firstMs.isExpired();
-    }
 
     static void throwIfNotAvailableToBuy(WCABasicInfo basicInfo, List<WCAMilestone> milestones) throws Exception {
         require(basicInfo.paid, "You can't buy an unpaid WCA.");
         require(basicInfo.nextMilestoneIndex == 0, "You can't buy a WCA already started.");
-        var firstMs = milestones.get(0);
-        require(!firstMs.isExpired(), "You can't buy a WCA already started.");
+        require(!milestones.get(0).isExpired(), "You can't buy a WCA already started.");
     }
 
     static void updateMilestone(
@@ -47,25 +38,11 @@ public class WCAAuxiliary {
 
     static boolean checkIfReadyToFinish(List<WCAMilestone> milestones) throws Exception {
         WCAMilestone ms = milestones.get(milestones.size() - 1);
-        if (ms.isFinished()) {
-            return true;
-        } else if (ms.isExpired()) {
-            return true;
-        } else {
-            return false;
-        }
+        return ms.isFinished() || ms.isExpired();
     }
     
     static boolean checkIfThresholdMet(WCABasicInfo basicInfo, List<WCAMilestone> milestones) {
-        if (basicInfo.nextMilestoneIndex > basicInfo.thresholdIndex) {
-            // next milestone include the threshold
-            return true;
-        } else if (milestones.get(basicInfo.thresholdIndex).isExpired()) {
-            // not met the threshold, but threshold ms is expired
-            return true;
-        } else {
-            // really not met the threshold ms
-            return false;
-        }
+        // pass the threshold, or threshold ms is expired
+        return basicInfo.nextMilestoneIndex > basicInfo.thresholdIndex || milestones.get(basicInfo.thresholdIndex).isExpired();
     }
 }

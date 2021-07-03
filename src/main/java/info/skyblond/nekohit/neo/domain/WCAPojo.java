@@ -1,13 +1,15 @@
 package info.skyblond.nekohit.neo.domain;
 
+import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
-import io.neow3j.devpack.contracts.StdLib;
 
 public class WCAPojo {
-    public String ownerBase64;
+    public String identifier;
+    public String description;
+    public Hash160 ownerHash160;
+    public int creationTimestamp;
     public int stakePer100Token;
     public int maxTokenSoldCount;
-    public boolean stakePaid;
     public int milestonesCount;
     public List<WCAMilestone> milestones;
     public int thresholdMilestoneIndex;
@@ -17,13 +19,17 @@ public class WCAPojo {
     public int remainTokenCount;
     public int buyerCount;
 
-    public WCAPojo(WCABasicInfo basicInfo, List<WCAMilestone> milestones, WCABuyerInfo buyerInfo) {
+    public String status;
+
+    public WCAPojo(String identifier, WCABasicInfo basicInfo, List<WCAMilestone> milestones, WCABuyerInfo buyerInfo) {
         // This is a workaround since Hash160 convert to int is too big for
         // StdLib.jsonSerialize, so encoded by Base64 first
-        this.ownerBase64 = StdLib.base64Encode(basicInfo.owner.toByteString());
+        this.identifier = identifier;
+        this.description = basicInfo.description;
+        this.ownerHash160 = basicInfo.owner;
+        this.creationTimestamp = basicInfo.creationTimestamp;
         this.stakePer100Token = basicInfo.stakePer100Token;
         this.maxTokenSoldCount = basicInfo.maxTokenSoldCount;
-        this.stakePaid = basicInfo.paid;
         this.milestonesCount = basicInfo.milestoneCount;
         this.milestones = milestones;
         this.thresholdMilestoneIndex = basicInfo.thresholdIndex;
@@ -32,5 +38,19 @@ public class WCAPojo {
         this.nextMilestone = basicInfo.nextMilestoneIndex;
         this.remainTokenCount = buyerInfo.remainTokenCount;
         this.buyerCount = buyerInfo.purchases.keys().length;
+
+        if (!basicInfo.paid) {
+            // not paid
+            this.status = "PENDING";
+        } else if (basicInfo.nextMilestoneIndex == 0 && !milestones.get(0).isExpired()) {
+            // paid but not started
+            this.status = "OPEN";
+        } else if (!basicInfo.finished) {
+            // paid, started, but not finished
+            this.status = "ACTIVE";
+        } else {
+            // finished
+            this.status = "FINISHED";
+        }
     }
 }
