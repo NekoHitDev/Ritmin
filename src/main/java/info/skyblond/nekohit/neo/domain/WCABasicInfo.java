@@ -1,8 +1,9 @@
 package info.skyblond.nekohit.neo.domain;
 
-import static info.skyblond.nekohit.neo.helper.Utils.require;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.Runtime;
+
+import static info.skyblond.nekohit.neo.helper.Utils.require;
 
 public class WCABasicInfo {
     public Hash160 owner;
@@ -29,7 +30,7 @@ public class WCABasicInfo {
      * Pointer to next ready to finished milestone *INDEX*(i.e. start with 0)
      */
     public int nextMilestoneIndex;
-    
+
     /**
      * Indicate if the stake is paid
      */
@@ -41,9 +42,9 @@ public class WCABasicInfo {
     public boolean finished;
 
     public WCABasicInfo(
-        Hash160 owner, String description,
-        int stakePer100Token, int maxTokenSoldCount,
-        int milestoneCount, int thresholdIndex, int coolDownInterval, boolean bePublic
+            Hash160 owner, String description,
+            int stakePer100Token, int maxTokenSoldCount,
+            int milestoneCount, int thresholdIndex, int coolDownInterval, boolean bePublic
     ) throws Exception {
         require(owner.isValid(), "Owner address is not a valid address.");
         this.owner = owner;
@@ -74,6 +75,7 @@ public class WCABasicInfo {
 
     /**
      * Get total staked token count
+     *
      * @return token count in fraction. 1.00 token means 100
      */
     public int getTotalStake() {

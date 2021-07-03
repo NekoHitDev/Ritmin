@@ -1,11 +1,11 @@
 package info.skyblond.nekohit.neo.contract;
 
-import static info.skyblond.nekohit.neo.helper.Utils.require;
-
 import info.skyblond.nekohit.neo.domain.WCABasicInfo;
 import info.skyblond.nekohit.neo.domain.WCAMilestone;
 import io.neow3j.devpack.List;
 import io.neow3j.devpack.Runtime;
+
+import static info.skyblond.nekohit.neo.helper.Utils.require;
 
 /**
  * This class contains some helper function specific to WCAContract.class
@@ -19,7 +19,7 @@ public class WCAAuxiliary {
     }
 
     static void updateMilestone(
-        WCABasicInfo basicInfo, List<WCAMilestone> milestones, int index, String proofOfWork
+            WCABasicInfo basicInfo, List<WCAMilestone> milestones, int index, String proofOfWork
     ) throws Exception {
         // check cool-down time first
         int currentTime = Runtime.getTime();
@@ -40,7 +40,7 @@ public class WCAAuxiliary {
         WCAMilestone ms = milestones.get(milestones.size() - 1);
         return ms.isFinished() || ms.isExpired();
     }
-    
+
     static boolean checkIfThresholdMet(WCABasicInfo basicInfo, List<WCAMilestone> milestones) {
         // pass the threshold, or threshold ms is expired
         return basicInfo.nextMilestoneIndex > basicInfo.thresholdIndex || milestones.get(basicInfo.thresholdIndex).isExpired();

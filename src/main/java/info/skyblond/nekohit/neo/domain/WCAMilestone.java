@@ -1,4 +1,5 @@
 package info.skyblond.nekohit.neo.domain;
+
 import io.neow3j.devpack.Runtime;
 
 public class WCAMilestone {
@@ -15,8 +16,9 @@ public class WCAMilestone {
     }
 
     /**
-     * {@link WCAMilestone#linkToResult} is considered a proof of milestone. 
+     * {@link WCAMilestone#linkToResult} is considered a proof of milestone.
      * If that is not null, then this milestone is finished.
+     *
      * @return true if finished; false if not.
      */
     public boolean isFinished() {
@@ -24,11 +26,12 @@ public class WCAMilestone {
     }
 
     /**
-     * When {@link WCAMilestone#endTimestamp} is passed, then the milestone 
+     * When {@link WCAMilestone#endTimestamp} is passed, then the milestone
      * is considering as expired, and you can't change it anymore.
+     *
      * @return
      */
-    public boolean isExpired(){
+    public boolean isExpired() {
         return endTimestamp <= Runtime.getTime();
     }
 }

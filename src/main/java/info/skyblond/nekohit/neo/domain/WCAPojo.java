@@ -1,12 +1,12 @@
 package info.skyblond.nekohit.neo.domain;
 
-import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.List;
+import io.neow3j.devpack.contracts.StdLib;
 
 public class WCAPojo {
     public String identifier;
     public String description;
-    public Hash160 ownerHash160;
+    public String ownerHashBase64;
     public int creationTimestamp;
     public int stakePer100Token;
     public int maxTokenSoldCount;
@@ -26,7 +26,7 @@ public class WCAPojo {
         // StdLib.jsonSerialize, so encoded by Base64 first
         this.identifier = identifier;
         this.description = basicInfo.description;
-        this.ownerHash160 = basicInfo.owner;
+        this.ownerHashBase64 = StdLib.base64Encode(basicInfo.owner.toByteString());
         this.creationTimestamp = basicInfo.creationTimestamp;
         this.stakePer100Token = basicInfo.stakePer100Token;
         this.maxTokenSoldCount = basicInfo.maxTokenSoldCount;

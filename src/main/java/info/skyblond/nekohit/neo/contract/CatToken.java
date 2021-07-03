@@ -1,27 +1,15 @@
 package info.skyblond.nekohit.neo.contract;
 
-import static info.skyblond.nekohit.neo.helper.Utils.require;
-import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
-
 import info.skyblond.nekohit.neo.helper.StorageHelper;
-import io.neow3j.devpack.ByteString;
-import io.neow3j.devpack.Contract;
-import io.neow3j.devpack.Hash160;
-import io.neow3j.devpack.Helper;
 import io.neow3j.devpack.Runtime;
-import io.neow3j.devpack.Storage;
-import io.neow3j.devpack.StorageContext;
-import io.neow3j.devpack.StorageMap;
-import io.neow3j.devpack.annotations.DisplayName;
-import io.neow3j.devpack.annotations.ManifestExtra;
-import io.neow3j.devpack.annotations.OnDeployment;
-import io.neow3j.devpack.annotations.OnVerification;
-import io.neow3j.devpack.annotations.Permission;
-import io.neow3j.devpack.annotations.SupportedStandards;
-import io.neow3j.devpack.annotations.Trust;
+import io.neow3j.devpack.*;
+import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.events.Event3Args;
+
+import static info.skyblond.nekohit.neo.helper.Utils.require;
+import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
 @ManifestExtra(key = "name", value = "CAT Token Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
@@ -79,7 +67,7 @@ public class CatToken {
 
         onTransfer.fire(from, to, amount);
         if (ContractManagement.getContract(to) != null) {
-            Contract.call(to, "onNEP17Payment", CallFlags.All, new Object[] { from, amount, data });
+            Contract.call(to, "onNEP17Payment", CallFlags.All, new Object[]{from, amount, data});
         }
 
         return true;

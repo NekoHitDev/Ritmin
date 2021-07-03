@@ -1,9 +1,10 @@
 package info.skyblond.nekohit.neo.domain;
 
-import static info.skyblond.nekohit.neo.helper.Utils.require;
+import info.skyblond.nekohit.neo.helper.Pair;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.Map;
-import info.skyblond.nekohit.neo.helper.Pair;
+
+import static info.skyblond.nekohit.neo.helper.Utils.require;
 
 public class WCABuyerInfo {
     public Map<Hash160, Integer> purchases;
@@ -17,9 +18,9 @@ public class WCABuyerInfo {
     }
 
     /**
-     * Record buyer's purchase record into list. 
-     * 
-     * @param buyer who is making this purchase
+     * Record buyer's purchase record into list.
+     *
+     * @param buyer  who is making this purchase
      * @param amount how much does he/her/it want to buy
      * @throws Exception if remain amount is smaller than buyer's intended amount
      */
@@ -39,7 +40,6 @@ public class WCABuyerInfo {
     }
 
     /**
-     * 
      * @param basicInfo
      * @param buyer
      * @return Pair(buyer amount, creator amount)
@@ -61,7 +61,7 @@ public class WCABuyerInfo {
         this.remainTokenCount += buyerPurchaseAmount;
         // remove from total selled amount
         this.totalPurchasedAmount -= buyerPurchaseAmount;
-        return new Pair<Integer,Integer>(remainAmount, toCreatorAmount);
+        return new Pair<Integer, Integer>(remainAmount, toCreatorAmount);
     }
 
     public int fullRefund(Hash160 buyer) throws Exception {
