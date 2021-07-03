@@ -13,6 +13,7 @@ import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
+
 import java.util.Scanner;
 
 public class UpdateContract {
@@ -23,7 +24,7 @@ public class UpdateContract {
     private static final int CONFIRM_TIME = 30;
     private static final boolean REALLY_DEPLOY_FLAG = true;
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
-    private static final Hash160 CONTRACT_HASH = new Hash160("0x11ed46dd463f850b628b27e632532157fb6200bd");
+    private static final Hash160 CONTRACT_HASH = new Hash160("0xbb1b061b381ccbee925909709be2ef37ece3e6c8");
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {
@@ -49,7 +50,7 @@ public class UpdateContract {
         System.out.println("Type 'continue' to continue...");
         var line = scanner.nextLine();
         scanner.close();
-        if (!line.toLowerCase().trim().equals("continue")){
+        if (!line.toLowerCase().trim().equals("continue")) {
             System.out.println("Canceled.");
             return;
         }
@@ -65,9 +66,9 @@ public class UpdateContract {
             var manifestBytes = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(compileResult.getManifest());
             var tx = CONTRACT
                     .invokeFunction(
-                        "update",
-                        ContractParameter.byteArray(compileResult.getNefFile().toArray()),
-                        ContractParameter.byteArray(manifestBytes)
+                            "update",
+                            ContractParameter.byteArray(compileResult.getNefFile().toArray()),
+                            ContractParameter.byteArray(manifestBytes)
                     )
                     .signers(Signer.calledByEntry(deployWallet.getDefaultAccount()))
                     .wallet(deployWallet)

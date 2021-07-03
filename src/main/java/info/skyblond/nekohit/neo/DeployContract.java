@@ -1,25 +1,25 @@
 package info.skyblond.nekohit.neo;
 
-import java.math.BigInteger;
-import java.util.Scanner;
-
-import info.skyblond.nekohit.neo.contract.WCAContract;
-import io.neow3j.contract.FungibleToken;
-import io.neow3j.protocol.core.response.NeoSendRawTransaction;
-import io.neow3j.types.ContractParameter;
-import io.neow3j.types.Hash160;
-import org.apache.commons.codec.binary.Hex;
 import info.skyblond.nekohit.neo.contract.CatToken;
+import info.skyblond.nekohit.neo.contract.WCAContract;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractManagement;
+import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
+import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.protocol.http.HttpService;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.Transaction;
+import io.neow3j.types.ContractParameter;
+import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
+import org.apache.commons.codec.binary.Hex;
+
+import java.math.BigInteger;
+import java.util.Scanner;
 
 public class DeployContract {
     private static final Neow3j NEOW3J = Neow3j.build(
@@ -29,7 +29,7 @@ public class DeployContract {
     private static final int CONFIRM_TIME = 30;
     private static final boolean REALLY_DEPLOY_FLAG = false;
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
-    
+
     public static void main(String[] args) throws Throwable {
         // compile contract
         var compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
@@ -59,7 +59,7 @@ public class DeployContract {
         System.out.println("Type 'confirmed' to continue...");
         var line = scanner.nextLine();
         scanner.close();
-        if (!line.toLowerCase().trim().equals("confirmed")){
+        if (!line.toLowerCase().trim().equals("confirmed")) {
             System.out.println("Canceled.");
             return;
         }
@@ -73,15 +73,15 @@ public class DeployContract {
 
         if (REALLY_DEPLOY_FLAG) {
             var tx = new ContractManagement(NEOW3J)
-            .deploy(compileResult.getNefFile(), compileResult.getManifest())
-            .signers(Signer.global(deployWallet.getDefaultAccount().getScriptHash()))
-            .wallet(deployWallet)
-            .sign();
+                    .deploy(compileResult.getNefFile(), compileResult.getManifest())
+                    .signers(Signer.global(deployWallet.getDefaultAccount().getScriptHash()))
+                    .wallet(deployWallet)
+                    .sign();
             var response = tx.send();
             if (response.hasError()) {
                 throw new Exception(String.format("Deployment was not successful. Error message from neo-node was: "
                         + "'%s'\n", response.getError().getMessage()));
-            } 
+            }
             System.out.println("Deployed tx: 0x" + tx.getTxId());
             Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
             System.out.println("Gas fee: " + getGasFeeFromTx(tx));

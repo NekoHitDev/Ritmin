@@ -2,6 +2,7 @@ package info.skyblond.nekohit.neo.helper;
 
 import io.neow3j.devpack.StorageContext;
 import io.neow3j.devpack.annotations.Syscall;
+
 import static io.neow3j.script.InteropService.SYSTEM_STORAGE_PUT;
 
 public class StorageHelper {

@@ -14,8 +14,8 @@ class UtilsTest {
     void testRequireFalse() {
         var message = "message";
         var t = assertThrows(
-            Exception.class,
-            () -> Utils.require(false, message)
+                Exception.class,
+                () -> Utils.require(false, message)
         );
         assertTrue(t.getMessage().contains(message), "Unknown error: " + t.getMessage());
     }

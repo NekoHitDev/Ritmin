@@ -1,20 +1,24 @@
 package info.skyblond.nekohit.neo.contract;
 
-import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
-import static info.skyblond.nekohit.neo.helper.Utils.require;
-import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.*;
-import info.skyblond.nekohit.neo.domain.*;
+import info.skyblond.nekohit.neo.domain.WCABasicInfo;
+import info.skyblond.nekohit.neo.domain.WCABuyerInfo;
+import info.skyblond.nekohit.neo.domain.WCAMilestone;
+import info.skyblond.nekohit.neo.domain.WCAPojo;
 import info.skyblond.nekohit.neo.helper.Pair;
-import io.neow3j.devpack.*;
 import io.neow3j.devpack.Runtime;
+import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
+import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.constants.FindOptions;
 import io.neow3j.devpack.contracts.ContractManagement;
-import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.StdLib;
 import io.neow3j.devpack.events.Event1Arg;
 import io.neow3j.devpack.events.Event3Args;
 import io.neow3j.devpack.events.Event4Args;
+
+import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.*;
+import static info.skyblond.nekohit.neo.helper.Utils.require;
+import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
@@ -92,23 +96,24 @@ public class WCAContract {
         }
     }
 
-    public static WCAPojo queryWCA(String identifier) {
+    public static String queryWCA(String identifier) {
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         if (basicInfo == null) {
-            return null;
+            return "";
         }
 
         WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         if (buyerInfo == null) {
-            return null;
+            return "";
         }
 
         List<WCAMilestone> milestones = getWCAMilestones(identifier);
         if (milestones == null) {
-            return null;
+            return "";
         }
 
-        return new WCAPojo(identifier, basicInfo, milestones, buyerInfo);
+        var pojo = new WCAPojo(identifier, basicInfo, milestones, buyerInfo);
+        return StdLib.jsonSerialize(pojo);
     }
 
     public static int queryPurchase(String identifier, Hash160 buyer) {
@@ -122,8 +127,8 @@ public class WCAContract {
         return buyerInfo.purchases.get(buyer);
     }
 
-    public static List<WCAPojo> advanceQuery(
-        Hash160 creator, Hash160 buyer, int page, int size
+    public static String advanceQuery(
+            Hash160 creator, Hash160 buyer, int page, int size
     ) throws Exception {
         require(page >= 1, "Page must bigger than 0");
         require(size >= 1, "Size must bigger than 0");
@@ -132,12 +137,12 @@ public class WCAContract {
         List<WCAPojo> result = new List<>();
         var iter = Storage.find(CTX, "BASIC_INFO", FindOptions.RemovePrefix);
         while (result.size() < size && iter.next()) {
-            var identifier = ((Iterator.Struct<ByteString, ByteString>)iter.get()).key.toString();
+            var identifier = ((Iterator.Struct<ByteString, ByteString>) iter.get()).key.toString();
             var basicInfo = getWCABasicInfo(identifier);
             var milestonesInfo = getWCAMilestones(identifier);
             var buyerInfo = getWCABuyerInfo(identifier);
 
-            if (!basicInfo.bePublic) continue;;
+            if (!basicInfo.bePublic) continue;
 
             if (creator != null && creator != Hash160.zero()) {
                 // filter creator
@@ -154,15 +159,15 @@ public class WCAContract {
                 result.add(pojo);
             count++;
         }
-        return result;
+        return StdLib.jsonSerialize(result);
     }
 
     public static String createWCA(
-        Hash160 owner, String wcaDescription,
-        int stakePer100Token, int maxTokenSoldCount,
-        String[] milestoneTitles, String[] milestoneDescriptions, int[] endTimestamps,
-        int thresholdIndex, int coolDownInterval,
-        boolean bePublic, String identifier
+            Hash160 owner, String wcaDescription,
+            int stakePer100Token, int maxTokenSoldCount,
+            String[] milestoneTitles, String[] milestoneDescriptions, int[] endTimestamps,
+            int thresholdIndex, int coolDownInterval,
+            boolean bePublic, String identifier
     ) throws Exception {
         require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), "Invalid sender signature. The owner of the wca needs to be the signing account.");
         // identifier should be unique
@@ -183,8 +188,8 @@ public class WCAContract {
 
         // create wca info obj
         WCABasicInfo info = new WCABasicInfo(
-            owner, wcaDescription, stakePer100Token, maxTokenSoldCount,
-            milestones.size(), thresholdIndex, coolDownInterval, bePublic
+                owner, wcaDescription, stakePer100Token, maxTokenSoldCount,
+                milestones.size(), thresholdIndex, coolDownInterval, bePublic
         );
 
         ByteString basicData = StdLib.serialize(info);
@@ -322,7 +327,7 @@ public class WCAContract {
     // Currently due to neow3j/neow3j#601, they won't work if they are outside of this contract.
     private static void transferTokenTo(Hash160 target, int amount, String identifier) {
         Contract.call(CAT_TOKEN_HASH, "transfer", CallFlags.All,
-                new Object[] { Runtime.getExecutingScriptHash(), target, amount, identifier });
+                new Object[]{Runtime.getExecutingScriptHash(), target, amount, identifier});
     }
 
     private static WCABasicInfo getWCABasicInfo(String identifier) {
