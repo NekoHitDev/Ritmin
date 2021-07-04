@@ -68,12 +68,6 @@ public class ContractInvokeHelper {
      * Create WCA, return the identifier
      */
     public static String createWCA(
-
-            // Hash160 owner, String wcaDescription,
-            //        int stakePer100Token, int maxTokenSoldCount,
-            //        String[] milestoneTitles, String[] milestoneDescriptions, int[] endTimestamps,
-            //        int thresholdIndex, int coolDownInterval,
-            //        boolean bePublic, String identifier
             SmartContract contract, String wcaDescription,
             int stakePer100Token, long totalAmount,
             String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
