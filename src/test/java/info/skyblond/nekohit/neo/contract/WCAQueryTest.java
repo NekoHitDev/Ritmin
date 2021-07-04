@@ -202,4 +202,51 @@ public class WCAQueryTest extends ContractTestFramework {
                 Hash160.ZERO, 1, 20
         )));
     }
+
+    @Test
+    void testLargeAdvancedQuery() throws Throwable {
+        // Skip this test if is on public chain
+        if (isPublicChain())
+            return;
+
+        var buyerWallet = getTestWallet();
+        var msCount = 10;
+        var milestoneTitle = new String[msCount];
+        var milestoneDescriptions = new String[msCount];
+        var milestoneEndTime = new Long[msCount];
+
+        for (int i = 0; i < msCount; i++) {
+            milestoneTitle[i] = "Title ".repeat(100);
+            milestoneDescriptions[i] = "description ".repeat(100);
+            milestoneEndTime[i] = System.currentTimeMillis() * 2 + i;
+        }
+
+        for (int i = 0; i < 1000; i++) {
+            int finalI = i;
+            Wallet finalBuyerWallet = buyerWallet;
+            new Thread(() -> {
+                try {
+                    ContractInvokeHelper.createWCA(
+                            getWcaContract(), "description ".repeat(100),
+                            1_00, 1_00,
+                            milestoneTitle, milestoneDescriptions, milestoneEndTime,
+                            0, 1, true,
+                            "test_large_query_" + finalI + "_" + System.currentTimeMillis(),
+                            finalBuyerWallet
+                    );
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                }
+            }).start();
+            if (i % 20 == 0) {
+                buyerWallet = getTestWallet();
+            }
+        }
+
+        Thread.sleep(5000);
+        System.out.println(assertDoesNotThrow(() -> ContractInvokeHelper.advanceQuery(
+                getWcaContract(),
+                Hash160.ZERO, Hash160.ZERO, 1, 9999
+        )));
+    }
 }
