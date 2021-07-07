@@ -42,7 +42,11 @@ public class WCAPojo {
         if (!basicInfo.paid) {
             // not paid
             this.status = "PENDING";
-        } else if (basicInfo.nextMilestoneIndex == 0 && !milestones.get(0).isExpired()) {
+        } else if (
+                basicInfo.nextMilestoneIndex == 0
+                        && !milestones.get(0).isExpired()
+                        && !basicInfo.finished
+        ) {
             // paid but not started
             this.status = "OPEN";
         } else if (!basicInfo.finished) {
