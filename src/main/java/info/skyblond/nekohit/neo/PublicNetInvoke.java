@@ -19,28 +19,46 @@ import io.neow3j.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Scanner;
 
 @SuppressWarnings({"unused", "SameParameterValue"})
 public final class PublicNetInvoke {
     private static final Logger logger = LoggerFactory.getLogger(PublicNetInvoke.class);
 
-    private static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://seed1t.neo.org:20332"));
+    private static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://seed2t.neo.org:20332"));
     private static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
     private static final FungibleToken CAT_TOKEN = new FungibleToken(new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7"), NEOW3J);
-    private static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0x11ed46dd463f850b628b27e632532157fb6200bd"), NEOW3J);
+    private static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0xbb1b061b381ccbee925909709be2ef37ece3e6c8"), NEOW3J);
 
     private static Wallet wallet;
 
     public static void main(String[] args) throws Throwable {
-        String result = advanceQuery(
-                Hash160.ZERO, Hash160.ZERO,
-                true, false, false, false,
-                1, 20
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Paste account WIF:");
+        var walletWIF = scanner.nextLine();
+        // flush WIF out of screen
+        for (int i = 0; i < 1000; i++) {
+            System.out.println();
+        }
+        scanner.close();
+        wallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
+
+        var id = createAndPayWCA(
+                "中文测试！！！",
+                1, 100_00,
+                new String[]{"MS1", "MS2", "MS3"},
+                new String[]{"milestone #1", "milestone #2", "milestone #3"},
+                new Long[]{
+                        System.currentTimeMillis() + 1 * 30L * 24 * 60 * 60 * 1000,
+                        System.currentTimeMillis() + 2 * 30L * 24 * 60 * 60 * 1000,
+                        System.currentTimeMillis() + 3 * 30L * 24 * 60 * 60 * 1000
+                },
+                0, 100,
+                true, "中文标签测试_" + System.currentTimeMillis()
         );
-        System.out.println(result);
+        System.out.println(id);
     }
 
     private static double getGasFeeFromTx(Transaction tx) {
@@ -73,6 +91,8 @@ public final class PublicNetInvoke {
         var tx = WCA_CONTRACT.callInvokeFunction(function, Arrays.asList(parameters), Signer.calledByEntry(wallet.getDefaultAccount()));
         if (tx.hasError())
             throw new Exception(String.format("Error when test invoking %s: %s", function, tx.getError().getMessage()));
+        if (tx.getInvocationResult().hasStateFault())
+            throw new Exception(tx.getInvocationResult().getException());
         return tx.getInvocationResult();
     }
 
@@ -92,35 +112,34 @@ public final class PublicNetInvoke {
     }
 
     private static String advanceQuery(
-            Hash160 creator, Hash160 buyer,
-            boolean unpaid, boolean canPurchase, boolean onGoing, boolean finished,
-            int page, int size
+            Hash160 creator, Hash160 buyer, int page, int size
     ) throws Throwable {
         var result = testInvoke("advanceQuery",
                 ContractParameter.hash160(creator),
                 ContractParameter.hash160(buyer),
-                ContractParameter.bool(unpaid),
-                ContractParameter.bool(canPurchase),
-                ContractParameter.bool(onGoing),
-                ContractParameter.bool(finished),
                 ContractParameter.integer(page),
                 ContractParameter.integer(size));
         return result.getStack().get(0).getString();
     }
 
+
     private static String createWCA(
-            int stakePer100Token, long totalAmount,
-            String[] descriptions, Long[] endTimestamps, int thresholdIndex,
-            long coolDownInterval, String identifier
+            String wcaDescription, int stakePer100Token, long maxTokenSoldCount,
+            String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
+            int thresholdIndex, long coolDownInterval,
+            boolean bePublic, String identifier
     ) throws Throwable {
         var appLog = invokeWCA("createWCA",
                 ContractParameter.hash160(wallet.getDefaultAccount()),
+                ContractParameter.string(wcaDescription),
                 ContractParameter.integer(stakePer100Token),
-                ContractParameter.integer(BigInteger.valueOf(totalAmount)),
-                ContractParameter.array(Arrays.asList(descriptions)),
+                ContractParameter.integer(BigInteger.valueOf(maxTokenSoldCount)),
+                ContractParameter.array(Arrays.asList(milestoneTitles)),
+                ContractParameter.array(Arrays.asList(milestoneDescriptions)),
                 ContractParameter.array(Arrays.asList(endTimestamps)),
                 ContractParameter.integer(thresholdIndex),
                 ContractParameter.integer(BigInteger.valueOf(coolDownInterval)),
+                ContractParameter.bool(bePublic),
                 ContractParameter.string(identifier));
         return appLog.getExecutions().get(0).getStack().get(0).getString();
     }
@@ -145,17 +164,18 @@ public final class PublicNetInvoke {
     }
 
     private static String createAndPayWCA(
-            int stakePer100Token, long totalAmount,
-            String[] descriptions, Long[] endTimestamps, int thresholdIndex,
-            long coolDownInterval, String identifier
+            String wcaDescription, int stakePer100Token, long maxTokenSoldCount,
+            String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
+            int thresholdIndex, long coolDownInterval,
+            boolean bePublic, String identifier
     ) throws Throwable {
-        var result = createWCA(
-                stakePer100Token, totalAmount, descriptions, endTimestamps,
-                thresholdIndex, coolDownInterval, identifier);
+        var result = createWCA(wcaDescription, stakePer100Token, maxTokenSoldCount,
+                milestoneTitles, milestoneDescriptions, endTimestamps,
+                thresholdIndex, coolDownInterval, bePublic, identifier);
 
         // pay stake
         transferCatToken(WCA_CONTRACT.getScriptHash(),
-                stakePer100Token * totalAmount / 100,
+                stakePer100Token * maxTokenSoldCount / 100,
                 identifier, true);
 
         return result;

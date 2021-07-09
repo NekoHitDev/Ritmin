@@ -18,7 +18,7 @@ import java.util.Scanner;
 
 public class UpdateContract {
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("http://seed1t.neo.org:20332")
+            new HttpService("http://seed2t.neo.org:20332")
     );
 
     private static final int CONFIRM_TIME = 30;
