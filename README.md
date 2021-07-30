@@ -12,7 +12,7 @@ Supported standard: `NEP-17`
 
 Deployed: 
 
-+ RC3 Test net: [`0xf461dff74f454e5016421341f115a2e789eadbd7`](https://neo3.neotube.io/contract/0xf461dff74f454e5016421341f115a2e789eadbd7)
++ RC4 Test net: [`0xf461dff74f454e5016421341f115a2e789eadbd7`](https://neo3.neotube.io/contract/0xf461dff74f454e5016421341f115a2e789eadbd7)
 
 + Main net: `TODO`
 
@@ -54,7 +54,7 @@ Trust: `*`
 
 Currently we have a telegram bot [dofovn_bot](https://t.me/dufovn_bot) to do the airdrop.
 
-+ Use `/airdrop` command, then send bot your address, like `NPLa4dfW8sNLj9j71Qg1JcFjUp36waDEBr`, then you will receive 50 cat token on Neo N3 RC3 test net. **You can request this everyday** (count in UTC, you can query the server side time by using `/time`).
++ Use `/airdrop` command, then send bot your address, like `NPLa4dfW8sNLj9j71Qg1JcFjUp36waDEBr`, then you will receive 50 cat token on Neo N3 RC4 test net. **You can request this everyday** (count in UTC, you can query the server side time by using `/time`).
 + Use `/balance`, then send bot your address, you can query the CAT token balance of the given address. 
 
 + If something goes wrong, you can check the status of this bot by using `/status` command. This will reply you a status report and a report email address, feel free to report the malfunction status to this email box.
@@ -67,7 +67,7 @@ This is the token accepted by other contracts (currently only the WCA Contract.)
 
 Deployed: 
 
-+ RC3 Test net: [`0xbb1b061b381ccbee925909709be2ef37ece3e6c8`](https://neo3.neotube.io/contract/0xbb1b061b381ccbee925909709be2ef37ece3e6c8)
++ RC4 Test net: [`0x7eaf33edde0cb499e84d940df65d875bed10b612`](https://neo3.neotube.io/contract/0x7eaf33edde0cb499e84d940df65d875bed10b612)
 
 + Main net: `TODO`
 
