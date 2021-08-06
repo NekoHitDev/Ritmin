@@ -11,6 +11,7 @@ import io.neow3j.devpack.events.Event3Args;
 import static info.skyblond.nekohit.neo.helper.Utils.require;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
+@SuppressWarnings("unused")
 @ManifestExtra(key = "name", value = "CAT Token Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
@@ -18,10 +19,9 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @Trust(value = "*")
 @SupportedStandards("NEP-17")
 public class CatToken {
-
     // public net owner: NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3
-    // private net owner: NVCqzVkjApBWtgKa7c7gbURrJ4dmFYLekS
-    private static final Hash160 OWNER = addressToScriptHash("NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3");
+    // private net owner: NM9GZtomtwHRmqCkj7TgPMq5ssDnHsP7h5
+    private static final Hash160 OWNER = addressToScriptHash("NM9GZtomtwHRmqCkj7TgPMq5ssDnHsP7h5");
 
     @DisplayName("Transfer")
     private static Event3Args<Hash160, Hash160, Integer> onTransfer;
@@ -52,7 +52,7 @@ public class CatToken {
     }
 
     public static boolean transfer(Hash160 from, Hash160 to, int amount, Object data) throws Exception {
-        require(from.isValid() && to.isValid(), "From or To address is not a valid address.");
+        require(Hash160.isValid(from) && Hash160.isValid(to), "From or To address is not a valid address.");
         require(amount >= 0, "The transfer amount was negative.");
         require(Runtime.checkWitness(from) || from == Runtime.getCallingScriptHash(),
                 "Invalid sender signature. The sender of the tokens needs to be the signing account.");
@@ -74,7 +74,7 @@ public class CatToken {
     }
 
     public static int balanceOf(Hash160 account) throws Exception {
-        require(account.isValid(), "Argument is not a valid address.");
+        require(Hash160.isValid(account), "Argument is not a valid address.");
         return getBalance(account);
     }
 

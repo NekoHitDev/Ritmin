@@ -6,7 +6,7 @@ public class Utils {
      *
      * @param condition the condition required to check
      * @param message   if condition is false, the message for exception
-     * @throws Exception
+     * @throws Exception if the condition is failed
      */
     public static void require(boolean condition, String message) throws Exception {
         if (!condition) {

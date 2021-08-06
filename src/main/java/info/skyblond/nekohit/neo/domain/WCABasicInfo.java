@@ -46,7 +46,7 @@ public class WCABasicInfo {
             int stakePer100Token, int maxTokenSoldCount,
             int milestoneCount, int thresholdIndex, int coolDownInterval, boolean bePublic
     ) throws Exception {
-        require(owner.isValid(), "Owner address is not a valid address.");
+        require(Hash160.isValid(owner), "Owner address is not a valid address.");
         this.owner = owner;
         require(description != null, "Description can be empty, but not null.");
         this.description = description;
