@@ -12,7 +12,7 @@ Supported standard: `NEP-17`
 
 Deployed: 
 
-+ RC4 Test net: [`0xf461dff74f454e5016421341f115a2e789eadbd7`](https://neo3.neotube.io/contract/0xf461dff74f454e5016421341f115a2e789eadbd7)
++ RC4 Test net: [`0xf461dff74f454e5016421341f115a2e789eadbd7`](https://neo3.testnet.neotube.io/contract/0xf461dff74f454e5016421341f115a2e789eadbd7)
 
 + Main net: `TODO`
 
@@ -67,7 +67,7 @@ This is the token accepted by other contracts (currently only the WCA Contract.)
 
 Deployed: 
 
-+ RC4 Test net: [`0x7eaf33edde0cb499e84d940df65d875bed10b612`](https://neo3.neotube.io/contract/0x7eaf33edde0cb499e84d940df65d875bed10b612)
++ RC4 Test net: [`0x7eaf33edde0cb499e84d940df65d875bed10b612`](https://neo3.testnet.neotube.io/contract/0x7eaf33edde0cb499e84d940df65d875bed10b612)
 
 + Main net: `TODO`
 

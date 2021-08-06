@@ -33,7 +33,7 @@ public class WCAContract {
 
     // address of CatToken Hash.
     // For private test net: NL75sYPVR5NcVpimsA4THSG6gwB9iNFPcQ
-    // For public net: TODO
+    // For public test net: NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH
     static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NL75sYPVR5NcVpimsA4THSG6gwB9iNFPcQ");
 
     private static final StorageContext CTX = Storage.getStorageContext();

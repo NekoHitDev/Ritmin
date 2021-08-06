@@ -1,9 +1,11 @@
 package info.skyblond.nekohit.neo;
 
+import info.skyblond.nekohit.neo.contract.CatToken;
 import info.skyblond.nekohit.neo.contract.WCAContract;
 import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.SmartContract;
+import io.neow3j.crypto.ECKeyPair;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.ObjectMapperFactory;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
@@ -16,17 +18,18 @@ import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
+import java.math.BigInteger;
 import java.util.Scanner;
 
 public class UpdateContract {
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("http://seed2t.neo.org:20332")
+            new HttpService("https://testnet1.neo.coz.io")
     );
 
     private static final int CONFIRM_TIME = 30;
-    private static final boolean REALLY_DEPLOY_FLAG = true;
+    private static final boolean REALLY_DEPLOY_FLAG = false;
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
-    private static final Hash160 CONTRACT_HASH = new Hash160("0xbb1b061b381ccbee925909709be2ef37ece3e6c8");
+    private static final Hash160 CONTRACT_HASH = new Hash160("0x7eaf33edde0cb499e84d940df65d875bed10b612");
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {
