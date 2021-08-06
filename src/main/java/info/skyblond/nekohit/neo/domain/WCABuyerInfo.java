@@ -40,28 +40,28 @@ public class WCABuyerInfo {
     }
 
     /**
-     * @param basicInfo
-     * @param buyer
+     * @param basicInfo of a given WCA
+     * @param buyer Hash160 of buyer
      * @return Pair(buyer amount, creator amount)
-     * @throws Exception
+     * @throws Exception if partial refund is not available
      */
     public Pair<Integer, Integer> partialRefund(WCABasicInfo basicInfo, Hash160 buyer) throws Exception {
         require(this.purchases.containsKey(buyer), "Purchase not found");
         Integer buyerPurchaseAmount = this.purchases.get(buyer);
         require(buyerPurchaseAmount != null, "Purchase found but amount is null");
 
-        int totalMiletones = basicInfo.milestoneCount;
+        int totalMilestones = basicInfo.milestoneCount;
         // finished milestone belongs to creator
-        int toCreatorAmount = buyerPurchaseAmount * basicInfo.finishedCount / totalMiletones;
+        int toCreatorAmount = buyerPurchaseAmount * basicInfo.finishedCount / totalMilestones;
         // rest of them goes back to buyer
         int remainAmount = buyerPurchaseAmount - toCreatorAmount;
         // after this, remove this record
         this.purchases.remove(buyer);
         // add to remain token
         this.remainTokenCount += buyerPurchaseAmount;
-        // remove from total selled amount
+        // remove from total sold amount
         this.totalPurchasedAmount -= buyerPurchaseAmount;
-        return new Pair<Integer, Integer>(remainAmount, toCreatorAmount);
+        return new Pair<>(remainAmount, toCreatorAmount);
     }
 
     public int fullRefund(Hash160 buyer) throws Exception {
@@ -71,7 +71,7 @@ public class WCABuyerInfo {
         this.purchases.remove(buyer);
         // add to remain token
         this.remainTokenCount += amount;
-        // remove from total selled amount
+        // remove from total sold amount
         this.totalPurchasedAmount -= amount;
         return amount;
     }

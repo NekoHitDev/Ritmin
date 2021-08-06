@@ -1,16 +1,17 @@
 package info.skyblond.nekohit.neo.contract;
 
+import info.skyblond.nekohit.neo.util.Utils;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractManagement;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.GasToken;
 import io.neow3j.contract.SmartContract;
-import io.neow3j.crypto.ECKeyPair;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.core.response.InvocationResult;
 import io.neow3j.protocol.core.response.NeoApplicationLog;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.protocol.http.HttpService;
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -23,15 +24,15 @@ import io.neow3j.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * This class is the basic frame work for testing contract.
+ * This class is the basic framework for testing contract.
  * It offers functions like compile and deploy contract,
  * set up contract address, offering some constants, etc.
  */
@@ -46,12 +47,12 @@ public class ContractTestFramework {
     protected static final Class<CatToken> CAT_TOKEN_CLASS = CatToken.class;
     protected static final Class<WCAContract> WCA_CONTRACT_CLASS = WCAContract.class;
 
-    // the node address defined in `devnet.neo-express`
-    private static final Account NODE_ACCOUNT = Account.fromWIF("KxPC9enS55zgQSUz7PMkS4QWsbABUZU58TMB2kkCaW1gnCcY7GUy");
+    // the node address defined in neo-express
+    private static final Account NODE_ACCOUNT = Utils.createAccountFromPrivateKey("57363779306c5100ca960cc39055f93fb114640c63616f2c570af809dc4b5c8e");
     private static final Account GENESIS_ACCOUNT = Account.createMultiSigAccount(
-            Arrays.asList(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
+            List.of(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
     private static final Wallet GENESIS_WALLET = Wallet.withAccounts(GENESIS_ACCOUNT, NODE_ACCOUNT);
-    protected static final Wallet CONTRACT_OWNER_WALLET = getContractOwnerFromEnv();
+    protected static final Wallet CONTRACT_OWNER_WALLET = Wallet.withAccounts(Utils.createAccountFromPrivateKey("4d742d3c83124e4fe037488ff1428f57d092e436b120cd45b4f808c45f6b4700"));
 
     protected static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
     protected static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
@@ -89,8 +90,7 @@ public class ContractTestFramework {
      * @param <T>           Contract Class Type
      * @param contractClass Contract class
      * @return The contract address Hash160
-     * @throws IOException
-     * @throws Throwable   if anything goes wrong
+     * @throws Throwable if anything goes wrong
      */
     private static <T> Hash160 compileAndDeploy(Class<T> contractClass) throws Throwable {
         var compileResult = new Compiler().compile(contractClass.getCanonicalName());
@@ -104,7 +104,7 @@ public class ContractTestFramework {
         try {
             var tx = new ContractManagement(NEOW3J)
                     .deploy(compileResult.getNefFile(), compileResult.getManifest())
-                    .signers(Signer.global(GENESIS_WALLET.getDefaultAccount().getScriptHash()))
+                    .signers(AccountSigner.global(GENESIS_WALLET.getDefaultAccount().getScriptHash()))
                     .wallet(GENESIS_WALLET)
                     .sign();
             var response = tx.send();
@@ -116,10 +116,12 @@ public class ContractTestFramework {
                 logger.info("Contract {} deployed at 0x{}, gas fee: {}", contractClass.getName(), contractHash, getGasFeeFromTx(tx));
             }
         } catch (TransactionConfigurationException e) {
-            if (!e.getMessage().contains("Contract Already Exists"))
+            if (!e.getMessage().contains("Contract Already Exists")) {
                 throw e;
+            }
         }
-        logger.info("Contract {} found at 0x{}", contractClass.getName(), contractHash);
+        logger.info("Contract {} found at 0x{}, address {}",
+                contractClass.getName(), contractHash, contractHash.toAddress());
         return contractHash;
     }
 
@@ -141,14 +143,15 @@ public class ContractTestFramework {
     ) throws Throwable {
         NeoSendRawTransaction tx = token.transferFromDefaultAccount(
                 wallet, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
-        ).signers(Signer.calledByEntry(wallet.getDefaultAccount())).sign().send();
+        ).signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).sign().send();
 
         if (tx.hasError()) {
             throw new Exception(tx.getError().getMessage());
         }
 
-        if (wait)
+        if (wait) {
             Await.waitUntilTransactionIsExecuted(tx.getSendRawTransaction().getHash(), NEOW3J);
+        }
 
         logger.info(
                 "Transfer {} {} from {} to {}, tx: {}",
@@ -204,8 +207,9 @@ public class ContractTestFramework {
         logger.info("{} gas fee: {}", function, getGasFeeFromTx(tx));
         var appLog = tx.getApplicationLog();
         assertEquals(1, appLog.getExecutions().size());
-        if (appLog.getExecutions().get(0).getState() != NeoVMStateType.HALT)
+        if (appLog.getExecutions().get(0).getState() != NeoVMStateType.HALT) {
             throw new Exception(appLog.getExecutions().get(0).getException());
+        }
         return appLog;
     }
 
@@ -232,30 +236,6 @@ public class ContractTestFramework {
             throw new Exception(tx.getInvocationResult().getException());
         }
         return tx.getInvocationResult();
-    }
-
-    protected static boolean isPublicChain() {
-        var value = System.getenv("PUBLIC_CHAIN");
-        return value != null && value.trim().toLowerCase().contains("true");
-    }
-
-    /**
-     * Get contract owner wallet from env if we are on public chain,
-     * otherwise just use the wallet defined in eno-express file.
-     *
-     * @return the wallet
-     */
-    private static Wallet getContractOwnerFromEnv() {
-        var value = System.getenv("PUBLIC_CHAIN_CONTRACT_OWNER_WIF");
-        if (value == null || !isPublicChain()) {
-            // ContractOwner defind in `devnet.neo-express`
-            Account account = new Account(ECKeyPair.create(
-                    new BigInteger("95ba67afd784f405e2800a0bcb875c035c41545d4a11e8995f6f1175d95c2952", 16)
-            ));
-            return Wallet.withAccounts(account);
-        } else {
-            return Wallet.withAccounts(Account.fromWIF(value));
-        }
     }
 
     public ContractTestFramework() {

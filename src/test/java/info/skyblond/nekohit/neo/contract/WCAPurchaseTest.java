@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
@@ -35,7 +36,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
                                 ContractParameter.string("some_id")
                         },
                         new Signer[]{
-                                Signer.calledByEntry(tempWallet.getDefaultAccount())
+                                AccountSigner.calledByEntry(tempWallet.getDefaultAccount())
                         },
                         tempWallet
                 )

@@ -6,9 +6,10 @@ import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.core.response.InvocationResult;
 import io.neow3j.protocol.core.response.NeoApplicationLog;
+import io.neow3j.protocol.core.response.NeoInvokeFunction;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.protocol.http.HttpService;
-import io.neow3j.transaction.Signer;
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -37,7 +38,7 @@ public final class PublicNetInvoke {
     public static void main(String[] args) throws Throwable {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Paste account WIF:");
-        var walletWIF = scanner.nextLine();
+        String walletWIF = scanner.nextLine();
         // flush WIF out of screen
         for (int i = 0; i < 1000; i++) {
             System.out.println();
@@ -45,7 +46,7 @@ public final class PublicNetInvoke {
         scanner.close();
         wallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
 
-        var id = createAndPayWCA(
+        String id = createAndPayWCA(
                 "中文测试！！！",
                 1, 100_00,
                 new String[]{"MS1", "MS2", "MS3"},
@@ -62,42 +63,45 @@ public final class PublicNetInvoke {
     }
 
     private static double getGasFeeFromTx(Transaction tx) {
-        var fraction = tx.getSystemFee() + tx.getNetworkFee();
+        long fraction = tx.getSystemFee() + tx.getNetworkFee();
         return fraction / Math.pow(10, 8);
     }
 
     private static NeoApplicationLog invokeWCA(
             String function, ContractParameter... parameters
     ) throws Throwable {
-        var tx = WCA_CONTRACT
+        Transaction tx = WCA_CONTRACT
                 .invokeFunction(function, parameters)
-                .signers(Signer.calledByEntry(wallet.getDefaultAccount())).wallet(wallet).sign();
-        var response = tx.send();
+                .signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).wallet(wallet).sign();
+        NeoSendRawTransaction response = tx.send();
         if (response.hasError()) {
             throw new Exception(String.format("Error when invoking %s: %s", function, response.getError().getMessage()));
         }
         logger.info("{} tx: {}", function, tx.getTxId());
         Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
         logger.info("{} gas fee: {}", function, getGasFeeFromTx(tx));
-        var appLog = tx.getApplicationLog();
-        if (appLog.getExecutions().get(0).getState() != NeoVMStateType.HALT)
+        NeoApplicationLog appLog = tx.getApplicationLog();
+        if (appLog.getExecutions().get(0).getState() != NeoVMStateType.HALT) {
             throw new Exception(appLog.getExecutions().get(0).getException());
+        }
         return appLog;
     }
 
     private static InvocationResult testInvoke(
             String function, ContractParameter... parameters
     ) throws Exception {
-        var tx = WCA_CONTRACT.callInvokeFunction(function, Arrays.asList(parameters), Signer.calledByEntry(wallet.getDefaultAccount()));
-        if (tx.hasError())
+        NeoInvokeFunction tx = WCA_CONTRACT.callInvokeFunction(function, Arrays.asList(parameters), AccountSigner.calledByEntry(wallet.getDefaultAccount()));
+        if (tx.hasError()) {
             throw new Exception(String.format("Error when test invoking %s: %s", function, tx.getError().getMessage()));
-        if (tx.getInvocationResult().hasStateFault())
+        }
+        if (tx.getInvocationResult().hasStateFault()) {
             throw new Exception(tx.getInvocationResult().getException());
+        }
         return tx.getInvocationResult();
     }
 
     private static String queryWCA(String trueId) throws Throwable {
-        var result = testInvoke("queryWCA",
+        InvocationResult result = testInvoke("queryWCA",
                 ContractParameter.string(trueId));
         return result.getStack().get(0).getString();
     }
@@ -105,7 +109,7 @@ public final class PublicNetInvoke {
     private static BigInteger queryPurchase(
             String identifier, Account buyer
     ) throws Throwable {
-        var result = testInvoke("queryPurchase",
+        InvocationResult result = testInvoke("queryPurchase",
                 ContractParameter.string(identifier),
                 ContractParameter.hash160(buyer));
         return result.getStack().get(0).getInteger();
@@ -114,7 +118,7 @@ public final class PublicNetInvoke {
     private static String advanceQuery(
             Hash160 creator, Hash160 buyer, int page, int size
     ) throws Throwable {
-        var result = testInvoke("advanceQuery",
+        InvocationResult result = testInvoke("advanceQuery",
                 ContractParameter.hash160(creator),
                 ContractParameter.hash160(buyer),
                 ContractParameter.integer(page),
@@ -129,7 +133,7 @@ public final class PublicNetInvoke {
             int thresholdIndex, long coolDownInterval,
             boolean bePublic, String identifier
     ) throws Throwable {
-        var appLog = invokeWCA("createWCA",
+        NeoApplicationLog appLog = invokeWCA("createWCA",
                 ContractParameter.hash160(wallet.getDefaultAccount()),
                 ContractParameter.string(wcaDescription),
                 ContractParameter.integer(stakePer100Token),
@@ -149,13 +153,15 @@ public final class PublicNetInvoke {
     ) throws Throwable {
         NeoSendRawTransaction tx = CAT_TOKEN.transferFromDefaultAccount(
                 wallet, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
-        ).signers(Signer.calledByEntry(wallet.getDefaultAccount())).sign().send();
+        ).signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).sign().send();
 
-        if (tx.hasError())
+        if (tx.hasError()) {
             throw new Exception(tx.getError().getMessage());
+        }
 
-        if (wait)
+        if (wait) {
             Await.waitUntilTransactionIsExecuted(tx.getSendRawTransaction().getHash(), NEOW3J);
+        }
 
         logger.info("Transfer {} {} from {} to {}, tx: {}",
                 amount, PublicNetInvoke.CAT_TOKEN.getSymbol(),
@@ -169,7 +175,7 @@ public final class PublicNetInvoke {
             int thresholdIndex, long coolDownInterval,
             boolean bePublic, String identifier
     ) throws Throwable {
-        var result = createWCA(wcaDescription, stakePer100Token, maxTokenSoldCount,
+        String result = createWCA(wcaDescription, stakePer100Token, maxTokenSoldCount,
                 milestoneTitles, milestoneDescriptions, endTimestamps,
                 thresholdIndex, coolDownInterval, bePublic, identifier);
 

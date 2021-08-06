@@ -1,6 +1,7 @@
 package info.skyblond.nekohit.neo.contract;
 
 import io.neow3j.contract.SmartContract;
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -14,10 +15,6 @@ import java.util.Arrays;
  * This class offers some handy functions for invoking WCAContract.
  */
 public class ContractInvokeHelper {
-
-
-    // ---------------- todo ----------------
-
     /**
      * Query WCA details, return NeoVM json
      */
@@ -62,8 +59,6 @@ public class ContractInvokeHelper {
         return result.getStack().get(0).getString();
     }
 
-    // ---------------- todo ----------------
-
     /**
      * Create WCA, return the identifier
      */
@@ -90,7 +85,7 @@ public class ContractInvokeHelper {
                         ContractParameter.string(identifier)
                 },
                 new Signer[]{
-                        Signer.calledByEntry(wallet.getDefaultAccount())
+                        AccountSigner.calledByEntry(wallet.getDefaultAccount())
                 },
                 wallet
         );
@@ -133,7 +128,7 @@ public class ContractInvokeHelper {
                         ContractParameter.string(proofOfWork)
                 },
                 new Signer[]{
-                        Signer.calledByEntry(wallet.getDefaultAccount())
+                        AccountSigner.calledByEntry(wallet.getDefaultAccount())
                 },
                 wallet
         );
@@ -149,7 +144,7 @@ public class ContractInvokeHelper {
                         ContractParameter.hash160(buyerWallet.getDefaultAccount())
                 },
                 new Signer[]{
-                        Signer.calledByEntry(buyerWallet.getDefaultAccount())
+                        AccountSigner.calledByEntry(buyerWallet.getDefaultAccount())
                 },
                 buyerWallet
         );
@@ -164,7 +159,7 @@ public class ContractInvokeHelper {
                         ContractParameter.string(identifier)
                 },
                 new Signer[]{
-                        Signer.calledByEntry(wallet.getDefaultAccount())
+                        AccountSigner.calledByEntry(wallet.getDefaultAccount())
                 },
                 wallet
         );
