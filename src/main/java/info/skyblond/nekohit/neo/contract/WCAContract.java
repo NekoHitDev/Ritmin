@@ -29,12 +29,12 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 public class WCAContract {
     // public net owner: NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3
     // private net owner: NM9GZtomtwHRmqCkj7TgPMq5ssDnHsP7h5
-    static final Hash160 OWNER = addressToScriptHash("NM9GZtomtwHRmqCkj7TgPMq5ssDnHsP7h5");
+    static final Hash160 OWNER = addressToScriptHash("NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3");
 
     // address of CatToken Hash.
     // For private test net: NL75sYPVR5NcVpimsA4THSG6gwB9iNFPcQ
     // For public test net: NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH
-    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NL75sYPVR5NcVpimsA4THSG6gwB9iNFPcQ");
+    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH");
 
     private static final StorageContext CTX = Storage.getStorageContext();
     private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
