@@ -1,6 +1,7 @@
 package info.skyblond.nekohit.neo.contract;
 
 import io.neow3j.contract.exceptions.UnexpectedReturnTypeException;
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
@@ -45,7 +46,7 @@ public class CatTokenTest extends ContractTestFramework {
                             "verify",
                             new ContractParameter[0],
                             new Signer[]{
-                                    Signer.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
+                                    AccountSigner.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
                             },
                             CONTRACT_OWNER_WALLET
                     );
@@ -62,7 +63,7 @@ public class CatTokenTest extends ContractTestFramework {
                         "verify",
                         new ContractParameter[0],
                         new Signer[]{
-                                Signer.calledByEntry(testWallet.getDefaultAccount())
+                                AccountSigner.calledByEntry(testWallet.getDefaultAccount())
                         },
                         testWallet
                 )
@@ -85,7 +86,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.integer(-100),
                                 ContractParameter.any(null)
                         },
-                        new Signer[]{Signer.calledByEntry(testWallet.getDefaultAccount())},
+                        new Signer[]{AccountSigner.calledByEntry(testWallet.getDefaultAccount())},
                         testWallet
                 )
         );
@@ -108,7 +109,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.integer(100),
                                 ContractParameter.any(null)
                         },
-                        new Signer[]{Signer.calledByEntry(testWallet.getDefaultAccount())},
+                        new Signer[]{AccountSigner.calledByEntry(testWallet.getDefaultAccount())},
                         testWallet
                 )
         );

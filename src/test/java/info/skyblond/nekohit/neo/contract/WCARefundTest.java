@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
@@ -48,7 +49,7 @@ public class WCARefundTest extends ContractTestFramework {
                                 ContractParameter.hash160(Account.create())
                         },
                         new Signer[]{
-                                Signer.calledByEntry(this.creatorWallet.getDefaultAccount())
+                                AccountSigner.calledByEntry(this.creatorWallet.getDefaultAccount())
                         },
                         this.creatorWallet
                 )

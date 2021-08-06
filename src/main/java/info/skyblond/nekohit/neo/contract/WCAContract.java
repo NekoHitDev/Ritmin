@@ -20,21 +20,21 @@ import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.*;
 import static info.skyblond.nekohit.neo.helper.Utils.require;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
+@SuppressWarnings("unused")
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
 @Trust(value = "*")
 @Permission(contract = "*")
 public class WCAContract {
-    // for public net
-    static final Hash160 OWNER = addressToScriptHash("NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3");
+    // public net owner: NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3
+    // private net owner: NM9GZtomtwHRmqCkj7TgPMq5ssDnHsP7h5
+    static final Hash160 OWNER = addressToScriptHash("NM9GZtomtwHRmqCkj7TgPMq5ssDnHsP7h5");
 
     // address of CatToken Hash.
-    // For private test net deploy by genesis(gradle): NiMNN2ZXML7C9uNEnp66U3VNp38FLBcJQi
-    // For private test net deploy by genesis(vsc): NjFMoMSoukNBetDZYPsGKzpLrUA1zgkMNM
-    // For develop branch unit test: NfxUbQnAeqYUp3qVq4BQ7Bsh1wFPpsZyga
-    // For public net deploy by NV5C...jTm3: NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH
-    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH");
+    // For private test net: NL75sYPVR5NcVpimsA4THSG6gwB9iNFPcQ
+    // For public test net: NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH
+    static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("NL75sYPVR5NcVpimsA4THSG6gwB9iNFPcQ");
 
     private static final StorageContext CTX = Storage.getStorageContext();
     private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
@@ -70,7 +70,7 @@ public class WCAContract {
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
         require(CAT_TOKEN_HASH == Runtime.getCallingScriptHash(), "Only Cat Token can invoke this function.");
         require(amount > 0, "Transfer amount must be a positive number.");
-        var identifier = (String) data;
+        String identifier = (String) data;
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
         require(basicInfo != null, "Identifier not found.");
         List<WCAMilestone> milestones = getWCAMilestones(identifier);
@@ -112,7 +112,7 @@ public class WCAContract {
             return "";
         }
 
-        var pojo = new WCAPojo(identifier, basicInfo, milestones, buyerInfo);
+        WCAPojo pojo = new WCAPojo(identifier, basicInfo, milestones, buyerInfo);
         return StdLib.jsonSerialize(pojo);
     }
 
@@ -135,28 +135,36 @@ public class WCAContract {
         int offset = (page - 1) * size;
         int count = 0;
         List<WCAPojo> result = new List<>();
-        var iter = Storage.find(CTX, "BASIC_INFO", FindOptions.RemovePrefix);
+        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, "BASIC_INFO", FindOptions.RemovePrefix);
         while (result.size() < size && iter.next()) {
-            var identifier = ((Iterator.Struct<ByteString, ByteString>) iter.get()).key.toString();
-            var basicInfo = getWCABasicInfo(identifier);
-            var milestonesInfo = getWCAMilestones(identifier);
-            var buyerInfo = getWCABuyerInfo(identifier);
+            String identifier = iter.get().key.toString();
+            WCABasicInfo basicInfo = getWCABasicInfo(identifier);
+            List<WCAMilestone> milestonesInfo = getWCAMilestones(identifier);
+            WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
 
-            if (!basicInfo.bePublic) continue;
+            if (basicInfo == null || milestonesInfo == null || buyerInfo == null)
+                continue;
+
+            if (!basicInfo.bePublic) {
+                continue;
+            }
 
             if (creator != null && creator != Hash160.zero()) {
                 // filter creator
-                if (basicInfo.owner != creator)
+                if (basicInfo.owner != creator) {
                     continue;
+                }
             }
             if (buyer != null && buyer != Hash160.zero()) {
                 // filter buyer
-                if (!buyerInfo.purchases.containsKey(buyer))
+                if (!buyerInfo.purchases.containsKey(buyer)) {
                     continue;
+                }
             }
-            var pojo = new WCAPojo(identifier, basicInfo, milestonesInfo, buyerInfo);
-            if (count >= offset)
+            WCAPojo pojo = new WCAPojo(identifier, basicInfo, milestonesInfo, buyerInfo);
+            if (count >= offset) {
                 result.add(pojo);
+            }
             count++;
         }
         return StdLib.jsonSerialize(result);
@@ -252,12 +260,12 @@ public class WCAContract {
 
         // for each buyer, return their token based on unfinished ms count
         // also remove stakes for that unfinished one
-        var buyers = buyerInfo.purchases.keys();
-        for (int i = 0; i < buyers.length; i++) {
-            var purchaseAmount = buyerInfo.purchases.get(buyers[i]);
-            var totalAmount = purchaseAmount + purchaseAmount * basicInfo.stakePer100Token / 100;
-            var returnAmount = totalAmount * unfinishedMilestones / totalMilestones;
-            transferTokenTo(buyers[i], returnAmount, identifier);
+        Hash160[] buyers = buyerInfo.purchases.keys();
+        for (Hash160 buyer : buyers) {
+            int purchaseAmount = buyerInfo.purchases.get(buyer);
+            int totalAmount = purchaseAmount + purchaseAmount * basicInfo.stakePer100Token / 100;
+            int returnAmount = totalAmount * unfinishedMilestones / totalMilestones;
+            transferTokenTo(buyer, returnAmount, identifier);
             remainTokens -= returnAmount;
         }
         // considering all decimals are floored, so totalTokens > 0
@@ -274,7 +282,7 @@ public class WCAContract {
     }
 
     public static void refund(String identifier, Hash160 buyer) throws Exception {
-        require(buyer.isValid(), "Buyer address is not a valid address.");
+        require(Hash160.isValid(buyer), "Buyer address is not a valid address.");
         require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(),
                 "Invalid sender signature. The buyer needs to be the signing account.");
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);

@@ -36,7 +36,7 @@ public class WCAAuxiliary {
         basicInfo.lastUpdateTime = currentTime;
     }
 
-    static boolean checkIfReadyToFinish(List<WCAMilestone> milestones) throws Exception {
+    static boolean checkIfReadyToFinish(List<WCAMilestone> milestones) {
         WCAMilestone ms = milestones.get(milestones.size() - 1);
         return ms.isFinished() || ms.isExpired();
     }

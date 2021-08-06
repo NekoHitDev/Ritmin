@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
@@ -126,7 +127,7 @@ public class WCACreateTest extends ContractTestFramework {
                                     ContractParameter.string("test_invalid_signer_" + System.currentTimeMillis())
                             },
                             new Signer[]{
-                                    Signer.calledByEntry(this.testWallet.getDefaultAccount())
+                                    AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())
                             },
                             this.testWallet
                     );
