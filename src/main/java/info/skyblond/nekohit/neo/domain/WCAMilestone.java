@@ -29,7 +29,7 @@ public class WCAMilestone {
      * When {@link WCAMilestone#endTimestamp} is passed, then the milestone
      * is considering as expired, and you can't change it anymore.
      *
-     * @return
+     * @return true if this milestone is already expired.
      */
     public boolean isExpired() {
         return endTimestamp <= Runtime.getTime();

@@ -1,12 +1,14 @@
 package info.skyblond.nekohit.neo;
 
 import info.skyblond.nekohit.neo.contract.WCAContract;
+import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.ObjectMapperFactory;
+import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.protocol.http.HttpService;
-import io.neow3j.transaction.Signer;
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -29,18 +31,18 @@ public class UpdateContract {
 
     public static void main(String[] args) throws Throwable {
         // compile contract
-        var compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
+        CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
         System.out.println("Contract compiled:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Paste contract owner account WIF:");
-        var walletWIF = scanner.nextLine();
+        String walletWIF = scanner.nextLine();
         // flush WIF out of screen
         for (int i = 0; i < 1000; i++) {
             System.out.println();
         }
-        var deployWallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
+        Wallet deployWallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
 
         System.out.println("Update following contract on public net:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
@@ -48,7 +50,7 @@ public class UpdateContract {
         System.out.println("Contract owner account: " + deployWallet.getDefaultAccount().getAddress());
 
         System.out.println("Type 'continue' to continue...");
-        var line = scanner.nextLine();
+        String line = scanner.nextLine();
         scanner.close();
         if (!line.toLowerCase().trim().equals("continue")) {
             System.out.println("Canceled.");
@@ -57,23 +59,25 @@ public class UpdateContract {
 
         System.out.println("This is the last chance to stop the process.");
         for (int i = CONFIRM_TIME; i > 0; i--) {
-            if (i % 10 == 0 || i <= 5) System.out.println("In " + i + " second(s)...");
+            if (i % 10 == 0 || i <= 5) {
+                System.out.println("In " + i + " second(s)...");
+            }
             Thread.sleep(1000);
         }
         System.out.println("Updating contract... Do not stop this program!");
 
         if (REALLY_DEPLOY_FLAG) {
-            var manifestBytes = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(compileResult.getManifest());
-            var tx = CONTRACT
+            byte[] manifestBytes = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(compileResult.getManifest());
+            Transaction tx = CONTRACT
                     .invokeFunction(
                             "update",
                             ContractParameter.byteArray(compileResult.getNefFile().toArray()),
                             ContractParameter.byteArray(manifestBytes)
                     )
-                    .signers(Signer.calledByEntry(deployWallet.getDefaultAccount()))
+                    .signers(AccountSigner.calledByEntry(deployWallet.getDefaultAccount()))
                     .wallet(deployWallet)
                     .sign();
-            var response = tx.send();
+            NeoSendRawTransaction response = tx.send();
             if (response.hasError()) {
                 throw new Exception(String.format("Update was not successful. Error message from neo-node was: "
                         + "'%s'\n", response.getError().getMessage()));
@@ -89,7 +93,7 @@ public class UpdateContract {
     }
 
     private static double getGasFeeFromTx(Transaction tx) {
-        var fraction = tx.getSystemFee() + tx.getNetworkFee();
+        long fraction = tx.getSystemFee() + tx.getNetworkFee();
         return fraction / Math.pow(10, 8);
     }
 }
