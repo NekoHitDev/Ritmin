@@ -1,7 +1,9 @@
 package info.skyblond.nekohit.neo;
 
+import info.skyblond.nekohit.neo.compile.CompileAndDeployUtils;
 import info.skyblond.nekohit.neo.contract.CatToken;
 import info.skyblond.nekohit.neo.contract.WCAContract;
+import info.skyblond.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractManagement;
@@ -20,23 +22,21 @@ import io.neow3j.wallet.Wallet;
 import org.apache.commons.codec.binary.Hex;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
+
+import static info.skyblond.nekohit.neo.helper.Utils.getGasFeeFromTx;
 
 public class DeployContract {
     private static final Neow3j NEOW3J = Neow3j.build(
             new HttpService("http://seed1t.neo.org:20332")
     );
 
-    private static final int CONFIRM_TIME = 30;
     private static final boolean REALLY_DEPLOY_FLAG = false;
     private static final Class<?> CONTRACT_CLASS = CatToken.class;
 
     public static void main(String[] args) throws Throwable {
-        // compile contract
-        CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
-        System.out.println("Contract compiled:");
-        System.out.println(CONTRACT_CLASS.getCanonicalName());
-
         Scanner scanner = new Scanner(System.in);
         System.out.println("Paste deploy account WIF:");
         String walletWIF = scanner.nextLine();
@@ -45,6 +45,28 @@ public class DeployContract {
             System.out.println();
         }
         Wallet deployWallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
+
+        System.out.println("Expected contract owner address: ");
+        Utils.require(deployWallet.getDefaultAccount().getAddress().equals(scanner.nextLine()),
+                "Contract owner address doesn't match your deploy account!");
+
+        Map<String, String> replaceMap = new HashMap<>();
+        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployWallet.getDefaultAccount().getAddress());
+        if (CONTRACT_CLASS == WCAContract.class) {
+            System.out.println("Paste CatToken address in hash160 (0x...): ");
+            String catHash = scanner.nextLine();
+            FungibleToken cat = new FungibleToken(new Hash160(catHash), NEOW3J);
+            Utils.require("CAT".equals(cat.getSymbol()), "Token symbol not match!");
+            Utils.require("CatToken".equals(cat.getName()), "Token name not match!");
+            replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", cat.getScriptHash().toAddress());
+            System.out.println("Validate CatToken contract address: " + cat.getScriptHash().toAddress());
+        }
+
+        // compile contract
+        CompilationUnit compileResult = CompileAndDeployUtils.compileModifiedContract(CONTRACT_CLASS, replaceMap);
+
+        System.out.println("Contract compiled:");
+        System.out.println(CONTRACT_CLASS.getCanonicalName());
 
         Hash160 contractHash = SmartContract.calcContractHash(
                 deployWallet.getDefaultAccount().getScriptHash(),
@@ -56,40 +78,30 @@ public class DeployContract {
         System.out.println(CONTRACT_CLASS.getCanonicalName());
         System.out.println("Will deployed to 0x" + contractHash);
         System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
+        System.out.println("Parameters:");
+        replaceMap.forEach((k ,v) -> System.out.println("\t" + k + ": " + v));
 
         System.out.println("Type 'confirmed' to continue...");
+        System.err.println("Note: Once confirmed, you CANNOT abort this process.");
         String line = scanner.nextLine();
         scanner.close();
-        if (!line.toLowerCase().trim().equals("confirmed")) {
-            System.out.println("Canceled.");
-            return;
-        }
 
-        System.out.println("This is the last chance to stop the process.");
-        for (int i = CONFIRM_TIME; i > 0; i--) {
-            if (i % 10 == 0 || i <= 5) {
-                System.out.println("In " + i + " second(s)...");
-            }
-            Thread.sleep(1000);
-        }
+        Utils.require(line.toLowerCase().trim().equals("confirmed"), "Canceled.");
+
         System.out.println("Deploying contract... Do not stop this program!");
 
         if (REALLY_DEPLOY_FLAG) {
-            Transaction tx = new ContractManagement(NEOW3J)
-                    .deploy(compileResult.getNefFile(), compileResult.getManifest())
-                    .signers(AccountSigner.global(deployWallet.getDefaultAccount().getScriptHash()))
-                    .wallet(deployWallet)
-                    .sign();
-            NeoSendRawTransaction response = tx.send();
-            if (response.hasError()) {
-                throw new Exception(String.format("Deployment was not successful. Error message from neo-node was: "
-                        + "'%s'\n", response.getError().getMessage()));
-            }
+            Transaction tx = CompileAndDeployUtils.deployContract(
+                    compileResult,
+                    deployWallet.getDefaultAccount(),
+                    deployWallet,
+                    NEOW3J
+            );
             System.out.println("Deployed tx: 0x" + tx.getTxId());
             Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
             System.out.println("Gas fee: " + getGasFeeFromTx(tx));
         } else {
-            System.out.println("This is a simulation. No contract is deployed.");
+            System.err.println("This is a simulation. No contract is deployed.");
         }
 
         System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
@@ -119,10 +131,5 @@ public class DeployContract {
 
         Await.waitUntilTransactionIsExecuted(tx.getSendRawTransaction().getHash(), NEOW3J);
         System.out.println("Transfer tx: 0x" + tx.getSendRawTransaction().getHash());
-    }
-
-    private static double getGasFeeFromTx(Transaction tx) {
-        long fraction = tx.getSystemFee() + tx.getNetworkFee();
-        return fraction / Math.pow(10, 8);
     }
 }
