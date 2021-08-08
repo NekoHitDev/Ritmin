@@ -1,11 +1,11 @@
 package info.skyblond.nekohit.neo;
 
-import info.skyblond.nekohit.neo.contract.CatToken;
+import info.skyblond.nekohit.neo.compile.CompileAndDeployUtils;
 import info.skyblond.nekohit.neo.contract.WCAContract;
+import info.skyblond.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
-import io.neow3j.compiler.Compiler;
+import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.SmartContract;
-import io.neow3j.crypto.ECKeyPair;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.ObjectMapperFactory;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
@@ -18,8 +18,11 @@ import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
-import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
+
+import static info.skyblond.nekohit.neo.helper.Utils.getGasFeeFromTx;
 
 public class UpdateContract {
     private static final Neow3j NEOW3J = Neow3j.build(
@@ -33,11 +36,6 @@ public class UpdateContract {
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {
-        // compile contract
-        CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName());
-        System.out.println("Contract compiled:");
-        System.out.println(CONTRACT_CLASS.getCanonicalName());
-
         Scanner scanner = new Scanner(System.in);
         System.out.println("Paste contract owner account WIF:");
         String walletWIF = scanner.nextLine();
@@ -47,26 +45,35 @@ public class UpdateContract {
         }
         Wallet deployWallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
 
+        // here we don't check the address, since only owner can update.
+        Map<String, String> replaceMap = new HashMap<>();
+        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployWallet.getDefaultAccount().getAddress());
+        if (CONTRACT_CLASS == WCAContract.class) {
+            System.out.println("Paste CatToken address in hash160 (0x...): ");
+            String catHash = scanner.nextLine();
+            FungibleToken cat = new FungibleToken(new Hash160(catHash), NEOW3J);
+            Utils.require("CAT".equals(cat.getSymbol()), "Token symbol not match!");
+            Utils.require("CatToken".equals(cat.getName()), "Token name not match!");
+            replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", cat.getScriptHash().toAddress());
+            System.out.println("Validate CatToken contract address: " + cat.getScriptHash().toAddress());
+        }
+
+        // compile contract
+        CompilationUnit compileResult = CompileAndDeployUtils.compileModifiedContract(CONTRACT_CLASS, replaceMap);
+        System.out.println("Contract compiled:");
+        System.out.println(CONTRACT_CLASS.getCanonicalName());
+
         System.out.println("Update following contract on public net:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
         System.out.println("Contract address: 0x" + CONTRACT_HASH);
         System.out.println("Contract owner account: " + deployWallet.getDefaultAccount().getAddress());
 
         System.out.println("Type 'continue' to continue...");
+        System.err.println("Note: Once confirmed, you CANNOT abort this process.");
         String line = scanner.nextLine();
         scanner.close();
-        if (!line.toLowerCase().trim().equals("continue")) {
-            System.out.println("Canceled.");
-            return;
-        }
+        Utils.require(line.toLowerCase().trim().equals("continue"), "Canceled.");
 
-        System.out.println("This is the last chance to stop the process.");
-        for (int i = CONFIRM_TIME; i > 0; i--) {
-            if (i % 10 == 0 || i <= 5) {
-                System.out.println("In " + i + " second(s)...");
-            }
-            Thread.sleep(1000);
-        }
         System.out.println("Updating contract... Do not stop this program!");
 
         if (REALLY_DEPLOY_FLAG) {
@@ -82,21 +89,16 @@ public class UpdateContract {
                     .sign();
             NeoSendRawTransaction response = tx.send();
             if (response.hasError()) {
-                throw new Exception(String.format("Update was not successful. Error message from neo-node was: "
+                throw new Exception(String.format("Update failed: "
                         + "'%s'\n", response.getError().getMessage()));
             }
             System.out.println("Updated tx: 0x" + tx.getTxId());
             Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
             System.out.println("Gas fee: " + getGasFeeFromTx(tx));
         } else {
-            System.out.println("This is a simulation. No contract is deployed.");
+            System.err.println("This is a simulation. No contract is deployed.");
         }
 
         System.out.println("Done.");
-    }
-
-    private static double getGasFeeFromTx(Transaction tx) {
-        long fraction = tx.getSystemFee() + tx.getNetworkFee();
-        return fraction / Math.pow(10, 8);
     }
 }

@@ -22,6 +22,9 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.2.5'
     //noinspection GradlePackageUpdate
     implementation 'commons-codec:commons-codec:1.15'
+    // for address replacement
+    implementation group: 'org.ow2.asm', name: 'asm', version: '9.2'
+    implementation group: 'org.ow2.asm', name: 'asm-util', version: '9.2'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
 
