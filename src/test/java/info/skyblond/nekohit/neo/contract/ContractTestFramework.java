@@ -1,8 +1,7 @@
 package info.skyblond.nekohit.neo.contract;
 
-import info.skyblond.nekohit.neo.util.Utils;
-import io.neow3j.compiler.Compiler;
-import io.neow3j.contract.ContractManagement;
+import info.skyblond.nekohit.neo.compile.CompileAndDeployUtils;
+import info.skyblond.nekohit.neo.helper.Utils;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.GasToken;
 import io.neow3j.contract.SmartContract;
@@ -13,7 +12,6 @@ import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.protocol.http.HttpService;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
-import io.neow3j.transaction.Transaction;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -25,9 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -52,7 +48,8 @@ public class ContractTestFramework {
     private static final Account GENESIS_ACCOUNT = Account.createMultiSigAccount(
             List.of(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
     private static final Wallet GENESIS_WALLET = Wallet.withAccounts(GENESIS_ACCOUNT, NODE_ACCOUNT);
-    protected static final Wallet CONTRACT_OWNER_WALLET = Wallet.withAccounts(Utils.createAccountFromPrivateKey("4d742d3c83124e4fe037488ff1428f57d092e436b120cd45b4f808c45f6b4700"));
+    protected static final Wallet CONTRACT_OWNER_WALLET = Wallet.withAccounts(
+            Utils.createAccountFromPrivateKey("4d742d3c83124e4fe037488ff1428f57d092e436b120cd45b4f808c45f6b4700"));
 
     protected static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
     protected static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
@@ -74,17 +71,6 @@ public class ContractTestFramework {
     }
 
     /**
-     * Get gas fee from given test
-     *
-     * @param tx the transaction
-     * @return the gas fee in decimal representation
-     */
-    private static double getGasFeeFromTx(Transaction tx) {
-        var fraction = tx.getSystemFee() + tx.getNetworkFee();
-        return fraction / Math.pow(10, 8);
-    }
-
-    /**
      * Compile the given contract class and try to deploy it with GENESIS account.
      *
      * @param <T>           Contract Class Type
@@ -93,7 +79,13 @@ public class ContractTestFramework {
      * @throws Throwable if anything goes wrong
      */
     private static <T> Hash160 compileAndDeploy(Class<T> contractClass) throws Throwable {
-        var compileResult = new Compiler().compile(contractClass.getCanonicalName());
+        Map<String, String> replaceMap = new HashMap<>();
+        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_WALLET.getDefaultAccount().getAddress());
+        if (catTokenAddress != null) {
+            replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", catTokenAddress.toAddress());
+        }
+
+        var compileResult = CompileAndDeployUtils.compileModifiedContract(contractClass, replaceMap);
 
         var contractHash = SmartContract.calcContractHash(
                 GENESIS_WALLET.getDefaultAccount().getScriptHash(),
@@ -102,19 +94,14 @@ public class ContractTestFramework {
         );
 
         try {
-            var tx = new ContractManagement(NEOW3J)
-                    .deploy(compileResult.getNefFile(), compileResult.getManifest())
-                    .signers(AccountSigner.global(GENESIS_WALLET.getDefaultAccount().getScriptHash()))
-                    .wallet(GENESIS_WALLET)
-                    .sign();
-            var response = tx.send();
-            if (response.hasError()) {
-                throw new Exception(String.format("Deployment was not successful. Error message from neo-node was: "
-                        + "'%s'\n", response.getError().getMessage()));
-            } else {
-                Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
-                logger.info("Contract {} deployed at 0x{}, gas fee: {}", contractClass.getName(), contractHash, getGasFeeFromTx(tx));
-            }
+            var tx = CompileAndDeployUtils.deployContract(
+                    compileResult,
+                    GENESIS_WALLET.getDefaultAccount(),
+                    GENESIS_WALLET,
+                    NEOW3J
+            );
+            logger.info("Contract {} deployed at 0x{}, gas fee: {}",
+                    contractClass.getName(), contractHash, Utils.getGasFeeFromTx(tx));
         } catch (TransactionConfigurationException e) {
             if (!e.getMessage().contains("Contract Already Exists")) {
                 throw e;
@@ -138,7 +125,7 @@ public class ContractTestFramework {
      * @param wait       true will wait tx confirmed, false won't wait
      * @throws Throwable if anything goes wrong
      */
-    public static void transferToken(
+    protected static void transferToken(
             FungibleToken token, Wallet wallet, Hash160 to, long amount, String identifier, boolean wait
     ) throws Throwable {
         NeoSendRawTransaction tx = token.transferFromDefaultAccount(
@@ -191,7 +178,7 @@ public class ContractTestFramework {
      * @return NeoApplicationLog contains the returned stack
      * @throws Throwable if anything goes wrong
      */
-    public static NeoApplicationLog invokeFunction(
+    protected static NeoApplicationLog invokeFunction(
             SmartContract contract, String function,
             ContractParameter[] parameters, Signer[] signers, Wallet wallet
     ) throws Throwable {
@@ -204,7 +191,7 @@ public class ContractTestFramework {
         }
         logger.info("{} tx: {}", function, tx.getTxId());
         Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
-        logger.info("{} gas fee: {}", function, getGasFeeFromTx(tx));
+        logger.info("{} gas fee: {}", function, Utils.getGasFeeFromTx(tx));
         var appLog = tx.getApplicationLog();
         assertEquals(1, appLog.getExecutions().size());
         if (appLog.getExecutions().get(0).getState() != NeoVMStateType.HALT) {
@@ -224,7 +211,7 @@ public class ContractTestFramework {
      * @return InvocationResult contains the retured stack
      * @throws Exception if anything goes wrong
      */
-    public static InvocationResult testInvoke(
+    protected static InvocationResult testInvoke(
             SmartContract contract, String function,
             ContractParameter[] parameters, Signer[] signers
     ) throws Exception {
