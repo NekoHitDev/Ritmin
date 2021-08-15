@@ -16,6 +16,9 @@ public class Messages {
     public static final String INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE =
             "Invalid status. Only OPEN and ACTIVE is allowed.";
 
+    public static final String INVALID_STATUS_ALLOW_PENDING_AND_OPEN =
+            "Invalid status. Only PENDING and OPEN is allowed.";
+
     public static final String INVALID_STATUS_ALLOW_READY_TO_FINISH =
             "Invalid status. Only Ready-To-Finished is allowed.";
 
