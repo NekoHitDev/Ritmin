@@ -277,13 +277,12 @@ public class WCAContract {
         require(Hash160.isValid(buyer), Messages.INVALID_HASH160);
         require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(), Messages.INVALID_SIGNATURE);
         WCABasicInfo basicInfo = getWCABasicInfo(identifier);
-        require(basicInfo != null, Messages.ID_NOT_FOUND);
-        require(basicInfo.status == 1 || basicInfo.status == 2,
-                Messages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE);
         List<WCAMilestone> milestones = getWCAMilestones(identifier);
+        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
+        require(basicInfo != null, Messages.ID_NOT_FOUND);
+        require(basicInfo.status == 1 || basicInfo.status == 2, Messages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE);
         require(milestones != null, Messages.ID_NOT_FOUND);
         require(!checkIfReadyToFinish(milestones), Messages.INVALID_STATUS_READY_TO_FINISH);
-        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
         require(buyerInfo != null, Messages.ID_NOT_FOUND);
 
         if (checkIfThresholdMet(basicInfo, milestones)) {
@@ -301,6 +300,42 @@ public class WCAContract {
 
         // update buyer info
         updateWCABuyerInfo(identifier, buyerInfo);
+    }
+
+    public static void cancelWCA(String identifier) throws Exception {
+        // get obj
+        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
+        require(basicInfo != null, Messages.ID_NOT_FOUND);
+        List<WCAMilestone> milestones = getWCAMilestones(identifier);
+        require(milestones != null, Messages.ID_NOT_FOUND);
+        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
+        require(buyerInfo != null, Messages.ID_NOT_FOUND);
+        // check signature
+        require(Hash160.isValid(basicInfo.owner), Messages.INVALID_HASH160);
+        require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(), Messages.INVALID_SIGNATURE);
+        // check status
+        basicInfo.updateStatus(milestones);
+        switch (basicInfo.status) {
+            case 0:
+                // PENDING, nothing to do
+                break;
+            case 1:
+                // OPEN, refund to everyone
+                // to creator
+                transferTokenTo(basicInfo.owner, basicInfo.getTotalStake(), identifier);
+                // to buyers
+                Hash160[] buyers = buyerInfo.purchases.keys();
+                for (Hash160 buyer : buyers) {
+                    transferTokenTo(buyer, buyerInfo.purchases.get(buyer), identifier);
+                }
+                break;
+            default:
+                throw new Exception(Messages.INVALID_STATUS_ALLOW_PENDING_AND_OPEN);
+        }
+        // delete this id
+        wcaBasicInfoMap.delete(identifier);
+        wcaBuyerInfoMap.delete(identifier);
+        wcaMilestonesMap.delete(identifier);
     }
 
     public static void update(ByteString script, String manifest) throws Exception {
