@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import info.skyblond.nekohit.neo.domain.Messages;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -134,7 +135,7 @@ public class WCACreateTest extends ContractTestFramework {
                 }
         );
         assertTrue(
-                throwable.getMessage().contains("Invalid sender signature."),
+                throwable.getMessage().contains(Messages.INVALID_SIGNATURE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -164,7 +165,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Duplicate identifier."),
+                throwable.getMessage().contains(Messages.DUPLICATED_ID),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -185,7 +186,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Cannot decide milestones count."),
+                throwable.getMessage().contains(Messages.INVALID_MILESTONES_COUNT),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -206,7 +207,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("The end timestamp should increase."),
+                throwable.getMessage().contains(Messages.INVALID_TIMESTAMP),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -228,7 +229,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("The end timestamp is already expired."),
+                throwable.getMessage().contains(Messages.EXPIRED_TIMESTAMP),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

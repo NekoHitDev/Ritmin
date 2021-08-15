@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import info.skyblond.nekohit.neo.domain.Messages;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -42,7 +43,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Only Cat Token can invoke this function."),
+                throwable.getMessage().contains(Messages.INVALID_CALLER),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -61,7 +62,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Identifier not found."),
+                throwable.getMessage().contains(Messages.ID_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -90,41 +91,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("You can't pay a paid WCA."),
-                "Unknown exception: " + throwable.getMessage()
-        );
-    }
-
-    @Test
-    void testPayExpiredWCA() throws Throwable {
-        var identifier = "test_pay_expired_" + System.currentTimeMillis();
-        var lastEndTimestamp = System.currentTimeMillis() + 3 * 1000;
-        // create WCA
-        ContractInvokeHelper.createWCA(
-                // stake: 1.00 * 1.00
-                getWcaContract(), "description",
-                1_00, 1_00,
-                new String[]{"milestone"},
-                new String[]{"milestone"},
-                new Long[]{lastEndTimestamp},
-                0, 100, false,
-                identifier, this.creatorWallet
-        );
-        // wait for last milestone expire
-        while (System.currentTimeMillis() <= lastEndTimestamp) {
-            Thread.sleep(100);
-        }
-        // pay
-        var throwable = assertThrows(
-                TransactionConfigurationException.class,
-                () -> transferToken(
-                        getCatToken(), this.creatorWallet,
-                        getWcaContractAddress(),
-                        1_00, identifier, false
-                )
-        );
-        assertTrue(
-                throwable.getMessage().contains("You can't pay a expired WCA."),
+                throwable.getMessage().contains(Messages.INVALID_STATUS_ALLOW_PENDING),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -206,47 +173,14 @@ public class WCAPurchaseTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("You can't buy an unpaid WCA."),
+                throwable.getMessage().contains(Messages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
 
     @Test
-    void testPurchaseStarted() throws Throwable {
-        var identifier = "test_purchase_started_" + System.currentTimeMillis();
-        // create WCA
-        ContractInvokeHelper.createAndPayWCA(
-                // stake: 1.00 * 1.00
-                getWcaContract(), "description",
-                1_00, 1_00,
-                new String[]{"milestone1", "milestone2"},
-                new String[]{"milestone1", "milestone2"},
-                new Long[]{System.currentTimeMillis() + 30 * 1000, System.currentTimeMillis() + 60 * 1000},
-                0, 100, false,
-                identifier, this.creatorWallet
-        );
-        // finish ms[0]
-        ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 0, "proofOfWork", this.creatorWallet
-        );
-        // purchase
-        var throwable = assertThrows(
-                TransactionConfigurationException.class,
-                () -> transferToken(
-                        getCatToken(), this.testWallet,
-                        getWcaContractAddress(),
-                        10, identifier, false
-                )
-        );
-        assertTrue(
-                throwable.getMessage().contains("You can't buy a WCA already started."),
-                "Unknown exception: " + throwable.getMessage()
-        );
-    }
-
-    @Test
-    void testPurchaseExpired() throws Throwable {
-        var identifier = "test_purchase_expired_" + System.currentTimeMillis();
+    void testPurchaseReadyToFinish() throws Throwable {
+        var identifier = "test_purchase_finish_" + System.currentTimeMillis();
         var firstEndTimestamp = System.currentTimeMillis() + 3 * 1000;
         // create WCA
         ContractInvokeHelper.createAndPayWCA(
@@ -273,7 +207,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("You can't buy a WCA already started."),
+                throwable.getMessage().contains(Messages.INVALID_STATUS_READY_TO_FINISH),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

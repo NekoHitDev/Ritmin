@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import info.skyblond.nekohit.neo.domain.Messages;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.wallet.Wallet;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Identifier not found."),
+                throwable.getMessage().contains(Messages.ID_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -53,7 +54,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Invalid caller signature."),
+                throwable.getMessage().contains(Messages.INVALID_SIGNATURE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -79,7 +80,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("You can't finish an unpaid WCA."),
+                throwable.getMessage().contains(Messages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

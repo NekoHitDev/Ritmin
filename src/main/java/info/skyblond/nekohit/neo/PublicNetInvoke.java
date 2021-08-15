@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo;
 
+import info.skyblond.nekohit.neo.helper.Utils;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.GasToken;
 import io.neow3j.contract.SmartContract;
@@ -20,6 +21,7 @@ import io.neow3j.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -36,15 +38,7 @@ public final class PublicNetInvoke {
     private static Wallet wallet;
 
     public static void main(String[] args) throws Throwable {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Paste account WIF:");
-        String walletWIF = scanner.nextLine();
-        // flush WIF out of screen
-        for (int i = 0; i < 1000; i++) {
-            System.out.println();
-        }
-        scanner.close();
-        wallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
+        wallet = Utils.readWalletWIF();
 
         String id = createAndPayWCA(
                 "中文测试！！！",
