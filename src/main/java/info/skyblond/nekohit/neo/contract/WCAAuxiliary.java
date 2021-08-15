@@ -12,12 +12,6 @@ import static info.skyblond.nekohit.neo.helper.Utils.require;
  */
 public class WCAAuxiliary {
 
-    static void throwIfNotAvailableToBuy(WCABasicInfo basicInfo, List<WCAMilestone> milestones) throws Exception {
-        require(basicInfo.paid, "You can't buy an unpaid WCA.");
-        require(basicInfo.nextMilestoneIndex == 0, "You can't buy a WCA already started.");
-        require(!milestones.get(0).isExpired(), "You can't buy a WCA already started.");
-    }
-
     static void updateMilestone(
             WCABasicInfo basicInfo, List<WCAMilestone> milestones, int index, String proofOfWork
     ) throws Exception {
@@ -34,15 +28,17 @@ public class WCAAuxiliary {
         basicInfo.nextMilestoneIndex = index + 1;
         basicInfo.finishedCount++;
         basicInfo.lastUpdateTime = currentTime;
+        // update status if we pass the threshold
+        basicInfo.updateStatus(milestones);
     }
 
-    static boolean checkIfReadyToFinish(List<WCAMilestone> milestones) {
+    public static boolean checkIfReadyToFinish(List<WCAMilestone> milestones) {
         WCAMilestone ms = milestones.get(milestones.size() - 1);
         return ms.isFinished() || ms.isExpired();
     }
 
-    static boolean checkIfThresholdMet(WCABasicInfo basicInfo, List<WCAMilestone> milestones) {
-        // pass the threshold, or threshold ms is expired
-        return basicInfo.nextMilestoneIndex > basicInfo.thresholdIndex || milestones.get(basicInfo.thresholdIndex).isExpired();
+    static boolean checkIfThresholdMet(WCABasicInfo basicInfo, List<WCAMilestone> milestones) throws Exception {
+        basicInfo.updateStatus(milestones);
+        return basicInfo.status == 2;
     }
 }
