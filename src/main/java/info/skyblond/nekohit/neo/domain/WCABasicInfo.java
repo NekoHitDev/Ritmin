@@ -50,8 +50,8 @@ public class WCABasicInfo {
         this.owner = owner;
         require(description != null, Messages.NULL_DESCRIPTION);
         this.description = description;
-        require(stakePer100Token > 0, "The stake amount per 100 token must be positive.");
-        require(maxTokenSoldCount > 0, "The max sell token count must be positive.");
+        require(stakePer100Token > 0, Messages.INVALID_STAKE_RATE);
+        require(maxTokenSoldCount > 0, Messages.INVALID_MAX_SELL_AMOUNT);
         this.stakePer100Token = stakePer100Token;
         this.maxTokenSoldCount = maxTokenSoldCount;
         require(milestoneCount > 0, Messages.INVALID_MILESTONES_COUNT);
@@ -59,9 +59,9 @@ public class WCABasicInfo {
         if (thresholdIndex >= 0 && thresholdIndex < this.milestoneCount) {
             this.thresholdIndex = thresholdIndex;
         } else {
-            throw new Exception("Invalid value for thresholdIndex");
+            throw new Exception(Messages.INVALID_THRESHOLD_INDEX);
         }
-        require(coolDownInterval >= 0, "Cool down interval must not be negative.");
+        require(coolDownInterval > 0, Messages.INVALID_COOL_DOWN_INTERVAL);
         this.coolDownInterval = coolDownInterval;
         this.bePublic = bePublic;
 
