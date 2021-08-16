@@ -34,7 +34,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.ID_NOT_FOUND),
+                throwable.getMessage().contains(Messages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -170,7 +170,7 @@ public class WCARefundTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("Purchase not found"),
+                throwable.getMessage().contains(Messages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -203,7 +203,7 @@ public class WCARefundTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("Purchase not found"),
+                throwable.getMessage().contains(Messages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

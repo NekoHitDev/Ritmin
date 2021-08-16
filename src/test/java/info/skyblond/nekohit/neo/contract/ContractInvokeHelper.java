@@ -164,4 +164,19 @@ public class ContractInvokeHelper {
                 wallet
         );
     }
+
+    public static void cancelWCA(
+            SmartContract contract, String identifier, Wallet wallet
+    ) throws Throwable {
+        ContractTestFramework.invokeFunction(
+                contract, "cancelWCA",
+                new ContractParameter[]{
+                        ContractParameter.string(identifier)
+                },
+                new Signer[]{
+                        AccountSigner.calledByEntry(wallet.getDefaultAccount())
+                },
+                wallet
+        );
+    }
 }

@@ -7,8 +7,11 @@ public class Messages {
     public static final String INVALID_AMOUNT =
             "Invalid amount. Only positive numbers are allowed.";
 
-    public static final String ID_NOT_FOUND =
-            "Identifier not found.";
+    public static final String RECORD_NOT_FOUND =
+            "Record not found.";
+
+    public static final String BROKEN_RECORD =
+            "Record found but seems broken.";
 
     public static final String INVALID_STATUS_ALLOW_PENDING =
             "Invalid status. Only PENDING is allowed.";
@@ -54,4 +57,31 @@ public class Messages {
 
     public static final String NULL_DESCRIPTION =
             "Invalid description. Only non-null value is allowed.";
+
+    public static final String INVALID_MILESTONE_PASSED =
+            "Invalid milestone: Already passed.";
+
+    public static final String INVALID_MILESTONE_FINISHED =
+            "Invalid milestone: Already finished.";
+
+    public static final String INVALID_MILESTONE_EXPIRED =
+            "Invalid milestone: Already expired.";
+
+    public static final String INVALID_PROOF_OF_WORK =
+            "Invalid proof of work. Only non-null and non-blank content allowed.";
+
+    public static final String COOL_DOWN_TIME_NOT_MET =
+            "Cool-down time not met";
+
+    public static final String INVALID_STAKE_RATE =
+            "Invalid stake amount per 100 token. Only positive numbers are allowed.";
+
+    public static final String INVALID_MAX_SELL_AMOUNT =
+            "Invalid max sell token count. Only positive numbers are allowed.";
+
+    public static final String INVALID_THRESHOLD_INDEX =
+            "Invalid thresholdIndex: Index out of range.";
+
+    public static final String INVALID_COOL_DOWN_INTERVAL =
+            "Invalid cool-down interval. Only positive numbers are allowed.";
 }

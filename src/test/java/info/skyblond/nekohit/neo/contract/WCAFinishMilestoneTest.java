@@ -28,7 +28,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.ID_NOT_FOUND),
+                throwable.getMessage().contains(Messages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -111,7 +111,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("Cool down time not met"),
+                throwable.getMessage().contains(Messages.COOL_DOWN_TIME_NOT_MET),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -146,7 +146,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("You can't finish a passed milestone"),
+                throwable.getMessage().contains(Messages.INVALID_MILESTONE_PASSED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -180,7 +180,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("You can't finish a passed milestone"),
+                throwable.getMessage().contains(Messages.INVALID_MILESTONE_PASSED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -212,7 +212,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("You can't finish a expired milestone"),
+                throwable.getMessage().contains(Messages.INVALID_MILESTONE_EXPIRED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -242,7 +242,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("Proof of work must be valid."),
+                throwable.getMessage().contains(Messages.INVALID_PROOF_OF_WORK),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

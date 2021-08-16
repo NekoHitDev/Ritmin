@@ -39,7 +39,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("The stake amount per 100 token must be positive."),
+                throwable.getMessage().contains(Messages.INVALID_STAKE_RATE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -60,7 +60,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("The stake amount per 100 token must be positive."),
+                throwable.getMessage().contains(Messages.INVALID_STAKE_RATE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -81,7 +81,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("The max sell token count must be positive."),
+                throwable.getMessage().contains(Messages.INVALID_MAX_SELL_AMOUNT),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -102,7 +102,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("The max sell token count must be positive."),
+                throwable.getMessage().contains(Messages.INVALID_MAX_SELL_AMOUNT),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -253,7 +253,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Invalid value for thresholdIndex"),
+                throwable.getMessage().contains(Messages.INVALID_THRESHOLD_INDEX),
                 "Unknown exception: " + throwable.getMessage()
         );
 
@@ -271,7 +271,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Invalid value for thresholdIndex"),
+                throwable.getMessage().contains(Messages.INVALID_THRESHOLD_INDEX),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -292,7 +292,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Cool down interval must not be negative."),
+                throwable.getMessage().contains(Messages.INVALID_COOL_DOWN_INTERVAL),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

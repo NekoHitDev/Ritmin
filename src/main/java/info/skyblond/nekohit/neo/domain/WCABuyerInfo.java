@@ -21,7 +21,7 @@ public class WCABuyerInfo {
      * Record buyer's purchase record into list.
      *
      * @param buyer  who is making this purchase
-     * @param amount how much does he/her/it want to buy
+     * @param amount how much does he/her/it wants to buy
      * @throws Exception if remain amount is smaller than buyer's intended amount
      */
     public void recordPurchase(Hash160 buyer, int amount) throws Exception {
@@ -46,9 +46,9 @@ public class WCABuyerInfo {
      * @throws Exception if partial refund is not available
      */
     public Pair<Integer, Integer> partialRefund(WCABasicInfo basicInfo, Hash160 buyer) throws Exception {
-        require(this.purchases.containsKey(buyer), "Purchase not found");
+        require(this.purchases.containsKey(buyer), Messages.RECORD_NOT_FOUND);
         Integer buyerPurchaseAmount = this.purchases.get(buyer);
-        require(buyerPurchaseAmount != null, "Purchase found but amount is null");
+        require(buyerPurchaseAmount != null, Messages.BROKEN_RECORD);
 
         int totalMilestones = basicInfo.milestoneCount;
         // finished milestone belongs to creator
@@ -65,9 +65,9 @@ public class WCABuyerInfo {
     }
 
     public int fullRefund(Hash160 buyer) throws Exception {
-        require(this.purchases.containsKey(buyer), "Purchase not found");
+        require(this.purchases.containsKey(buyer), Messages.RECORD_NOT_FOUND);
         Integer amount = this.purchases.get(buyer);
-        require(amount != null, "Purchase found but amount is null");
+        require(amount != null, Messages.BROKEN_RECORD);
         this.purchases.remove(buyer);
         // add to remain token
         this.remainTokenCount += amount;
