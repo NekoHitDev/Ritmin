@@ -41,7 +41,7 @@ public class WCAPojo {
         this.buyerCount = buyerInfo.purchases.keys().length;
 
         // update status first
-        basicInfo.updateStatus(milestones);
+        WCAAuxiliary.updateStatus(basicInfo, milestones);
         if (basicInfo.status == 0) {
             this.status = "PENDING";
         } else if (basicInfo.status == 1) {

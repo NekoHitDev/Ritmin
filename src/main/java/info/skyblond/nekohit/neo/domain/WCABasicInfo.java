@@ -46,22 +46,22 @@ public class WCABasicInfo {
             int stakePer100Token, int maxTokenSoldCount,
             int milestoneCount, int thresholdIndex, int coolDownInterval, boolean bePublic
     ) throws Exception {
-        require(Hash160.isValid(owner), Messages.INVALID_HASH160);
+        require(Hash160.isValid(owner), ExceptionMessages.INVALID_HASH160);
         this.owner = owner;
-        require(description != null, Messages.NULL_DESCRIPTION);
+        require(description != null, ExceptionMessages.NULL_DESCRIPTION);
         this.description = description;
-        require(stakePer100Token > 0, Messages.INVALID_STAKE_RATE);
-        require(maxTokenSoldCount > 0, Messages.INVALID_MAX_SELL_AMOUNT);
+        require(stakePer100Token > 0, ExceptionMessages.INVALID_STAKE_RATE);
+        require(maxTokenSoldCount > 0, ExceptionMessages.INVALID_MAX_SELL_AMOUNT);
         this.stakePer100Token = stakePer100Token;
         this.maxTokenSoldCount = maxTokenSoldCount;
-        require(milestoneCount > 0, Messages.INVALID_MILESTONES_COUNT);
+        require(milestoneCount > 0, ExceptionMessages.INVALID_MILESTONES_COUNT);
         this.milestoneCount = milestoneCount;
         if (thresholdIndex >= 0 && thresholdIndex < this.milestoneCount) {
             this.thresholdIndex = thresholdIndex;
         } else {
-            throw new Exception(Messages.INVALID_THRESHOLD_INDEX);
+            throw new Exception(ExceptionMessages.INVALID_THRESHOLD_INDEX);
         }
-        require(coolDownInterval > 0, Messages.INVALID_COOL_DOWN_INTERVAL);
+        require(coolDownInterval > 0, ExceptionMessages.INVALID_COOL_DOWN_INTERVAL);
         this.coolDownInterval = coolDownInterval;
         this.bePublic = bePublic;
 
@@ -72,23 +72,6 @@ public class WCABasicInfo {
         this.status = 0;
     }
 
-
-    /**
-     * Update the status based on milestones.
-     * Mainly: OPEN -> ACTIVE, if the threshold milestone is passed
-     */
-    public void updateStatus(List<WCAMilestone> milestones) {
-        if (this.status == 1) {
-            // is open status
-            WCAMilestone threshold = milestones.get(this.thresholdIndex);
-            if (this.nextMilestoneIndex > this.thresholdIndex ||
-                    threshold.isExpired() || threshold.isFinished()) {
-                // threshold passed, finished, or expired
-                // then set the WCA to ACTIVE
-                this.status = 2;
-            }
-        }
-    }
 
     /**
      * Get total staked token count

@@ -1,6 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
-import info.skyblond.nekohit.neo.domain.Messages;
+import info.skyblond.nekohit.neo.domain.ExceptionMessages;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -34,7 +34,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.RECORD_NOT_FOUND),
+                throwable.getMessage().contains(ExceptionMessages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -56,7 +56,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_SIGNATURE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_SIGNATURE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -83,7 +83,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -113,7 +113,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -141,7 +141,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_STATUS_READY_TO_FINISH),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_READY_TO_FINISH),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -170,7 +170,7 @@ public class WCARefundTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains(Messages.RECORD_NOT_FOUND),
+                throwable.getMessage().contains(ExceptionMessages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -203,7 +203,7 @@ public class WCARefundTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains(Messages.RECORD_NOT_FOUND),
+                throwable.getMessage().contains(ExceptionMessages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

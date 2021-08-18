@@ -1,6 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
-import info.skyblond.nekohit.neo.domain.Messages;
+import info.skyblond.nekohit.neo.domain.ExceptionMessages;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.wallet.Wallet;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.RECORD_NOT_FOUND),
+                throwable.getMessage().contains(ExceptionMessages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -54,7 +54,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_SIGNATURE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_SIGNATURE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -80,7 +80,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -111,7 +111,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains(Messages.COOL_DOWN_TIME_NOT_MET),
+                throwable.getMessage().contains(ExceptionMessages.COOL_DOWN_TIME_NOT_MET),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -146,7 +146,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_MILESTONE_PASSED),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MILESTONE_PASSED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -180,7 +180,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_MILESTONE_PASSED),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MILESTONE_PASSED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -212,7 +212,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_MILESTONE_EXPIRED),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MILESTONE_EXPIRED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -242,7 +242,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_PROOF_OF_WORK),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_PROOF_OF_WORK),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

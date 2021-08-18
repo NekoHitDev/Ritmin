@@ -46,9 +46,9 @@ public class WCABuyerInfo {
      * @throws Exception if partial refund is not available
      */
     public Pair<Integer, Integer> partialRefund(WCABasicInfo basicInfo, Hash160 buyer) throws Exception {
-        require(this.purchases.containsKey(buyer), Messages.RECORD_NOT_FOUND);
+        require(this.purchases.containsKey(buyer), ExceptionMessages.RECORD_NOT_FOUND);
         Integer buyerPurchaseAmount = this.purchases.get(buyer);
-        require(buyerPurchaseAmount != null, Messages.BROKEN_RECORD);
+        require(buyerPurchaseAmount != null, ExceptionMessages.BROKEN_RECORD);
 
         int totalMilestones = basicInfo.milestoneCount;
         // finished milestone belongs to creator
@@ -65,9 +65,9 @@ public class WCABuyerInfo {
     }
 
     public int fullRefund(Hash160 buyer) throws Exception {
-        require(this.purchases.containsKey(buyer), Messages.RECORD_NOT_FOUND);
+        require(this.purchases.containsKey(buyer), ExceptionMessages.RECORD_NOT_FOUND);
         Integer amount = this.purchases.get(buyer);
-        require(amount != null, Messages.BROKEN_RECORD);
+        require(amount != null, ExceptionMessages.BROKEN_RECORD);
         this.purchases.remove(buyer);
         // add to remain token
         this.remainTokenCount += amount;
