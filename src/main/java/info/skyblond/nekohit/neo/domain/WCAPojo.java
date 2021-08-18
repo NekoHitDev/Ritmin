@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.domain;
 
+import info.skyblond.nekohit.neo.contract.WCAAuxiliary;
 import io.neow3j.devpack.List;
 import io.neow3j.devpack.contracts.StdLib;
 
@@ -39,22 +40,18 @@ public class WCAPojo {
         this.remainTokenCount = buyerInfo.remainTokenCount;
         this.buyerCount = buyerInfo.purchases.keys().length;
 
-        if (!basicInfo.paid) {
-            // not paid
+        // update status first
+        WCAAuxiliary.updateStatus(basicInfo, milestones);
+        if (basicInfo.status == 0) {
             this.status = "PENDING";
-        } else if (
-                basicInfo.nextMilestoneIndex == 0
-                        && !milestones.get(0).isExpired()
-                        && !basicInfo.finished
-        ) {
-            // paid but not started
+        } else if (basicInfo.status == 1) {
             this.status = "OPEN";
-        } else if (!basicInfo.finished) {
-            // paid, started, but not finished
+        } else if (basicInfo.status == 2) {
             this.status = "ACTIVE";
-        } else {
-            // finished
+        } else if (basicInfo.status == 3) {
             this.status = "FINISHED";
+        } else {
+            this.status = "UNKNOWN";
         }
     }
 }

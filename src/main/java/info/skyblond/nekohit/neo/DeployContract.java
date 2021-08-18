@@ -37,14 +37,8 @@ public class DeployContract {
     private static final Class<?> CONTRACT_CLASS = CatToken.class;
 
     public static void main(String[] args) throws Throwable {
+        Wallet deployWallet = Utils.readWalletWIF();
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Paste deploy account WIF:");
-        String walletWIF = scanner.nextLine();
-        // flush WIF out of screen
-        for (int i = 0; i < 1000; i++) {
-            System.out.println();
-        }
-        Wallet deployWallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
 
         System.out.println("Expected contract owner address: ");
         Utils.require(deployWallet.getDefaultAccount().getAddress().equals(scanner.nextLine()),
