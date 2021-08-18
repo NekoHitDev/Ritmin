@@ -1,6 +1,6 @@
 package info.skyblond.nekohit.neo.domain;
 
-public class Messages {
+public class ExceptionMessages {
     public static final String INVALID_CALLER =
             "Invalid caller. Only CatToken are allowed.";
 

@@ -1,6 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
-import info.skyblond.nekohit.neo.domain.Messages;
+import info.skyblond.nekohit.neo.domain.ExceptionMessages;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -39,7 +39,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_STAKE_RATE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STAKE_RATE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -60,7 +60,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_STAKE_RATE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STAKE_RATE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -81,7 +81,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_MAX_SELL_AMOUNT),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MAX_SELL_AMOUNT),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -102,7 +102,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_MAX_SELL_AMOUNT),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MAX_SELL_AMOUNT),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -135,7 +135,7 @@ public class WCACreateTest extends ContractTestFramework {
                 }
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_SIGNATURE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_SIGNATURE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -165,7 +165,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.DUPLICATED_ID),
+                throwable.getMessage().contains(ExceptionMessages.DUPLICATED_ID),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -186,7 +186,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_MILESTONES_COUNT),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MILESTONES_COUNT),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -207,7 +207,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_TIMESTAMP),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_TIMESTAMP),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -229,7 +229,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.EXPIRED_TIMESTAMP),
+                throwable.getMessage().contains(ExceptionMessages.EXPIRED_TIMESTAMP),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -253,7 +253,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_THRESHOLD_INDEX),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_THRESHOLD_INDEX),
                 "Unknown exception: " + throwable.getMessage()
         );
 
@@ -271,7 +271,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_THRESHOLD_INDEX),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_THRESHOLD_INDEX),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -292,7 +292,7 @@ public class WCACreateTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(Messages.INVALID_COOL_DOWN_INTERVAL),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_COOL_DOWN_INTERVAL),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
