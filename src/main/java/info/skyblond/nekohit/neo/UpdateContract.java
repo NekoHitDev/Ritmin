@@ -15,7 +15,6 @@ import io.neow3j.transaction.Transaction;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
-import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
 import java.util.HashMap;
@@ -36,14 +35,8 @@ public class UpdateContract {
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {
+        Wallet deployWallet = Utils.readWalletWIF();
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Paste contract owner account WIF:");
-        String walletWIF = scanner.nextLine();
-        // flush WIF out of screen
-        for (int i = 0; i < 1000; i++) {
-            System.out.println();
-        }
-        Wallet deployWallet = Wallet.withAccounts(Account.fromWIF(walletWIF));
 
         // here we don't check the address, since only owner can update.
         Map<String, String> replaceMap = new HashMap<>();

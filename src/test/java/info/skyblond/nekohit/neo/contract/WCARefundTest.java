@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import info.skyblond.nekohit.neo.domain.ExceptionMessages;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
@@ -33,7 +34,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Identifier not found."),
+                throwable.getMessage().contains(ExceptionMessages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -55,7 +56,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Invalid sender signature."),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_SIGNATURE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -82,7 +83,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("You can not refund an unpaid WCA."),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -112,7 +113,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("You can not refund a finished WCA."),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -140,7 +141,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("You can not refund a finished WCA."),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_READY_TO_FINISH),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -169,7 +170,7 @@ public class WCARefundTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("Purchase not found"),
+                throwable.getMessage().contains(ExceptionMessages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -202,7 +203,7 @@ public class WCARefundTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("Purchase not found"),
+                throwable.getMessage().contains(ExceptionMessages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

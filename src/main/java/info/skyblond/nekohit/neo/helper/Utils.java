@@ -3,8 +3,10 @@ package info.skyblond.nekohit.neo.helper;
 import io.neow3j.crypto.ECKeyPair;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.wallet.Account;
+import io.neow3j.wallet.Wallet;
 
 import java.math.BigInteger;
+import java.util.Scanner;
 
 public class Utils {
     /**
@@ -35,5 +37,16 @@ public class Utils {
     public static double getGasFeeFromTx(Transaction tx) {
         long fraction = tx.getSystemFee() + tx.getNetworkFee();
         return fraction / Math.pow(10, 8);
+    }
+
+    public static Wallet readWalletWIF() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Paste account WIF:");
+        String walletWIF = scanner.nextLine();
+        // flush WIF out of screen
+        for (int i = 0; i < 2000; i++) {
+            System.out.println();
+        }
+        return Wallet.withAccounts(Account.fromWIF(walletWIF));
     }
 }

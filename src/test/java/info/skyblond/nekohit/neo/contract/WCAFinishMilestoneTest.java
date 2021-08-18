@@ -1,5 +1,6 @@
 package info.skyblond.nekohit.neo.contract;
 
+import info.skyblond.nekohit.neo.domain.ExceptionMessages;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.wallet.Wallet;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Identifier not found."),
+                throwable.getMessage().contains(ExceptionMessages.RECORD_NOT_FOUND),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -53,7 +54,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Invalid caller signature."),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_SIGNATURE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -79,7 +80,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("You can't finish an unpaid WCA."),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -110,7 +111,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("Cool down time not met"),
+                throwable.getMessage().contains(ExceptionMessages.COOL_DOWN_TIME_NOT_MET),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -145,7 +146,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("You can't finish a passed milestone"),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MILESTONE_PASSED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -179,7 +180,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("You can't finish a passed milestone"),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MILESTONE_PASSED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -211,7 +212,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("You can't finish a expired milestone"),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_MILESTONE_EXPIRED),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -241,7 +242,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         );
 
         assertTrue(
-                throwable.getMessage().contains("Proof of work must be valid."),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_PROOF_OF_WORK),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
