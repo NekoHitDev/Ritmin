@@ -80,7 +80,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

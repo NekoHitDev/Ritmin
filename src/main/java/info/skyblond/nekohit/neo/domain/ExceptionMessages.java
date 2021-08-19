@@ -10,23 +10,23 @@ public class ExceptionMessages {
     public static final String RECORD_NOT_FOUND =
             "Record not found.";
 
-    public static final String BROKEN_RECORD =
-            "Record found but seems broken.";
+    public static final String INVALID_STAGE_ACTIVE =
+            "Invalid stage: ACTIVE. Only OPEN is allowed.";
 
     public static final String INVALID_STATUS_ALLOW_PENDING =
             "Invalid status. Only PENDING is allowed.";
 
-    public static final String INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE =
-            "Invalid status. Only OPEN and ACTIVE is allowed.";
+    public static final String INVALID_STATUS_ALLOW_ONGOING =
+            "Invalid status. Only ONGOING is allowed.";
 
-    public static final String INVALID_STATUS_ALLOW_PENDING_AND_OPEN =
-            "Invalid status. Only PENDING and OPEN is allowed.";
+    public static final String INVALID_STATUS_ALLOW_PENDING_AND_ONGOING =
+            "Invalid status. Only PENDING and ONGOING is allowed.";
 
-    public static final String INVALID_STATUS_ALLOW_READY_TO_FINISH =
-            "Invalid status. Only Ready-To-Finished is allowed.";
+    public static final String INVALID_STAGE_ALLOW_READY_TO_FINISH =
+            "Invalid stage. Only Ready-To-Finished is allowed.";
 
-    public static final String INVALID_STATUS_READY_TO_FINISH =
-            "Invalid status: Ready-To-Finish.";
+    public static final String INVALID_STAGE_READY_TO_FINISH =
+            "Invalid stage: Ready-To-Finish.";
 
     public static final String INVALID_HASH160 =
             "Invalid hash160.";
