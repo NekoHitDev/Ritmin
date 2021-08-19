@@ -1,7 +1,11 @@
 package info.skyblond.nekohit.neo.helper;
 
 import io.neow3j.crypto.ECKeyPair;
+import io.neow3j.devpack.ByteString;
+import io.neow3j.devpack.annotations.Instruction;
+import io.neow3j.script.OpCode;
 import io.neow3j.transaction.Transaction;
+import io.neow3j.types.StackItemType;
 import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
@@ -9,6 +13,19 @@ import java.math.BigInteger;
 import java.util.Scanner;
 
 public class Utils {
+    @Instruction(opcode = OpCode.CONVERT, operand = StackItemType.BYTE_STRING_CODE)
+    public static native ByteString intToByteString(int i);
+
+    public static ByteString paddingByteString(ByteString b, int l) throws Exception {
+        require(b.length() <= l, "Max length exceeded.");
+        if (b.length() < l) {
+            byte[] buffer = new byte[l - b.length()];
+            b = b.concat(buffer);
+        }
+//        require(b.length() == l, "assert failed!");
+        return b;
+    }
+
     /**
      * Similar to kotlin's require function. If condition is false, then exception is thrown
      *

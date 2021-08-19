@@ -164,7 +164,7 @@ public class WCACancelTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_PENDING_AND_OPEN),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STAGE_ACTIVE),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -192,7 +192,7 @@ public class WCACancelTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_PENDING_AND_OPEN),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_PENDING_AND_ONGOING),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

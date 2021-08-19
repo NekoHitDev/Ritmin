@@ -6,23 +6,23 @@ public class WCAMilestone {
     public String title;
     public String description;
     public int endTimestamp;
-    public String linkToResult;
+    public String proofOfWork;
 
     public WCAMilestone(String title, String description, int endTimestamp) {
         this.title = title;
         this.description = description;
         this.endTimestamp = endTimestamp;
-        linkToResult = null;
+        proofOfWork = null;
     }
 
     /**
-     * {@link WCAMilestone#linkToResult} is considered a proof of milestone.
+     * {@link WCAMilestone#proofOfWork} is considered a proof of milestone.
      * If that is not null, then this milestone is finished.
      *
      * @return true if finished; false if not.
      */
     public boolean isFinished() {
-        return linkToResult != null;
+        return proofOfWork != null;
     }
 
     /**

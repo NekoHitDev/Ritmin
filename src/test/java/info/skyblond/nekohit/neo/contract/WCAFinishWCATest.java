@@ -55,7 +55,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -81,7 +81,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_READY_TO_FINISH),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -132,7 +132,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -162,7 +162,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

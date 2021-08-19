@@ -83,7 +83,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -113,7 +113,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -141,7 +141,7 @@ public class WCARefundTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_READY_TO_FINISH),
+                throwable.getMessage().contains(ExceptionMessages.INVALID_STAGE_READY_TO_FINISH),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

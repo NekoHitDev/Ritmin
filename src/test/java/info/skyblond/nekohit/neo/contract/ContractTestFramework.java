@@ -12,6 +12,7 @@ import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.protocol.http.HttpService;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
+import io.neow3j.transaction.Transaction;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -128,23 +129,24 @@ public class ContractTestFramework {
     protected static void transferToken(
             FungibleToken token, Wallet wallet, Hash160 to, long amount, String identifier, boolean wait
     ) throws Throwable {
-        NeoSendRawTransaction tx = token.transferFromDefaultAccount(
+        Transaction tx = token.transferFromDefaultAccount(
                 wallet, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
-        ).signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).sign().send();
+        ).signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).sign();
+        NeoSendRawTransaction resp = tx.send();
 
-        if (tx.hasError()) {
-            throw new Exception(tx.getError().getMessage());
+        if (resp.hasError()) {
+            throw new Exception(resp.getError().getMessage());
         }
 
         if (wait) {
-            Await.waitUntilTransactionIsExecuted(tx.getSendRawTransaction().getHash(), NEOW3J);
+            Await.waitUntilTransactionIsExecuted(resp.getSendRawTransaction().getHash(), NEOW3J);
         }
 
         logger.info(
-                "Transfer {} {} from {} to {}, tx: {}",
+                "Transfer {} {} from {} to {}, gas: {}",
                 amount, token.getSymbol(),
                 wallet.getDefaultAccount().getAddress(),
-                to.toAddress(), tx.getSendRawTransaction().getHash()
+                to.toAddress(), Utils.getGasFeeFromTx(tx)
         );
     }
 
@@ -189,7 +191,7 @@ public class ContractTestFramework {
         if (response.hasError()) {
             throw new Exception(String.format("Error when invoking %s: %s", function, response.getError().getMessage()));
         }
-        logger.info("{} tx: {}", function, tx.getTxId());
+//        logger.info("{} tx: {}", function, tx.getTxId());
         Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
         logger.info("{} gas fee: {}", function, Utils.getGasFeeFromTx(tx));
         var appLog = tx.getApplicationLog();

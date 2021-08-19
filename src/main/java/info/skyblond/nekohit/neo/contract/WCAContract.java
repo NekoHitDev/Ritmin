@@ -2,6 +2,7 @@ package info.skyblond.nekohit.neo.contract;
 
 import info.skyblond.nekohit.neo.domain.*;
 import info.skyblond.nekohit.neo.helper.Pair;
+import info.skyblond.nekohit.neo.helper.Utils;
 import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
@@ -10,14 +11,16 @@ import io.neow3j.devpack.constants.FindOptions;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.contracts.StdLib;
 import io.neow3j.devpack.events.Event1Arg;
+import io.neow3j.devpack.events.Event2Args;
 import io.neow3j.devpack.events.Event3Args;
 import io.neow3j.devpack.events.Event4Args;
 
-import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.*;
+import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.checkIfReadyToFinish;
+import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.checkIfThresholdMet;
 import static info.skyblond.nekohit.neo.helper.Utils.require;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
-@SuppressWarnings("unused")
+//@SuppressWarnings("unused")
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
@@ -34,9 +37,13 @@ public class WCAContract {
     static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>");
 
     private static final StorageContext CTX = Storage.getStorageContext();
-    private static final StorageMap wcaBasicInfoMap = CTX.createMap("BASIC_INFO");
-    private static final StorageMap wcaMilestonesMap = CTX.createMap("MILESTONES");
-    private static final StorageMap wcaBuyerInfoMap = CTX.createMap("BUYER_INFO");
+
+    private static final String COUNTER_KEY = "CK";
+    private static final StorageMap wcaIdentifierMap = CTX.createMap("ID");
+    private static final StorageMap wcaStaticContentMap = CTX.createMap("SC");
+    private static final StorageMap wcaDynamicContentMap = CTX.createMap("DC");
+    private static final StorageMap wcaPurchaseRecordMap = CTX.createMap("PR");
+    private static final StorageMap wcaMilestoneMap = CTX.createMap("MS");
 
     // creator, identifier, milestone count
     @DisplayName("CreateWCA")
@@ -50,9 +57,9 @@ public class WCAContract {
     @DisplayName("BuyWCA")
     private static Event3Args<Hash160, String, Integer> onBuyWCA;
 
-    // identifier, milestone index, proof of work
+    // identifier, milestone index
     @DisplayName("FinishMilestone")
-    private static Event3Args<String, Integer, String> onFinishMilestone;
+    private static Event2Args<String, Integer> onFinishMilestone;
 
     // identifier
     @DisplayName("FinishWCA")
@@ -62,6 +69,7 @@ public class WCAContract {
     @DisplayName("Refund")
     private static Event4Args<Hash160, String, Integer, Integer> onRefund;
 
+    // identifier
     @DisplayName("CancelWCA")
     private static Event1Arg<String> onCancelWCA;
 
@@ -71,64 +79,47 @@ public class WCAContract {
         require(CAT_TOKEN_HASH == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_CALLER);
         require(amount > 0, ExceptionMessages.INVALID_AMOUNT);
         String identifier = (String) data;
-        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
-        require(basicInfo != null, ExceptionMessages.RECORD_NOT_FOUND);
-        List<WCAMilestone> milestones = getWCAMilestones(identifier);
-        require(milestones != null, ExceptionMessages.BROKEN_RECORD);
+        ByteString wcaId = getWCAId(identifier);
+
+        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
 
         if (basicInfo.owner.equals(from)) {
             // owner paying stake
-            require(basicInfo.status == 0, ExceptionMessages.INVALID_STATUS_ALLOW_PENDING);
+            require(dynamicContent.status == 0, ExceptionMessages.INVALID_STATUS_ALLOW_PENDING);
             require(basicInfo.getTotalStake() == amount, ExceptionMessages.INCORRECT_AMOUNT);
-            // unpaid before, amount is correct, set to OPEN
-            basicInfo.status = 1;
-            // update status in case the threshold milestone is expired
-            updateStatus(basicInfo, milestones);
-            updateWCABasicInfo(identifier, basicInfo);
-            onPayWCA.fire(from, identifier, amount);
+            // unpaid before, amount is correct, set to ONGOING
+            dynamicContent.status = 1;
         } else {
-            // buyer want to buy a WCA, update status first
-            updateStatus(basicInfo, milestones);
-            require(basicInfo.status == 1 || basicInfo.status == 2, ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE);
-            require(!checkIfReadyToFinish(milestones), ExceptionMessages.INVALID_STATUS_READY_TO_FINISH);
-            WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
-            require(buyerInfo != null, ExceptionMessages.BROKEN_RECORD);
-            buyerInfo.recordPurchase(from, amount);
-            updateWCABasicInfo(identifier, basicInfo);
-            updateWCABuyerInfo(identifier, buyerInfo);
-            onBuyWCA.fire(from, identifier, amount);
+            require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
+            require(!checkIfReadyToFinish(basicInfo, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
+            require(dynamicContent.remainTokenCount >= amount, "Insufficient token remain in this WCA.");
+            dynamicContent.remainTokenCount -= amount;
+            dynamicContent.totalPurchasedAmount += amount;
+            dynamicContent.buyerCounter++;
+            // update purchase record
+            ByteString purchaseId = wcaId.concat(from.toByteString());
+            int value = wcaPurchaseRecordMap.get(purchaseId).toInteger();
+            value += amount;
+            wcaPurchaseRecordMap.put(purchaseId, value);
         }
+        updateWCADynamicContent(wcaId, dynamicContent);
+        onBuyWCA.fire(from, identifier, amount);
     }
 
-    public static String queryWCA(String identifier) {
-        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
-        if (basicInfo == null) {
-            return "";
-        }
+    public static String queryWCA(String identifier) throws Exception {
+        ByteString wcaId = getWCAId(identifier);
+        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+        WCAMilestone[] milestones = getWCAMilestones(wcaId, basicInfo);
 
-        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
-        if (buyerInfo == null) {
-            return "";
-        }
-
-        List<WCAMilestone> milestones = getWCAMilestones(identifier);
-        if (milestones == null) {
-            return "";
-        }
-
-        WCAPojo pojo = new WCAPojo(identifier, basicInfo, milestones, buyerInfo);
+        WCAPojo pojo = new WCAPojo(identifier, basicInfo, dynamicContent, milestones);
         return StdLib.jsonSerialize(pojo);
     }
 
-    public static int queryPurchase(String identifier, Hash160 buyer) {
-        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
-        if (buyerInfo == null) {
-            return 0;
-        }
-        if (!buyerInfo.purchases.containsKey(buyer)) {
-            return 0;
-        }
-        return buyerInfo.purchases.get(buyer);
+    public static int queryPurchase(String identifier, Hash160 buyer) throws Exception {
+        ByteString wcaId = getWCAId(identifier);
+        return wcaPurchaseRecordMap.get(wcaId.concat(buyer.toByteString())).toInteger();
     }
 
     public static String advanceQuery(
@@ -139,16 +130,13 @@ public class WCAContract {
         int offset = (page - 1) * size;
         int count = 0;
         List<WCAPojo> result = new List<>();
-        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, "BASIC_INFO", FindOptions.RemovePrefix);
+        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, "ID", FindOptions.RemovePrefix);
         while (result.size() < size && iter.next()) {
             String identifier = iter.get().key.toString();
-            WCABasicInfo basicInfo = getWCABasicInfo(identifier);
-            List<WCAMilestone> milestonesInfo = getWCAMilestones(identifier);
-            WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
-
-            if (basicInfo == null || milestonesInfo == null || buyerInfo == null) {
-                continue;
-            }
+            ByteString wcaId = iter.get().value;
+            WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+            WCAMilestone[] milestonesInfo = getWCAMilestones(wcaId, basicInfo);
+            WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
 
             if (!basicInfo.bePublic) {
                 continue;
@@ -162,11 +150,11 @@ public class WCAContract {
             }
             if (buyer != null && buyer != Hash160.zero()) {
                 // filter buyer
-                if (!buyerInfo.purchases.containsKey(buyer)) {
+                if (wcaPurchaseRecordMap.get(wcaId.concat(buyer.toByteString())) == null) {
                     continue;
                 }
             }
-            WCAPojo pojo = new WCAPojo(identifier, basicInfo, milestonesInfo, buyerInfo);
+            WCAPojo pojo = new WCAPojo(identifier, basicInfo, dynamicContent, milestonesInfo);
             if (count >= offset) {
                 result.add(pojo);
             }
@@ -182,83 +170,112 @@ public class WCAContract {
             int thresholdIndex, int coolDownInterval,
             boolean bePublic, String identifier
     ) throws Exception {
+        require(Hash160.isValid(owner), ExceptionMessages.INVALID_HASH160);
         require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
-        // identifier should be unique
-        require(wcaBasicInfoMap.get(identifier) == null, ExceptionMessages.DUPLICATED_ID);
-        // check milestone
-        require(milestoneTitles.length == milestoneDescriptions.length, ExceptionMessages.INVALID_MILESTONES_COUNT);
-        require(milestoneDescriptions.length == endTimestamps.length, ExceptionMessages.INVALID_MILESTONES_COUNT);
+        // wcaId should be unique
+        require(wcaIdentifierMap.get(identifier) == null, ExceptionMessages.DUPLICATED_ID);
+        int counter = Storage.get(CTX, COUNTER_KEY).toInteger() + 1;
+        wcaIdentifierMap.put(identifier, counter);
+        Storage.put(CTX, COUNTER_KEY, counter);
+        ByteString wcaId = wcaIdentifierMap.get(identifier);
 
-        // convert to object on the fly
-        List<WCAMilestone> milestones = new List<>();
+        require(wcaDescription != null, ExceptionMessages.NULL_DESCRIPTION);
+        require(stakePer100Token > 0, ExceptionMessages.INVALID_STAKE_RATE);
+        require(maxTokenSoldCount > 0, ExceptionMessages.INVALID_MAX_SELL_AMOUNT);
+
+        // check milestone
+        int milestoneCount = endTimestamps.length;
+        require(milestoneTitles.length == milestoneCount, ExceptionMessages.INVALID_MILESTONES_COUNT);
+        require(milestoneCount == milestoneDescriptions.length, ExceptionMessages.INVALID_MILESTONES_COUNT);
+
         int lastTimestamp = 0;
-        for (int i = 0; i < endTimestamps.length; i++) {
-            require(lastTimestamp < endTimestamps[i], ExceptionMessages.INVALID_TIMESTAMP);
-            require(endTimestamps[i] > Runtime.getTime(), ExceptionMessages.EXPIRED_TIMESTAMP);
-            lastTimestamp = endTimestamps[i];
-            milestones.add(new WCAMilestone(milestoneTitles[i], milestoneDescriptions[i], endTimestamps[i]));
+        require(endTimestamps[0] > Runtime.getTime(), ExceptionMessages.EXPIRED_TIMESTAMP);
+        for (int i = 0; i < milestoneCount; i++) {
+            int t = endTimestamps[i];
+            require(lastTimestamp < t, ExceptionMessages.INVALID_TIMESTAMP);
+            lastTimestamp = t;
+            updateMilestone(wcaId, i, new WCAMilestone(milestoneTitles[i], milestoneDescriptions[i], t));
         }
+        require(thresholdIndex >= 0 && thresholdIndex < milestoneCount, ExceptionMessages.INVALID_THRESHOLD_INDEX);
+        require(coolDownInterval > 0, ExceptionMessages.INVALID_COOL_DOWN_INTERVAL);
 
         // create wca info obj
-        WCABasicInfo basicInfo = new WCABasicInfo(
+        WCAStaticContent basicInfo = new WCAStaticContent(
                 owner, wcaDescription, stakePer100Token, maxTokenSoldCount,
-                milestones.size(), thresholdIndex, coolDownInterval, bePublic
+                milestoneCount, thresholdIndex, coolDownInterval,
+                endTimestamps[thresholdIndex], endTimestamps[milestoneCount - 1],
+                bePublic
         );
+
         // store
-        updateWCABasicInfo(identifier, basicInfo);
-        updateWCABuyerInfo(identifier, new WCABuyerInfo(maxTokenSoldCount));
-        updateWCAMilestones(identifier, milestones);
+        wcaStaticContentMap.put(wcaId, StdLib.serialize(basicInfo));
+        updateWCADynamicContent(wcaId, new WCADynamicContent(maxTokenSoldCount));
         // fire event and done
-        onCreateWCA.fire(owner, identifier, milestones.size());
+        onCreateWCA.fire(owner, identifier, milestoneTitles.length);
         return identifier;
     }
 
     public static void finishMilestone(String identifier, int index, String proofOfWork) throws Exception {
-        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
-        require(basicInfo != null, ExceptionMessages.RECORD_NOT_FOUND);
+        ByteString wcaId = getWCAId(identifier);
+        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
         // only creator can update WCA to finished
         require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
-        require(basicInfo.status == 1 || basicInfo.status == 2, ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE);
-        List<WCAMilestone> milestones = getWCAMilestones(identifier);
-        require(milestones != null, ExceptionMessages.BROKEN_RECORD);
-
-        updateMilestone(basicInfo, milestones, index, proofOfWork);
+        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+        require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
+        WCAMilestone ms = getWCAMilestone(wcaId, index);
+        // check cool-down time first
+        int currentTime = Runtime.getTime();
+        require(dynamicContent.lastUpdateTime + basicInfo.coolDownInterval <= currentTime, ExceptionMessages.COOL_DOWN_TIME_NOT_MET);
+        require(index >= dynamicContent.nextMilestoneIndex, ExceptionMessages.INVALID_MILESTONE_PASSED);
+        require(!ms.isFinished(), ExceptionMessages.INVALID_MILESTONE_FINISHED);
+        require(!ms.isExpired(), ExceptionMessages.INVALID_MILESTONE_EXPIRED);
+        // not finished nor expired, then we can modify it.
+        require(proofOfWork != null && proofOfWork.length() != 0, ExceptionMessages.INVALID_PROOF_OF_WORK);
+        ms.proofOfWork = proofOfWork;
+        dynamicContent.nextMilestoneIndex = index + 1;
+        dynamicContent.finishedMilestoneCount++;
+        dynamicContent.lastUpdateTime = currentTime;
+        if (index == basicInfo.thresholdIndex) {
+            dynamicContent.thresholdMilestoneFinished = true;
+        }
+        if (index == basicInfo.milestoneCount - 1) {
+            dynamicContent.lastMilestoneFinished = true;
+        }
 
         // store it back
-        updateWCABasicInfo(identifier, basicInfo);
-        updateWCAMilestones(identifier, milestones);
-        onFinishMilestone.fire(identifier, index, proofOfWork);
+        updateWCADynamicContent(wcaId, dynamicContent);
+        updateMilestone(wcaId, index, ms);
+        onFinishMilestone.fire(identifier, index);
 
         // if whole WCA is finished
-        if (checkIfReadyToFinish(milestones)) {
+        if (checkIfReadyToFinish(basicInfo, dynamicContent)) {
             finishWCA(identifier);
         }
     }
 
     public static void finishWCA(String identifier) throws Exception {
-        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
-        require(basicInfo != null, ExceptionMessages.RECORD_NOT_FOUND);
-        require(basicInfo.status == 1 || basicInfo.status == 2, ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE);
-        List<WCAMilestone> milestones = getWCAMilestones(identifier);
-        require(milestones != null, ExceptionMessages.BROKEN_RECORD);
+        ByteString wcaId = getWCAId(identifier);
+        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+        require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
 
         if (!Runtime.checkWitness(basicInfo.owner)) {
             // only owner can finish an unfinished WCA
-            require(checkIfReadyToFinish(milestones), ExceptionMessages.INVALID_STATUS_ALLOW_READY_TO_FINISH);
+            require(checkIfReadyToFinish(basicInfo, dynamicContent), ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH);
         }
         // get wca buyer info obj
-        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
-        require(buyerInfo != null, ExceptionMessages.BROKEN_RECORD);
-
-        int remainTokens = basicInfo.getTotalStake() + buyerInfo.totalPurchasedAmount;
+        int remainTokens = basicInfo.getTotalStake() + dynamicContent.totalPurchasedAmount;
         int totalMilestones = basicInfo.milestoneCount;
-        int unfinishedMilestones = totalMilestones - basicInfo.finishedCount;
+        int unfinishedMilestones = totalMilestones - dynamicContent.finishedMilestoneCount;
 
         // for each buyer, return their token based on unfinished ms count
         // also remove stakes for that unfinished one
-        Hash160[] buyers = buyerInfo.purchases.keys();
-        for (Hash160 buyer : buyers) {
-            int purchaseAmount = buyerInfo.purchases.get(buyer);
+        ByteString prefix = new ByteString("PR").concat(wcaId);
+        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
+        while (iter.next()) {
+            Iterator.Struct<ByteString, ByteString> elem = iter.get();
+            Hash160 buyer = new Hash160(elem.key);
+            int purchaseAmount = elem.value.toInteger();
             int totalAmount = purchaseAmount + purchaseAmount * basicInfo.stakePer100Token / 100;
             int returnAmount = totalAmount * unfinishedMilestones / totalMilestones;
             transferTokenTo(buyer, returnAmount, identifier);
@@ -269,77 +286,87 @@ public class WCAContract {
         if (remainTokens > 0) {
             transferTokenTo(basicInfo.owner, remainTokens, identifier);
         }
-        basicInfo.status = 3;
-        basicInfo.lastUpdateTime = Runtime.getTime();
+        dynamicContent.status = 2;
+        dynamicContent.lastUpdateTime = Runtime.getTime();
         // store it back
-        updateWCABasicInfo(identifier, basicInfo);
+        updateWCADynamicContent(wcaId, dynamicContent);
         onFinishWCA.fire(identifier);
     }
 
     public static void refund(String identifier, Hash160 buyer) throws Exception {
         require(Hash160.isValid(buyer), ExceptionMessages.INVALID_HASH160);
         require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
-        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
-        List<WCAMilestone> milestones = getWCAMilestones(identifier);
-        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
-        require(basicInfo != null, ExceptionMessages.RECORD_NOT_FOUND);
-        require(basicInfo.status == 1 || basicInfo.status == 2, ExceptionMessages.INVALID_STATUS_ALLOW_OPEN_AND_ACTIVE);
-        require(milestones != null, ExceptionMessages.BROKEN_RECORD);
-        require(!checkIfReadyToFinish(milestones), ExceptionMessages.INVALID_STATUS_READY_TO_FINISH);
-        require(buyerInfo != null, ExceptionMessages.BROKEN_RECORD);
+        ByteString wcaId = getWCAId(identifier);
+        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+        require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
 
-        if (checkIfThresholdMet(basicInfo, milestones)) {
+        require(!checkIfReadyToFinish(basicInfo, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
+        ByteString purchaseId = wcaId.concat(buyer.toByteString());
+        int value = wcaPurchaseRecordMap.get(purchaseId).toInteger();
+        if (checkIfThresholdMet(basicInfo, dynamicContent)) {
             // after the threshold
-            Pair<Integer, Integer> buyerAndCreator = buyerInfo.partialRefund(basicInfo, buyer);
+            Pair<Integer, Integer> buyerAndCreator = dynamicContent.partialRefund(basicInfo, value);
             transferTokenTo(buyer, buyerAndCreator.first, identifier);
             transferTokenTo(basicInfo.owner, buyerAndCreator.second, identifier);
             onRefund.fire(buyer, identifier, buyerAndCreator.first, buyerAndCreator.second);
         } else {
             // full refund
-            int amount = buyerInfo.fullRefund(buyer);
+            int amount = dynamicContent.fullRefund(value);
             transferTokenTo(buyer, amount, identifier);
             onRefund.fire(buyer, identifier, amount, 0);
         }
-
+        wcaPurchaseRecordMap.delete(purchaseId);
         // update buyer info
-        updateWCABuyerInfo(identifier, buyerInfo);
+        updateWCADynamicContent(wcaId, dynamicContent);
     }
 
     public static void cancelWCA(String identifier) throws Exception {
+        ByteString wcaId = getWCAId(identifier);
         // get obj
-        WCABasicInfo basicInfo = getWCABasicInfo(identifier);
-        require(basicInfo != null, ExceptionMessages.RECORD_NOT_FOUND);
-        List<WCAMilestone> milestones = getWCAMilestones(identifier);
-        require(milestones != null, ExceptionMessages.BROKEN_RECORD);
-        WCABuyerInfo buyerInfo = getWCABuyerInfo(identifier);
-        require(buyerInfo != null, ExceptionMessages.BROKEN_RECORD);
+        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+
         // check signature
         require(Hash160.isValid(basicInfo.owner), ExceptionMessages.INVALID_HASH160);
         require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
         // check status
-        updateStatus(basicInfo, milestones);
-        switch (basicInfo.status) {
+        switch (dynamicContent.status) {
             case 0:
                 // PENDING, nothing to do
                 break;
             case 1:
-                // OPEN, refund to everyone
+                // ONGOING, check threshold
+                require(!checkIfThresholdMet(basicInfo, dynamicContent), ExceptionMessages.INVALID_STAGE_ACTIVE);
                 // to creator
                 transferTokenTo(basicInfo.owner, basicInfo.getTotalStake(), identifier);
                 // to buyers
-                Hash160[] buyers = buyerInfo.purchases.keys();
-                for (Hash160 buyer : buyers) {
-                    transferTokenTo(buyer, buyerInfo.purchases.get(buyer), identifier);
+                ByteString prefix = new ByteString("PR").concat(wcaId);
+                Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
+                while (iter.next()) {
+                    Iterator.Struct<ByteString, ByteString> elem = iter.get();
+                    Hash160 buyer = new Hash160(elem.key);
+                    int purchaseAmount = elem.value.toInteger();
+                    // delete record
+                    wcaPurchaseRecordMap.delete(wcaId.concat(buyer.toByteString()));
+                    transferTokenTo(buyer, purchaseAmount, identifier);
                 }
                 break;
             default:
                 // Cancel is not available for the rest of status
-                throw new Exception(ExceptionMessages.INVALID_STATUS_ALLOW_PENDING_AND_OPEN);
+                throw new Exception(ExceptionMessages.INVALID_STATUS_ALLOW_PENDING_AND_ONGOING);
         }
         // delete this id
-        wcaBasicInfoMap.delete(identifier);
-        wcaBuyerInfoMap.delete(identifier);
-        wcaMilestonesMap.delete(identifier);
+        wcaIdentifierMap.delete(identifier);
+        wcaStaticContentMap.delete(wcaId);
+        wcaDynamicContentMap.delete(wcaId);
+        // delete milestones
+        ByteString prefix = new ByteString("MS").concat(wcaId);
+        Iterator<ByteString> iter = Storage.find(CTX, prefix, FindOptions.KeysOnly);
+        while (iter.next()) {
+            Storage.delete(CTX, iter.get());
+        }
+
         onCancelWCA.fire(identifier);
     }
 
@@ -368,39 +395,54 @@ public class WCAContract {
                 new Object[]{Runtime.getExecutingScriptHash(), target, amount, identifier});
     }
 
-    private static WCABasicInfo getWCABasicInfo(String identifier) {
-        ByteString data = wcaBasicInfoMap.get(identifier);
-        if (data == null) {
-            return null;
+    /**
+     * Check and get the wcaId of the given identifier.
+     * If identifier not exist, exception will be thrown.
+     */
+    private static ByteString getWCAId(String identifier) throws Exception {
+        ByteString id = wcaIdentifierMap.get(identifier);
+        require(id != null, ExceptionMessages.RECORD_NOT_FOUND);
+        return id;
+    }
+
+    private static WCAStaticContent getWCAStaticContent(ByteString wcaId) {
+        ByteString data = wcaStaticContentMap.get(wcaId);
+        return (WCAStaticContent) StdLib.deserialize(data);
+    }
+
+    private static WCADynamicContent getWCADynamicContent(ByteString wcaId) {
+        ByteString data = wcaDynamicContentMap.get(wcaId);
+        return (WCADynamicContent) StdLib.deserialize(data);
+    }
+
+    private static WCAMilestone getWCAMilestone(ByteString wcaId, int index) throws Exception {
+        // Since wcaId has no fixed length, thus milestone index must have fixed length
+        // otherwise there will be [010][1010] = [0101][010]
+        ByteString data = wcaMilestoneMap.get(
+                wcaId.concat(
+                        Utils.paddingByteString(Utils.intToByteString(index), 20)
+                ));
+        return (WCAMilestone) StdLib.deserialize(data);
+    }
+
+    private static WCAMilestone[] getWCAMilestones(ByteString wcaId, WCAStaticContent staticContent) throws Exception {
+        WCAMilestone[] result = new WCAMilestone[staticContent.milestoneCount];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = getWCAMilestone(wcaId, i);
         }
-        return (WCABasicInfo) StdLib.deserialize(data);
+        return result;
     }
 
-    private static WCABuyerInfo getWCABuyerInfo(String identifier) {
-        ByteString data = wcaBuyerInfoMap.get(identifier);
-        if (data == null) {
-            return null;
-        }
-        return (WCABuyerInfo) StdLib.deserialize(data);
+    private static void updateWCADynamicContent(ByteString wcaId, WCADynamicContent data) {
+        wcaDynamicContentMap.put(wcaId, StdLib.serialize(data));
     }
 
-    private static List<WCAMilestone> getWCAMilestones(String identifier) {
-        ByteString data = wcaMilestonesMap.get(identifier);
-        if (data == null) {
-            return null;
-        }
-        return (List<WCAMilestone>) StdLib.deserialize(data);
-    }
-
-    private static void updateWCABasicInfo(String identifier, WCABasicInfo data) {
-        wcaBasicInfoMap.put(identifier, StdLib.serialize(data));
-    }
-
-    private static void updateWCABuyerInfo(String identifier, WCABuyerInfo data) {
-        wcaBuyerInfoMap.put(identifier, StdLib.serialize(data));
-    }
-
-    private static void updateWCAMilestones(String identifier, List<WCAMilestone> data) {
-        wcaMilestonesMap.put(identifier, StdLib.serialize(data));
+    private static void updateMilestone(ByteString wcaId, int index, WCAMilestone data) throws Exception {
+        wcaMilestoneMap.put(
+                wcaId.concat(
+                        Utils.paddingByteString(Utils.intToByteString(index), 20)
+                ),
+                StdLib.serialize(data)
+        );
     }
 }
