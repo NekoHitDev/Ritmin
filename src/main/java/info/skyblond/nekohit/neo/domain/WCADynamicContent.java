@@ -47,14 +47,14 @@ public class WCADynamicContent {
     }
 
     /**
-     * @param basicInfo of a given WCA
+     * @param staticContent of a given WCA
      * @return Pair(buyer amount, creator amount)
      * @throws Exception if partial refund is not available
      */
-    public Pair<Integer, Integer> partialRefund(WCAStaticContent basicInfo, int buyerPurchaseAmount) throws Exception {
+    public Pair<Integer, Integer> partialRefund(WCAStaticContent staticContent, int buyerPurchaseAmount) throws Exception {
         require(buyerPurchaseAmount != 0, ExceptionMessages.RECORD_NOT_FOUND);
 
-        int totalMilestones = basicInfo.milestoneCount;
+        int totalMilestones = staticContent.milestoneCount;
         // finished milestone belongs to creator
         int toCreatorAmount = buyerPurchaseAmount * this.finishedMilestoneCount / totalMilestones;
         // rest of them goes back to buyer

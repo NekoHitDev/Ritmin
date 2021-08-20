@@ -15,12 +15,10 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "CAT Token Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
+//@Permission(contract = "*", methods = {"onNEP17Payment"})
 @Permission(contract = "*")
-@Trust(value = "*")
 @SupportedStandards("NEP-17")
 public class CatToken {
-    // public net owner: NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3
-    // private net owner: NM9GZtomtwHRmqCkj7TgPMq5ssDnHsP7h5
     private static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
 
     @DisplayName("Transfer")

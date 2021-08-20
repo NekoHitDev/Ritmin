@@ -20,20 +20,16 @@ import static info.skyblond.nekohit.neo.contract.WCAAuxiliary.checkIfThresholdMe
 import static info.skyblond.nekohit.neo.helper.Utils.require;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
-//@SuppressWarnings("unused")
+@SuppressWarnings("unused")
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@Trust(value = "*")
+//@Permission(contract = "<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", methods = {"transfer"})
 @Permission(contract = "*")
 public class WCAContract {
-    // public net owner: NV5CSGyT6B39fZJ6zw4x6gh1b3C6cpjTm3
-    // private net owner: NM9GZtomtwHRmqCkj7TgPMq5ssDnHsP7h5
     static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
 
     // address of CatToken Hash.
-    // For private test net: NL75sYPVR5NcVpimsA4THSG6gwB9iNFPcQ
-    // For public test net: NfbKv3Rg6grgkLVG7SJYtPmhJXcW43RzbH
     static final Hash160 CAT_TOKEN_HASH = addressToScriptHash("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>");
 
     private static final StorageContext CTX = Storage.getStorageContext();
@@ -81,18 +77,18 @@ public class WCAContract {
         String identifier = (String) data;
         ByteString wcaId = getWCAId(identifier);
 
-        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
         WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
 
-        if (basicInfo.owner.equals(from)) {
+        if (staticContent.owner.equals(from)) {
             // owner paying stake
             require(dynamicContent.status == 0, ExceptionMessages.INVALID_STATUS_ALLOW_PENDING);
-            require(basicInfo.getTotalStake() == amount, ExceptionMessages.INCORRECT_AMOUNT);
+            require(staticContent.getTotalStake() == amount, ExceptionMessages.INCORRECT_AMOUNT);
             // unpaid before, amount is correct, set to ONGOING
             dynamicContent.status = 1;
         } else {
             require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
-            require(!checkIfReadyToFinish(basicInfo, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
+            require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
             require(dynamicContent.remainTokenCount >= amount, "Insufficient token remain in this WCA.");
             dynamicContent.remainTokenCount -= amount;
             dynamicContent.totalPurchasedAmount += amount;
@@ -107,19 +103,27 @@ public class WCAContract {
         onBuyWCA.fire(from, identifier, amount);
     }
 
-    public static String queryWCA(String identifier) throws Exception {
-        ByteString wcaId = getWCAId(identifier);
-        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
-        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
-        WCAMilestone[] milestones = getWCAMilestones(wcaId, basicInfo);
+    public static String queryWCA(String identifier) {
+        try {
+            ByteString wcaId = getWCAId(identifier);
+            WCAStaticContent staticContent = getWCAStaticContent(wcaId);
+            WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+            WCAMilestone[] milestones = getWCAMilestones(wcaId, staticContent);
 
-        WCAPojo pojo = new WCAPojo(identifier, basicInfo, dynamicContent, milestones);
-        return StdLib.jsonSerialize(pojo);
+            WCAPojo pojo = new WCAPojo(identifier, staticContent, dynamicContent, milestones);
+            return StdLib.jsonSerialize(pojo);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
-    public static int queryPurchase(String identifier, Hash160 buyer) throws Exception {
-        ByteString wcaId = getWCAId(identifier);
-        return wcaPurchaseRecordMap.get(wcaId.concat(buyer.toByteString())).toInteger();
+    public static int queryPurchase(String identifier, Hash160 buyer) {
+        try {
+            ByteString wcaId = getWCAId(identifier);
+            return wcaPurchaseRecordMap.get(wcaId.concat(buyer.toByteString())).toInteger();
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public static String advanceQuery(
@@ -134,17 +138,17 @@ public class WCAContract {
         while (result.size() < size && iter.next()) {
             String identifier = iter.get().key.toString();
             ByteString wcaId = iter.get().value;
-            WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
-            WCAMilestone[] milestonesInfo = getWCAMilestones(wcaId, basicInfo);
+            WCAStaticContent staticContent = getWCAStaticContent(wcaId);
+            WCAMilestone[] milestonesInfo = getWCAMilestones(wcaId, staticContent);
             WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
 
-            if (!basicInfo.bePublic) {
+            if (!staticContent.bePublic) {
                 continue;
             }
 
             if (creator != null && creator != Hash160.zero()) {
                 // filter creator
-                if (basicInfo.owner != creator) {
+                if (staticContent.owner != creator) {
                     continue;
                 }
             }
@@ -154,7 +158,7 @@ public class WCAContract {
                     continue;
                 }
             }
-            WCAPojo pojo = new WCAPojo(identifier, basicInfo, dynamicContent, milestonesInfo);
+            WCAPojo pojo = new WCAPojo(identifier, staticContent, dynamicContent, milestonesInfo);
             if (count >= offset) {
                 result.add(pojo);
             }
@@ -200,7 +204,7 @@ public class WCAContract {
         require(coolDownInterval > 0, ExceptionMessages.INVALID_COOL_DOWN_INTERVAL);
 
         // create wca info obj
-        WCAStaticContent basicInfo = new WCAStaticContent(
+        WCAStaticContent staticContent = new WCAStaticContent(
                 owner, wcaDescription, stakePer100Token, maxTokenSoldCount,
                 milestoneCount, thresholdIndex, coolDownInterval,
                 endTimestamps[thresholdIndex], endTimestamps[milestoneCount - 1],
@@ -208,7 +212,7 @@ public class WCAContract {
         );
 
         // store
-        wcaStaticContentMap.put(wcaId, StdLib.serialize(basicInfo));
+        wcaStaticContentMap.put(wcaId, StdLib.serialize(staticContent));
         updateWCADynamicContent(wcaId, new WCADynamicContent(maxTokenSoldCount));
         // fire event and done
         onCreateWCA.fire(owner, identifier, milestoneTitles.length);
@@ -217,15 +221,15 @@ public class WCAContract {
 
     public static void finishMilestone(String identifier, int index, String proofOfWork) throws Exception {
         ByteString wcaId = getWCAId(identifier);
-        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
         // only creator can update WCA to finished
-        require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
+        require(Runtime.checkWitness(staticContent.owner) || staticContent.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
         WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
         require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
         WCAMilestone ms = getWCAMilestone(wcaId, index);
         // check cool-down time first
         int currentTime = Runtime.getTime();
-        require(dynamicContent.lastUpdateTime + basicInfo.coolDownInterval <= currentTime, ExceptionMessages.COOL_DOWN_TIME_NOT_MET);
+        require(dynamicContent.lastUpdateTime + staticContent.coolDownInterval <= currentTime, ExceptionMessages.COOL_DOWN_TIME_NOT_MET);
         require(index >= dynamicContent.nextMilestoneIndex, ExceptionMessages.INVALID_MILESTONE_PASSED);
         require(!ms.isFinished(), ExceptionMessages.INVALID_MILESTONE_FINISHED);
         require(!ms.isExpired(), ExceptionMessages.INVALID_MILESTONE_EXPIRED);
@@ -235,10 +239,10 @@ public class WCAContract {
         dynamicContent.nextMilestoneIndex = index + 1;
         dynamicContent.finishedMilestoneCount++;
         dynamicContent.lastUpdateTime = currentTime;
-        if (index == basicInfo.thresholdIndex) {
+        if (index == staticContent.thresholdIndex) {
             dynamicContent.thresholdMilestoneFinished = true;
         }
-        if (index == basicInfo.milestoneCount - 1) {
+        if (index == staticContent.milestoneCount - 1) {
             dynamicContent.lastMilestoneFinished = true;
         }
 
@@ -248,24 +252,24 @@ public class WCAContract {
         onFinishMilestone.fire(identifier, index);
 
         // if whole WCA is finished
-        if (checkIfReadyToFinish(basicInfo, dynamicContent)) {
+        if (checkIfReadyToFinish(staticContent, dynamicContent)) {
             finishWCA(identifier);
         }
     }
 
     public static void finishWCA(String identifier) throws Exception {
         ByteString wcaId = getWCAId(identifier);
-        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
         WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
         require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
 
-        if (!Runtime.checkWitness(basicInfo.owner)) {
+        if (!Runtime.checkWitness(staticContent.owner)) {
             // only owner can finish an unfinished WCA
-            require(checkIfReadyToFinish(basicInfo, dynamicContent), ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH);
+            require(checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH);
         }
         // get wca buyer info obj
-        int remainTokens = basicInfo.getTotalStake() + dynamicContent.totalPurchasedAmount;
-        int totalMilestones = basicInfo.milestoneCount;
+        int remainTokens = staticContent.getTotalStake() + dynamicContent.totalPurchasedAmount;
+        int totalMilestones = staticContent.milestoneCount;
         int unfinishedMilestones = totalMilestones - dynamicContent.finishedMilestoneCount;
 
         // for each buyer, return their token based on unfinished ms count
@@ -276,7 +280,7 @@ public class WCAContract {
             Iterator.Struct<ByteString, ByteString> elem = iter.get();
             Hash160 buyer = new Hash160(elem.key);
             int purchaseAmount = elem.value.toInteger();
-            int totalAmount = purchaseAmount + purchaseAmount * basicInfo.stakePer100Token / 100;
+            int totalAmount = purchaseAmount + purchaseAmount * staticContent.stakePer100Token / 100;
             int returnAmount = totalAmount * unfinishedMilestones / totalMilestones;
             transferTokenTo(buyer, returnAmount, identifier);
             remainTokens -= returnAmount;
@@ -284,7 +288,7 @@ public class WCAContract {
         // considering all decimals are floored, so totalTokens > 0
         // return the reset of total tokens to creator
         if (remainTokens > 0) {
-            transferTokenTo(basicInfo.owner, remainTokens, identifier);
+            transferTokenTo(staticContent.owner, remainTokens, identifier);
         }
         dynamicContent.status = 2;
         dynamicContent.lastUpdateTime = Runtime.getTime();
@@ -297,18 +301,18 @@ public class WCAContract {
         require(Hash160.isValid(buyer), ExceptionMessages.INVALID_HASH160);
         require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
         ByteString wcaId = getWCAId(identifier);
-        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
         WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
         require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
 
-        require(!checkIfReadyToFinish(basicInfo, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
+        require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
         ByteString purchaseId = wcaId.concat(buyer.toByteString());
         int value = wcaPurchaseRecordMap.get(purchaseId).toInteger();
-        if (checkIfThresholdMet(basicInfo, dynamicContent)) {
+        if (checkIfThresholdMet(staticContent, dynamicContent)) {
             // after the threshold
-            Pair<Integer, Integer> buyerAndCreator = dynamicContent.partialRefund(basicInfo, value);
+            Pair<Integer, Integer> buyerAndCreator = dynamicContent.partialRefund(staticContent, value);
             transferTokenTo(buyer, buyerAndCreator.first, identifier);
-            transferTokenTo(basicInfo.owner, buyerAndCreator.second, identifier);
+            transferTokenTo(staticContent.owner, buyerAndCreator.second, identifier);
             onRefund.fire(buyer, identifier, buyerAndCreator.first, buyerAndCreator.second);
         } else {
             // full refund
@@ -324,12 +328,12 @@ public class WCAContract {
     public static void cancelWCA(String identifier) throws Exception {
         ByteString wcaId = getWCAId(identifier);
         // get obj
-        WCAStaticContent basicInfo = getWCAStaticContent(wcaId);
+        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
         WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
 
         // check signature
-        require(Hash160.isValid(basicInfo.owner), ExceptionMessages.INVALID_HASH160);
-        require(Runtime.checkWitness(basicInfo.owner) || basicInfo.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
+        require(Hash160.isValid(staticContent.owner), ExceptionMessages.INVALID_HASH160);
+        require(Runtime.checkWitness(staticContent.owner) || staticContent.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
         // check status
         switch (dynamicContent.status) {
             case 0:
@@ -337,9 +341,9 @@ public class WCAContract {
                 break;
             case 1:
                 // ONGOING, check threshold
-                require(!checkIfThresholdMet(basicInfo, dynamicContent), ExceptionMessages.INVALID_STAGE_ACTIVE);
+                require(!checkIfThresholdMet(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_ACTIVE);
                 // to creator
-                transferTokenTo(basicInfo.owner, basicInfo.getTotalStake(), identifier);
+                transferTokenTo(staticContent.owner, staticContent.getTotalStake(), identifier);
                 // to buyers
                 ByteString prefix = new ByteString("PR").concat(wcaId);
                 Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);

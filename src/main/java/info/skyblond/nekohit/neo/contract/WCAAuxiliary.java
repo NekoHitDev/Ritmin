@@ -8,17 +8,17 @@ import info.skyblond.nekohit.neo.domain.WCAStaticContent;
  */
 public class WCAAuxiliary {
 
-    public static boolean checkIfReadyToFinish(WCAStaticContent basicInfo, WCADynamicContent dynamicContent) {
+    public static boolean checkIfReadyToFinish(WCAStaticContent staticContent, WCADynamicContent dynamicContent) {
         if (dynamicContent.status != 1) {
             return false;
         }
-        return dynamicContent.lastMilestoneFinished || basicInfo.isLastExpired();
+        return dynamicContent.lastMilestoneFinished || staticContent.isLastExpired();
     }
 
-    static boolean checkIfThresholdMet(WCAStaticContent basicInfo, WCADynamicContent dynamicContent) {
+    static boolean checkIfThresholdMet(WCAStaticContent staticContent, WCADynamicContent dynamicContent) {
         if (dynamicContent.status != 1) {
             return false;
         }
-        return dynamicContent.thresholdMilestoneFinished || basicInfo.isThresholdExpired();
+        return dynamicContent.thresholdMilestoneFinished || staticContent.isThresholdExpired();
     }
 }
