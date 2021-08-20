@@ -50,15 +50,6 @@ Trust: `*`
 
   Query and return the Cat Token balance of given account.
 
-### How to get some
-
-Currently we have a telegram bot [dofovn_bot](https://t.me/dufovn_bot) to do the airdrop.
-
-+ Use `/airdrop` command, then send bot your address, like `NPLa4dfW8sNLj9j71Qg1JcFjUp36waDEBr`, then you will receive 50 cat token on Neo N3 RC4 test net. **You can request this everyday** (count in UTC, you can query the server side time by using `/time`).
-+ Use `/balance`, then send bot your address, you can query the CAT token balance of the given address. 
-
-+ If something goes wrong, you can check the status of this bot by using `/status` command. This will reply you a status report and a report email address, feel free to report the malfunction status to this email box.
-
 ## WCA Contract
 
 This is the token accepted by other contracts (currently only the WCA Contract.)
