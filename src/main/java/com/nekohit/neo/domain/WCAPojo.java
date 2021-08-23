@@ -4,21 +4,88 @@ import com.nekohit.neo.contract.WCAAuxiliary;
 import io.neow3j.devpack.contracts.StdLib;
 
 public class WCAPojo {
+    /**
+     * The identifier of this wca.
+     */
     public final String identifier;
+
+    /**
+     * The description of this wca.
+     */
     public final String description;
+
+    /**
+     * The Base64 of owner's ScriptHash represented in little endian.
+     * Normally we use big endian in Java.
+     */
     public final String ownerHashBase64;
+
+    /**
+     * The timestamp indicate when this wca is created.
+     */
     public final int creationTimestamp;
+
+    /**
+     * Stake rate represented in fraction.
+     */
     public final int stakePer100Token;
+
+    /**
+     * Total sold tokens represented in fraction.
+     */
     public final int maxTokenSoldCount;
+
+    /**
+     * Total milestone count.
+     */
     public final int milestonesCount;
+
+    /**
+     * Array of milestones.
+     */
     public final WCAMilestone[] milestones;
+
+    /**
+     * The index of the threshold milestone.
+     */
     public final int thresholdMilestoneIndex;
+
+    /**
+     * Cooldown interval represented in milliseconds.
+     */
     public final int coolDownInterval;
+
+    /**
+     * The timestamp indicate when the wca is updated.
+     */
     public final int lastUpdateTimestamp;
+
+    /**
+     * Index of the next to-be-done milestone.
+     */
     public final int nextMilestone;
+
+    /**
+     * How many tokens remained for sale.
+     */
     public final int remainTokenCount;
+
+    /**
+     * How many addresses have already made the purchase.
+     * Refunded addresses are excluded.
+     */
     public final int buyerCount;
+
+    /**
+     * String representation of status.
+     */
     public final String status;
+
+    /**
+     * String representation of stage, aka the sub status of a status.
+     * For now only ONGOING has stages, rest of status has no stages, so
+     * this will be null if the status != ONGOING.
+     */
     public final String stage;
 
     public WCAPojo(String identifier, WCAStaticContent staticContent, WCADynamicContent dynamicContent, WCAMilestone[] milestones) {

@@ -3,9 +3,25 @@ package com.nekohit.neo.domain;
 import io.neow3j.devpack.Runtime;
 
 public class WCAMilestone {
+    /**
+     * The title of this milestone
+     */
     public String title;
+
+    /**
+     * The description of this milestone
+     */
     public String description;
+
+    /**
+     * The end, or expiry timestamp of this milestone
+     */
     public int endTimestamp;
+
+    /**
+     * The proof of work, or the result of this milestone.
+     * Null if not finished yet.
+     */
     public String proofOfWork;
 
     public WCAMilestone(String title, String description, int endTimestamp) {

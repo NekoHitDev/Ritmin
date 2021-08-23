@@ -84,6 +84,7 @@ public class ContractTestFramework {
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_WALLET.getDefaultAccount().getAddress());
         if (catTokenAddress != null) {
             replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", catTokenAddress.toAddress());
+            replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", catTokenAddress.toString());
         }
 
         var compileResult = CompileAndDeployUtils.compileModifiedContract(contractClass, replaceMap);

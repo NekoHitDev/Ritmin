@@ -5,10 +5,30 @@ import com.nekohit.neo.helper.Pair;
 import static com.nekohit.neo.helper.Utils.require;
 
 public class WCADynamicContent {
+    /**
+     * How many tokens remained for sale.
+     */
     public int remainTokenCount;
+
+    /**
+     * How many tokens have already been purchased.
+     */
     public int totalPurchasedAmount;
+
+    /**
+     * How many addresses have been made the purchase.
+     * Refund addressed are excluded.
+     */
     public int buyerCounter;
+
+    /**
+     * If the threshold milestone has been finished by creator/owner.
+     */
     public boolean thresholdMilestoneFinished;
+
+    /**
+     * If the last milestone has been finished by creator/owner.
+     */
     public boolean lastMilestoneFinished;
 
     /**
@@ -17,12 +37,12 @@ public class WCADynamicContent {
     public int lastUpdateTime;
 
     /**
-     * Count current finished ms number. Updated when finishing a milestone.
+     * Counter for current finished milestone. Updated when finishing a milestone.
      */
     public int finishedMilestoneCount;
 
     /**
-     * Pointer to next ready to finished milestone *INDEX*(i.e. start with 0)
+     * Index of the next to-be-done milestone.
      */
     public int nextMilestoneIndex;
 
@@ -47,8 +67,10 @@ public class WCADynamicContent {
     }
 
     /**
+     * Calculate the partial refund amount.
+     *
      * @param staticContent of a given WCA
-     * @return Pair(buyer amount, creator amount)
+     * @return Pair(to buyer amount, to creator amount)
      * @throws Exception if partial refund is not available
      */
     public Pair<Integer, Integer> partialRefund(WCAStaticContent staticContent, int buyerPurchaseAmount) throws Exception {
@@ -67,6 +89,13 @@ public class WCADynamicContent {
         return new Pair<>(remainAmount, toCreatorAmount);
     }
 
+    /**
+     * Calculate the full refund amount
+     *
+     * @param amount the purchase record
+     * @return the amount of refund
+     * @throws Exception if purchase record is 0 (aka not found)
+     */
     public int fullRefund(int amount) throws Exception {
         require(amount != 0, ExceptionMessages.RECORD_NOT_FOUND);
         // add to remain token
