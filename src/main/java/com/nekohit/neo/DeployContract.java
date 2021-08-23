@@ -25,11 +25,11 @@ import java.util.Scanner;
 
 public class DeployContract {
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("http://seed1t.neo.org:20332")
+            new HttpService("https://neo3-testnet.neoline.vip/")
     );
 
-    private static final boolean REALLY_DEPLOY_FLAG = false;
-    private static final Class<?> CONTRACT_CLASS = CatToken.class;
+    private static final boolean REALLY_DEPLOY_FLAG = true;
+    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
 
     public static void main(String[] args) throws Throwable {
         Wallet deployWallet = Utils.readWalletWIF();
@@ -48,6 +48,7 @@ public class DeployContract {
             Utils.require("CAT".equals(cat.getSymbol()), "Token symbol not match!");
             Utils.require("CatToken".equals(cat.getName()), "Token name not match!");
             replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", cat.getScriptHash().toAddress());
+            replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", cat.getScriptHash().toString());
             System.out.println("Validate CatToken contract address: " + cat.getScriptHash().toAddress());
         }
 

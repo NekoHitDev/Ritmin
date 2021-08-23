@@ -28,7 +28,6 @@ public class UpdateContract {
             new HttpService("https://testnet1.neo.coz.io")
     );
 
-    private static final int CONFIRM_TIME = 30;
     private static final boolean REALLY_DEPLOY_FLAG = false;
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
     private static final Hash160 CONTRACT_HASH = new Hash160("0x7eaf33edde0cb499e84d940df65d875bed10b612");
@@ -48,6 +47,7 @@ public class UpdateContract {
             Utils.require("CAT".equals(cat.getSymbol()), "Token symbol not match!");
             Utils.require("CatToken".equals(cat.getName()), "Token name not match!");
             replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", cat.getScriptHash().toAddress());
+            replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", cat.getScriptHash().toString());
             System.out.println("Validate CatToken contract address: " + cat.getScriptHash().toAddress());
         }
 
