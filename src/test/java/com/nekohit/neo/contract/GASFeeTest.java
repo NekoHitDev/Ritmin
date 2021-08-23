@@ -19,9 +19,9 @@ public class GASFeeTest extends ContractTestFramework{
 
     @Test
     void test() throws Throwable {
-        String[] wcaS = new String[2];
-        Long[] wcaL = new Long[2];
-        for (int i = 0; i < 2; i++) {
+        String[] wcaS = new String[10];
+        Long[] wcaL = new Long[10];
+        for (int i = 0; i < 10; i++) {
             wcaS[i] = "Large text in content for the Milestone #" + i;
             wcaL[i] = System.currentTimeMillis() + 60 * 1000 * (i + 1) * 2;
         }

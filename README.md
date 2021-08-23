@@ -16,10 +16,6 @@ Deployed:
 
 + Main net: `TODO`
 
-Permission: `*`
-
-Trust: `*`
-
 ### Events and Methods
 
 #### Events
@@ -58,13 +54,9 @@ This is the token accepted by other contracts (currently only the WCA Contract.)
 
 Deployed: 
 
-+ RC4 Test net: [`0x7eaf33edde0cb499e84d940df65d875bed10b612`](https://neo3.testnet.neotube.io/contract/0x7eaf33edde0cb499e84d940df65d875bed10b612)
++ RC4 Test net: [`0xcb74c96a1a65ff3b07662294d2da243543587403`](https://neo3.testnet.neotube.io/contract/0xcb74c96a1a65ff3b07662294d2da243543587403)
 
 + Main net: `TODO`
-
-Permission: `*`
-
-Trust: `*`
 
 Note: 
 
@@ -73,221 +65,20 @@ Note:
 
 ### Events and Methods
 
-#### Events
-
-+ `CreateWCA(creator: Hash160, identifier: String, milestoneCount: Integer)`
-
-  Fired when successfully created a WCA.
-
-+ `PayWCA(owner: Hash160, identifier: String, amount: Integer)`
-
-  Fired when owner successfully paid the stake.
-
-+ `BuyWCA(buyer: Hash160, identifier: String, amount: Integer)`
-
-  Fired when buyer successfully made a purchase. The amount refers to this transaction, not total purchased amount.
-
-+ `FinishMilestone(identifier: String, milestoneIndex: Integer, proofOfWork: String)`
-
-  Fired when owner successfully finished a milestone.
-
-+ `FinishWCA(identifier: String)`
-
-  Fired when a WCA is  successfully finished (by the meaning of all tokens are transferred properly).
-
-+ `Refund(buyer: Hash160, identifier: String, returnToBuyerAmount: Integer, returnToCreatorAmount: Integer)`
-
-  Fired when buyer successfully made a refund.
-
-  
-
-#### Methods
-
-+ `createWCA(owner: Hash160, wcaDescription: String, stakePer100Token: Integer, maxTokenSoldCount: Integer, titles: String[], descriptions: String[], endTimestamps: int[], thresholdIndex: Integer, coolDownInterval: Integer, bePublic: Boolean, identifier: String): String`
-
-  Create a WCA. Signature from owner account is required.
-
-  + `wcaDescription`: The description for this WCA. A link to details is recommended, otherwise you might suffering a higher Gas fee when updating it.
-
-  + `stakePer100Token`: Stake rate per 1.00 CAT, represent in fraction: 100 means 1.00 CAT.
-
-  + `maxTokenSoldCount`: How much token would you sell to buyer, represent in fraction.
-
-  + `titles`: Array of string, is the title of each milestones.
-
-  + `descriptions`: Array of string, describing each milestones.
-
-  + `endTimestamps`: Array of timestamp (millisecond), represent the deadline of each milestones.
-
-  + `thresholdIndex`: The index of your threshold milestone. Before finish this specific milestone, buyer can make a full refund, after finish this milestone, buyer can only make refund for the token corresponding to milestones you haven't finished yet, the token corresponding to milestones you finished will transfer to owner when buyer make a refund.
-
-  + `coolDownInterval`: Limit your rate of finishing milestones. You must wait this interval before you can finish next milestone. This will prevent evil creator just finishes all milestones and take tokens away. By this limitation, buyer can have time notice the abnormalities and have time to make a refund. 
-
-  + `bePublic`: `true` means this WCA will be list by `advanceQuery` function, when setting to `false`, `advanceQuery` function will not return this WCA in it's returned list.
-
-  + `identifier`: Just give your WCA a identifier, this must unique to other WCAs.
-
-    
-
-+ `onNEP17Payment(from: Hash160, amount: Integer, identifier: String): Unit`
-
-  Handle transaction from Cat Token. If transaction made from the owner of this WCA, then this will be handled as stake; otherwise it will be handled as general purchase.
-
-  Stake amount = `stakePer100Token` * `maxTokenSoldCount` / 100. **You must pay the stake in one shot.** 
-
-  For example, `stakePer100Token = 10` and  `maxTokenSoldCount = 1000_00`, means I want to sell 1000.00CAT in total and stake 0.10CAT per token I sold, thus I need stake 1000.00 * 0.10 = 100.00CAT.
-
-  For general purchase, you can make multiple purchase for one WCA, your purchases will be accumulated and treated like single one.
-
-  
-
-+ `finishMilestone(identifier: String, index: Integer, proofOfWork: String): Unit`
-
-  Finish a milestone in your WCA. Owner's signature is required.
-
-  You cannot finish a missed milestone. Which means you cannot finish milestone#5, then finish milestone#4, this is not allowed. Also you cannot finish a expired (miss the deadline) milestone.
-
-  The `proofOfWork` not necessarily need to be your work. It can be a link to some URL, or Cid from IPFS, or just some explanation of how buyer can find and evaluate your work. 
-
-  Please do notice that you cannot modify `proofOfWork` after you finished a milestone. So do think twice before call this method.
-
-  
-
-+ `finishWCA(identifier: String): Unit`
-
-  Finish a WCA. By finish, it means account all tokens and transfer to each buyer and owner based on milestones. Only owner can finish WCA if there has any unfinished milestone left. If the last milestone is expired, any one can request to finish this WCA. If the last milestone is finished by `finishMilestone`, this method will be called automatically.
-
-  For all buyer stick to the end:
-
-  + Your total amount = your purchased amount + your purchased mount * stakePer100Token
-
-    For example: I purchased 100.00CAT and stake rate is 0.10CAT, then total amount is 110.00CAT
-
-  + Return to buyer amount = your total amount * unfinished milestone count / total milestone count.
-
-    For example there are 3 milestones in total, owner only finished 2, so I will get my 110.00CAT * 1 / 3 = 36.66CAT back, including the stake as a punishment for owner not finishing that milestone.
-
-  + After sending those token back to each buyer, all left token are transferred to owner.
-
-    
-
-+ `refund(identifier: String, buyer: Hash160): Unit`
-
-  Make a refund. Signature from buyer account is required.
-
-  If you make a refund before owner finishing the threshold milestone, then you can get all your token back. Your purchase record will be deleted.
-
-  If you make a refund after owner finishing the threshold milestone:
-
-  + Send to creator amount = your purchased amount * finished milestone count / total milestone count
-
-  + Rest of the token will send back to your account.
-
-    For example, I purchased 100.00CAT and currently owner finished 2 milestone, total 5. Then I will lose 100.00 * 2 / 5 = 40.00CAT to owner, and get rest 60.00CAT back.
-
-    
-
-+ `queryWCA(identifier: String): Json`
-
-  Query a WCA by given identifier. If identifier not exists, then empty string will be returned, otherwise the corresponding NeoVM version of Json will be returned:
-
-  ```Java
-  public class WCAPojo {
-      // The identifier of this WCA
-      public String identifier;
-      // The description of this WCA
-      public String description;
-      // Base64 encoded little-endian owner Hash160
-      public String ownerHashBase64;
-      // When this WCA is created, unit in `ms`
-      public int creationTimestamp;
-      // stake per 1.00 token
-      public int stakePer100Token;
-      // total tokens can sell, in fraction.
-      // i.e.: 100 means 1.00CAT
-      public int maxTokenSoldCount;
-      // total milestone count
-      public int milestonesCount;
-      // milestone details
-      public List<WCAMilestone> milestones;
-      // the threshold milestone
-      public int thresholdMilestoneIndex;
-      // the cool down interval, in ms
-      public int coolDownInterval;
-      // last time this WCA is updated, in ms
-      public int lastUpdateTimestamp;
-      // next to be done milestone index
-      public int nextMilestone;
-      // tokens remained for sell
-      public int remainTokenCount;
-      // total buyer count
-      public int buyerCount;
-      // The status of this WCA.
-      // PENDING: This WCA is waiting for stake
-      // OPEN: This WCA can be purchased
-      // ACTIVE: This WCA is on going
-      // FINISHED: This WCA is finished (all tokens are transferred)
-      public String status;
-  }
-  
-  public class WCAMilestone {
-      // The title of this milestone
-      public String title;
-      // description of this milestone
-      public String description;
-      // the deadline of this milestone, in ms
-      public int endTimestamp;
-      // how to find the work result
-      // null means this milestone is not finished yet
-      public String linkToResult;
-  }
-  ```
-
-  
-
-+ `queryPurchase(identifier: String, buyer: Hash160): Integer`
-
-  Query the total purchase amount of a given WCA and buyer address. This is required since the underlaying structure is a block of data, so **only one modification (one purchase) is accepted per block, rest of them are discarded.** You can use this method to check if your purchase is accepted.
-
-  
-
-+ `advanceQuery(creator: Hash160, buyer: Hash160, page: Integer, size: Integer): Json`
-
-  This query function offers a more advanced filter, which allow you specific list all WCA satisfied those filters. `creator` can be used filter all WCA created by specific owner, `buyer` can filter all WCA which the given buyer made a purchase. `page` and `size` are used to control how many identifiers are returned, so you can have a easy paging. 
-
-  **This function returns List of WCAPojo in JSON.**
-  
-  
+See the code, repo wiki, and the whitepaper.
 
 ### How to use
 
 You can use our client to do that, see [NekoHitDev/ritmin-frontend](https://github.com/NekoHitDev/ritmin-frontend).
 
-Or you can manually invoke the methods. Here is the procedure：
+Or you can manually invoke the methods. 
 
-1.  Make sure you have enough GAS to operate. Typical gas usage will be listed for each step.
+### Group
 
-2. Create WCA by invoking the `createWCA` method, giving the correct parameters.
+Telegram group (Chinese): https://t.me/NekoHitCommunity
 
-   + Create a 2 milestones WCA will cost 0.4470761GAS
-   + Create a 10 milestones WCA will cost 0.6622909GAS
-
-   + Create a 50 milestones WCA will cost 1.7737549GAS
-   + Create a 250 milestones WCA will cost 7.4834049GAS
-   + The gas usage also depends on how much bytes you write into storage.
-   + 2 milestones with each has 60 bytes description will cost 0.5642561GAS
-   + 10 milestones with each has 60 bytes description will cost 1.2481109GAS
-   + 50 milestones with each has 60 bytes description will cost 4.7027549GAS
-   + 250 milestones with each has 60 bytes description will cost 22.1284049GAS
-
-3. Pay the stake, by transfer the correct amount Cat Token to WCA Contract. Address can be found in `Basic Info` section. This usually costs less than 0.5GAS.
-4. Let buyer make the purchase, by transfer the correct amount Cat Token to WCA Contract. Address can be found in `Basic Info` section. This will rewrite all purchase record again, but with 75% discount. Also you have to pay for instructions that handle this transaction, and the fee to write your purchase data into storage. 
-   + Each record consist of a Hash160 and a integer, Let's assume they take 32 bytes, plus two integer, take that as 32 too. If we have 1000 buyers, then old data is 3232 bytes, this will charge you 0.808GAS, then your new data is 32 bytes, cost 0.032GAS, so 0.84GAS in total.
-5. Finish milestones, by calling the `finishMilestone` method. This will rewrite all milestone data again, but with 75% discount. Also you have to pay for instructions that handle this transaction, and the fee to write your `proofOfWork` into storage. If your are finishing the last milestone, then you have to cover the fee for finish the WCA, aka the step 6.
-6. Finish the WCA. Most of fees are used to pay for instructions that transfer tokens. This is based on how many buyers, each transaction cost around 0.1~0.3GAS.
+Discord Server (English): https://discord.gg/DfSjhXuWyT
 
 
 
-### TODO
-
-We are trying to make out a plan to reduce purchase fee when there are already a large amount purchase record.
+Feel free to join the group and ask questions, or submit your ideas. We're glad to hear from you.
