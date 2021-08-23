@@ -15,7 +15,7 @@ public class WCAAuxiliary {
         return dynamicContent.lastMilestoneFinished || staticContent.isLastExpired();
     }
 
-    static boolean checkIfThresholdMet(WCAStaticContent staticContent, WCADynamicContent dynamicContent) {
+    public static boolean checkIfThresholdMet(WCAStaticContent staticContent, WCADynamicContent dynamicContent) {
         if (dynamicContent.status != 1) {
             return false;
         }
