@@ -1,9 +1,9 @@
 package com.nekohit.neo;
 
-import com.nekohit.neo.compile.CompileAndDeployUtils;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
+import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
@@ -52,7 +52,7 @@ public class UpdateContract {
         }
 
         // compile contract
-        CompilationUnit compileResult = CompileAndDeployUtils.compileModifiedContract(CONTRACT_CLASS, replaceMap);
+        CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName(), replaceMap);
         System.out.println("Contract compiled:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
 
@@ -78,7 +78,7 @@ public class UpdateContract {
                             ContractParameter.byteArray(manifestBytes)
                     )
                     .signers(AccountSigner.calledByEntry(deployWallet.getDefaultAccount()))
-                    .wallet(deployWallet)
+//                    .wallet(deployWallet)
                     .sign();
             NeoSendRawTransaction response = tx.send();
             if (response.hasError()) {

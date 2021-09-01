@@ -5,12 +5,12 @@ import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
+import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.protocol.http.HttpService;
-import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -53,7 +53,7 @@ public class DeployContract {
         }
 
         // compile contract
-        CompilationUnit compileResult = CompileAndDeployUtils.compileModifiedContract(CONTRACT_CLASS, replaceMap);
+        CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName(), replaceMap);
 
         System.out.println("Contract compiled:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
@@ -111,9 +111,9 @@ public class DeployContract {
     public static void transferToken(
             FungibleToken token, Wallet wallet, Hash160 to, long amount, String identifier
     ) throws Throwable {
-        NeoSendRawTransaction tx = token.transferFromDefaultAccount(
-                wallet, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
-        ).signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).sign().send();
+        NeoSendRawTransaction tx = token.transfer(
+                wallet.getDefaultAccount(), to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
+        ).sign().send();
 
         if (tx.hasError()) {
             throw new Exception(tx.getError().getMessage());
