@@ -25,6 +25,8 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
 @Permission(contract = "<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", methods = {"transfer"})
+// ContractManagement::update
+@Permission(contract = "0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", methods = {"update"})
 public class WCAContract {
     static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
 
