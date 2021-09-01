@@ -2,9 +2,12 @@ package com.nekohit.neo.contract;
 
 import com.nekohit.neo.compile.CompileAndDeployUtils;
 import com.nekohit.neo.helper.Utils;
+import io.neow3j.compiler.Compiler;
+import io.neow3j.contract.ContractManagement;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.GasToken;
 import io.neow3j.contract.SmartContract;
+import io.neow3j.crypto.Sign;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.core.response.InvocationResult;
 import io.neow3j.protocol.core.response.NeoApplicationLog;
@@ -13,6 +16,7 @@ import io.neow3j.protocol.http.HttpService;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.Transaction;
+import io.neow3j.transaction.Witness;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -87,7 +91,7 @@ public class ContractTestFramework {
             replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", catTokenAddress.toString());
         }
 
-        var compileResult = CompileAndDeployUtils.compileModifiedContract(contractClass, replaceMap);
+        var compileResult = new Compiler().compile(contractClass.getCanonicalName(), replaceMap);
 
         var contractHash = SmartContract.calcContractHash(
                 GENESIS_WALLET.getDefaultAccount().getScriptHash(),
@@ -96,12 +100,20 @@ public class ContractTestFramework {
         );
 
         try {
-            var tx = CompileAndDeployUtils.deployContract(
-                    compileResult,
-                    GENESIS_WALLET.getDefaultAccount(),
-                    GENESIS_WALLET,
-                    NEOW3J
-            );
+            Transaction tx = new ContractManagement(NEOW3J)
+                    .deploy(compileResult.getNefFile(), compileResult.getManifest())
+                    .signers(AccountSigner.none(GENESIS_ACCOUNT))
+                    .getUnsignedTransaction();
+            Witness multiSigWitness = Witness.createMultiSigWitness(
+                    List.of(Sign.signMessage(tx.getHashData(), NODE_ACCOUNT.getECKeyPair())),
+                    GENESIS_ACCOUNT.getVerificationScript());
+            NeoSendRawTransaction response = tx.addWitness(multiSigWitness).send();
+            if (response.hasError()) {
+                throw new Exception(String.format("Deployment failed: "
+                        + "'%s'\n", response.getError().getMessage()));
+            } else {
+                Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
+            }
             logger.info("Contract {} deployed at 0x{}, gas fee: {}",
                     contractClass.getName(), contractHash, Utils.getGasFeeFromTx(tx));
         } catch (TransactionConfigurationException e) {
@@ -130,9 +142,22 @@ public class ContractTestFramework {
     protected static void transferToken(
             FungibleToken token, Wallet wallet, Hash160 to, long amount, String identifier, boolean wait
     ) throws Throwable {
-        Transaction tx = token.transferFromDefaultAccount(
-                wallet, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
-        ).signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).sign();
+        Transaction tx;
+        if (wallet.getDefaultAccount() == GENESIS_ACCOUNT) {
+            // multi sign
+            tx = token.transfer(
+                            GENESIS_ACCOUNT, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
+                    )
+                    .getUnsignedTransaction()
+                    .addMultiSigWitness(GENESIS_ACCOUNT.getVerificationScript(), NODE_ACCOUNT);
+
+        } else {
+            // normal account
+            tx = token.transfer(
+                    wallet.getDefaultAccount(), to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
+            ).sign();
+        }
+
         NeoSendRawTransaction resp = tx.send();
 
         if (resp.hasError()) {
@@ -187,7 +212,9 @@ public class ContractTestFramework {
     ) throws Throwable {
         var tx = contract
                 .invokeFunction(function, parameters)
-                .signers(signers).wallet(wallet).sign();
+                .signers(signers)
+//                .wallet(wallet)
+                .sign();
         var response = tx.send();
         if (response.hasError()) {
             throw new Exception(String.format("Error when invoking %s: %s", function, response.getError().getMessage()));
