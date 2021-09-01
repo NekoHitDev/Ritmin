@@ -1,5 +1,6 @@
 package com.nekohit.neo;
 
+import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
@@ -29,8 +30,8 @@ public class UpdateContract {
     );
 
     private static final boolean REALLY_DEPLOY_FLAG = false;
-    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
-    private static final Hash160 CONTRACT_HASH = new Hash160("0x7eaf33edde0cb499e84d940df65d875bed10b612");
+    private static final Class<?> CONTRACT_CLASS = CatToken.class;
+    private static final Hash160 CONTRACT_HASH = new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7");
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {

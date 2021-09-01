@@ -9,7 +9,7 @@ import com.nekohit.neo.domain.WCAStaticContent;
 public class WCAAuxiliary {
 
     /**
-     * @param staticContent {@link WCAStaticContent} of the given wca.
+     * @param staticContent  {@link WCAStaticContent} of the given wca.
      * @param dynamicContent {@link WCADynamicContent} of the given wca.
      * @return true if the wca is ready to finish. (last milestone is finished or expired)
      */
@@ -21,7 +21,7 @@ public class WCAAuxiliary {
     }
 
     /**
-     * @param staticContent {@link WCAStaticContent} of the given wca.
+     * @param staticContent  {@link WCAStaticContent} of the given wca.
      * @param dynamicContent {@link WCADynamicContent} of the given wca.
      * @return true if the threshold milestone is finished or expired.
      */

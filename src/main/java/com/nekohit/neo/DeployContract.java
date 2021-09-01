@@ -28,7 +28,7 @@ public class DeployContract {
             new HttpService("https://neo3-testnet.neoline.vip/")
     );
 
-    private static final boolean REALLY_DEPLOY_FLAG = true;
+    private static final boolean REALLY_DEPLOY_FLAG = false;
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
 
     public static void main(String[] args) throws Throwable {
@@ -69,7 +69,7 @@ public class DeployContract {
         System.out.println("Will deployed to 0x" + contractHash);
         System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
         System.out.println("Parameters:");
-        replaceMap.forEach((k ,v) -> System.out.println("\t" + k + ": " + v));
+        replaceMap.forEach((k, v) -> System.out.println("\t" + k + ": " + v));
 
         System.out.println("Type 'confirmed' to continue...");
         System.err.println("Note: Once confirmed, you CANNOT abort this process.");
