@@ -64,7 +64,9 @@ public final class PublicNetInvoke {
     ) throws Throwable {
         Transaction tx = WCA_CONTRACT
                 .invokeFunction(function, parameters)
-                .signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).wallet(wallet).sign();
+                .signers(AccountSigner.calledByEntry(wallet.getDefaultAccount()))
+//                .wallet(wallet)
+                .sign();
         NeoSendRawTransaction response = tx.send();
         if (response.hasError()) {
             throw new Exception(String.format("Error when invoking %s: %s", function, response.getError().getMessage()));
@@ -143,9 +145,9 @@ public final class PublicNetInvoke {
     private static void transferCatToken(
             Hash160 to, long amount, String identifier, boolean wait
     ) throws Throwable {
-        NeoSendRawTransaction tx = CAT_TOKEN.transferFromDefaultAccount(
-                wallet, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
-        ).signers(AccountSigner.calledByEntry(wallet.getDefaultAccount())).sign().send();
+        NeoSendRawTransaction tx = CAT_TOKEN.transfer(
+                wallet.getDefaultAccount(), to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
+        ).sign().send();
 
         if (tx.hasError()) {
             throw new Exception(tx.getError().getMessage());

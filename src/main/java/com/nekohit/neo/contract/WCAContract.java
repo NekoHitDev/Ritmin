@@ -24,7 +24,9 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@Permission(contract = "<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", methods = {"transfer", "decimals"})
+@Permission(contract = "<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", methods = {"transfer"})
+// ContractManagement::update
+@Permission(contract = "0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", methods = {"update"})
 public class WCAContract {
     static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
 
@@ -94,7 +96,8 @@ public class WCAContract {
             dynamicContent.buyerCounter++;
             // update purchase record
             ByteString purchaseId = wcaId.concat(from.toByteString());
-            int value = wcaPurchaseRecordMap.get(purchaseId).toInteger();
+            Integer value = wcaPurchaseRecordMap.getInteger(purchaseId);
+            if (value == null) value = 0;
             value += amount;
             wcaPurchaseRecordMap.put(purchaseId, value);
         }
@@ -119,7 +122,8 @@ public class WCAContract {
     public static int queryPurchase(String identifier, Hash160 buyer) {
         try {
             ByteString wcaId = getWCAId(identifier);
-            return wcaPurchaseRecordMap.get(wcaId.concat(buyer.toByteString())).toInteger();
+            Integer value = wcaPurchaseRecordMap.getInteger(wcaId.concat(buyer.toByteString()));
+            return value == null ? 0 : value;
         } catch (Exception e) {
             return 0;
         }
@@ -177,10 +181,11 @@ public class WCAContract {
         require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
         // wcaId should be unique
         require(wcaIdentifierMap.get(identifier) == null, ExceptionMessages.DUPLICATED_ID);
-        int counter = Storage.get(CTX, COUNTER_KEY).toInteger() + 1;
-        wcaIdentifierMap.put(identifier, counter);
+        Integer counter = Storage.getInteger(CTX, COUNTER_KEY);
+        if (counter == null) counter = 0;
+        wcaIdentifierMap.put(identifier, ++counter);
         Storage.put(CTX, COUNTER_KEY, counter);
-        ByteString wcaId = wcaIdentifierMap.get(identifier);
+        ByteString wcaId = Utils.intToByteString(counter);
 
         require(wcaDescription != null, ExceptionMessages.NULL_DESCRIPTION);
         require(stakePer100Token > 0, ExceptionMessages.INVALID_STAKE_RATE);
@@ -306,7 +311,8 @@ public class WCAContract {
 
         require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
         ByteString purchaseId = wcaId.concat(buyer.toByteString());
-        int value = wcaPurchaseRecordMap.get(purchaseId).toInteger();
+        Integer value = wcaPurchaseRecordMap.getInteger(purchaseId);
+        if (value == null) value = 0;
         if (checkIfThresholdMet(staticContent, dynamicContent)) {
             // after the threshold
             Pair<Integer, Integer> buyerAndCreator = dynamicContent.partialRefund(staticContent, value);

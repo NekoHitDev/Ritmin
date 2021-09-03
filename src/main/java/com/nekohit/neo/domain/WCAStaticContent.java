@@ -107,6 +107,7 @@ public class WCAStaticContent {
     public boolean isThresholdExpired() {
         return this.thresholdMilestoneExpireTime <= Runtime.getTime();
     }
+
     /**
      * @return true if the last milestone is expired, according to the expiry time.
      */
