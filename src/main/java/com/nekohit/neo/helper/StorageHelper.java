@@ -1,5 +1,6 @@
 package com.nekohit.neo.helper;
 
+import io.neow3j.devpack.ByteString;
 import io.neow3j.devpack.StorageContext;
 import io.neow3j.devpack.annotations.Instruction;
 
@@ -10,5 +11,5 @@ public class StorageHelper {
     public static native void put(StorageContext context, String key, long value);
 
     @Instruction(interopService = SYSTEM_STORAGE_PUT)
-    public static native void put(StorageContext context, byte[] key, long value);
+    public static native void put(StorageContext context, ByteString key, long value);
 }

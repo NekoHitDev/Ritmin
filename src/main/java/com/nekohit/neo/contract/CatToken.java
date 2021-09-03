@@ -15,8 +15,9 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "CAT Token Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-//@Permission(contract = "*", methods = {"onNEP17Payment"})
-@Permission(contract = "*")
+@Permission(contract = "*", methods = "onNEP17Payment")
+// ContractManagement::update
+@Permission(contract = "0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", methods = {"update"})
 @SupportedStandards("NEP-17")
 public class CatToken {
     private static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
@@ -27,7 +28,7 @@ public class CatToken {
     // issue #4, fixed supply with 1 billion
     private static final long INITIAL_SUPPLY = 1_000_000_000_00L;
     private static final int DECIMALS = 2;
-    private static final String ASSET_PREFIX = "asset";
+    private static final ByteString ASSET_PREFIX = new ByteString("asset");
     private static final String TOTAL_SUPPLY_KEY = "totalSupply";
     private static final String SYMBOL = "CAT";
     private static final StorageContext sc = Storage.getStorageContext();
@@ -46,7 +47,8 @@ public class CatToken {
     }
 
     static int getTotalSupply() {
-        return Storage.get(sc, TOTAL_SUPPLY_KEY).toInteger();
+        Integer i = Storage.getInteger(sc, TOTAL_SUPPLY_KEY);
+        return i == null ? 0 : i;
     }
 
     public static boolean transfer(Hash160 from, Hash160 to, int amount, Object data) throws Exception {
@@ -83,7 +85,7 @@ public class CatToken {
             // Initialize supply
             StorageHelper.put(sc, TOTAL_SUPPLY_KEY, INITIAL_SUPPLY);
             // And allocate all tokens to the contract owner.
-            StorageHelper.put(sc, Helper.concat(Helper.toByteArray(ASSET_PREFIX), OWNER.toByteArray()), INITIAL_SUPPLY);
+            StorageHelper.put(sc, ASSET_PREFIX.concat(OWNER.toByteString()), INITIAL_SUPPLY);
         }
     }
 
@@ -96,9 +98,8 @@ public class CatToken {
     }
 
     @OnVerification
-    public static boolean verify() throws Exception {
-        throwIfSignerIsNotOwner();
-        return true;
+    public static boolean verify() {
+        return false;
     }
 
     /**
@@ -117,19 +118,20 @@ public class CatToken {
     }
 
     private static void addToBalance(Hash160 key, int value) {
-        assetMap.put(key.toByteArray(), getBalance(key) + value);
+        assetMap.put(key.toByteString(), getBalance(key) + value);
     }
 
     private static void deductFromBalance(Hash160 key, int value) {
         int oldValue = getBalance(key);
         if (oldValue == value) {
-            assetMap.delete(key.toByteArray());
+            assetMap.delete(key.toByteString());
         } else {
-            assetMap.put(key.toByteArray(), oldValue - value);
+            assetMap.put(key.toByteString(), oldValue - value);
         }
     }
 
     private static int getBalance(Hash160 key) {
-        return assetMap.get(key.toByteArray()).toInteger();
+        Integer i = assetMap.getInteger(key.toByteString());
+        return i == null ? 0 : i;
     }
 }

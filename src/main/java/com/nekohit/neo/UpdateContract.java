@@ -1,9 +1,10 @@
 package com.nekohit.neo;
 
-import com.nekohit.neo.compile.CompileAndDeployUtils;
+import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
+import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
@@ -29,8 +30,8 @@ public class UpdateContract {
     );
 
     private static final boolean REALLY_DEPLOY_FLAG = false;
-    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
-    private static final Hash160 CONTRACT_HASH = new Hash160("0x7eaf33edde0cb499e84d940df65d875bed10b612");
+    private static final Class<?> CONTRACT_CLASS = CatToken.class;
+    private static final Hash160 CONTRACT_HASH = new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7");
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {
@@ -52,7 +53,7 @@ public class UpdateContract {
         }
 
         // compile contract
-        CompilationUnit compileResult = CompileAndDeployUtils.compileModifiedContract(CONTRACT_CLASS, replaceMap);
+        CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName(), replaceMap);
         System.out.println("Contract compiled:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
 
@@ -78,7 +79,7 @@ public class UpdateContract {
                             ContractParameter.byteArray(manifestBytes)
                     )
                     .signers(AccountSigner.calledByEntry(deployWallet.getDefaultAccount()))
-                    .wallet(deployWallet)
+//                    .wallet(deployWallet)
                     .sign();
             NeoSendRawTransaction response = tx.send();
             if (response.hasError()) {

@@ -55,39 +55,32 @@ public class CatTokenTest extends ContractTestFramework {
     }
 
     @Test
-    void testNotOwner() {
-        var throwable = assertThrows(
-                TransactionConfigurationException.class,
-                () -> invokeFunction(
-                        getCatToken(),
-                        "verify",
-                        new ContractParameter[0],
-                        new Signer[]{
-                                AccountSigner.calledByEntry(testWallet.getDefaultAccount())
-                        },
-                        testWallet
-                )
-        );
-        assertTrue(
-                throwable.getMessage().contains("The calling entity is not the owner of this contract."),
-                "Unknown exception: " + throwable.getMessage()
-        );
+    void testNotOwner() throws Throwable {
+        assertFalse(invokeFunction(
+                getCatToken(),
+                "verify",
+                new ContractParameter[0],
+                new Signer[]{
+                        AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())
+                },
+                this.testWallet
+        ).getExecutions().get(0).getStack().get(0).getBoolean());
     }
 
     @Test
-    void testInvalidAmount() throws Throwable {
+    void testInvalidAmount() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> invokeFunction(
                         getCatToken(), "transfer",
                         new ContractParameter[]{
-                                ContractParameter.hash160(testWallet.getDefaultAccount()),
-                                ContractParameter.hash160(testWallet.getDefaultAccount()),
+                                ContractParameter.hash160(this.testWallet.getDefaultAccount()),
+                                ContractParameter.hash160(this.testWallet.getDefaultAccount()),
                                 ContractParameter.integer(-100),
                                 ContractParameter.any(null)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(testWallet.getDefaultAccount())},
-                        testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
+                        this.testWallet
                 )
         );
         assertTrue(
@@ -97,7 +90,7 @@ public class CatTokenTest extends ContractTestFramework {
     }
 
     @Test
-    void testInvalidSigner() throws Throwable {
+    void testInvalidSigner() {
         var tempWallet = Wallet.create();
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
@@ -109,8 +102,8 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.integer(100),
                                 ContractParameter.any(null)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(testWallet.getDefaultAccount())},
-                        testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
+                        this.testWallet
                 )
         );
         assertTrue(
@@ -124,20 +117,20 @@ public class CatTokenTest extends ContractTestFramework {
         var toWallet = Wallet.create();
         var transferAmount = 1000_00;
         // Query old balance
-        var oldFromBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
+        var oldFromBalance = getCatToken().getBalanceOf(this.testWallet.getDefaultAccount()).longValue();
         var oldToBalance = getCatToken().getBalanceOf(toWallet.getDefaultAccount()).longValue();
 
         // do the transfer
         assertDoesNotThrow(
                 () -> transferToken(
-                        getCatToken(), testWallet,
+                        getCatToken(), this.testWallet,
                         toWallet.getDefaultAccount().getScriptHash(),
                         transferAmount, null, true
                 )
         );
 
         // query new balance
-        var newFromBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
+        var newFromBalance = getCatToken().getBalanceOf(this.testWallet.getDefaultAccount()).longValue();
         var newToBalance = getCatToken().getBalanceOf(toWallet.getDefaultAccount()).longValue();
 
         // check change

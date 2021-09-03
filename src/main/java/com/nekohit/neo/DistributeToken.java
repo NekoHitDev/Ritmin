@@ -52,8 +52,8 @@ public class DistributeToken {
 
         Transaction tx = new TransactionBuilder(NEOW3J)
                 .script(scriptBuilder.toArray())
-                .wallet(wallet)
-                .signers(calledByEntry(wallet.getDefaultAccount().getScriptHash()))
+//                .wallet(wallet)
+                .signers(calledByEntry(wallet.getDefaultAccount()))
                 .sign();
 
         NeoSendRawTransaction resp = tx.send();
