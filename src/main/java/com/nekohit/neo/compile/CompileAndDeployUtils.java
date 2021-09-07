@@ -14,13 +14,11 @@ public class CompileAndDeployUtils {
     public static Transaction deployContract(
             CompilationUnit res,
             Account account,
-            Wallet wallet,
             Neow3j neow3j
     ) throws Throwable {
         Transaction tx = new ContractManagement(neow3j)
                 .deploy(res.getNefFile(), res.getManifest())
                 .signers(AccountSigner.global(account))
-//                .wallet(wallet)
                 .sign();
         NeoSendRawTransaction response = tx.send();
         if (response.hasError()) {

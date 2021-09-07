@@ -28,6 +28,9 @@ public class ExceptionMessages {
     public static final String INVALID_STAGE_READY_TO_FINISH =
             "Invalid stage: Ready-To-Finish.";
 
+    public static final String INSUFFICIENT_AMOUNT_REMAIN =
+            "Insufficient token remain in this project.";
+
     public static final String INVALID_HASH160 =
             "Invalid hash160.";
 

@@ -84,7 +84,6 @@ public class DeployContract {
             Transaction tx = CompileAndDeployUtils.deployContract(
                     compileResult,
                     deployWallet.getDefaultAccount(),
-                    deployWallet,
                     NEOW3J
             );
             System.out.println("Deployed tx: 0x" + tx.getTxId());

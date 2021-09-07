@@ -36,39 +36,39 @@ public class WCAContract {
     private static final StorageContext CTX = Storage.getStorageContext();
 
     private static final String COUNTER_KEY = "CK";
-    private static final StorageMap wcaIdentifierMap = CTX.createMap("ID");
-    private static final StorageMap wcaStaticContentMap = CTX.createMap("SC");
-    private static final StorageMap wcaDynamicContentMap = CTX.createMap("DC");
-    private static final StorageMap wcaPurchaseRecordMap = CTX.createMap("PR");
-    private static final StorageMap wcaMilestoneMap = CTX.createMap("MS");
+    private static final StorageMap projectIdentifierMap = CTX.createMap("ID");
+    private static final StorageMap projectStaticContentMap = CTX.createMap("SC");
+    private static final StorageMap projectDynamicContentMap = CTX.createMap("DC");
+    private static final StorageMap projectPurchaseRecordMap = CTX.createMap("PR");
+    private static final StorageMap projectMilestoneMap = CTX.createMap("MS");
 
     // creator, identifier, milestone count
-    @DisplayName("CreateWCA")
-    private static Event3Args<Hash160, String, Integer> onCreateWCA;
+    @DisplayName("DeclareProject")
+    private static Event3Args<Hash160, String, Integer> onDeclareProject;
 
     // owner, identifier, amount
-    @DisplayName("PayWCA")
-    private static Event3Args<Hash160, String, Integer> onPayWCA;
+    @DisplayName("PayStake")
+    private static Event3Args<Hash160, String, Integer> onPayStake;
 
     // buyer, identifier, deal amount
-    @DisplayName("BuyWCA")
-    private static Event3Args<Hash160, String, Integer> onBuyWCA;
+    @DisplayName("PurchaseProject")
+    private static Event3Args<Hash160, String, Integer> onPurchaseProject;
 
     // identifier, milestone index
     @DisplayName("FinishMilestone")
     private static Event2Args<String, Integer> onFinishMilestone;
 
     // identifier
-    @DisplayName("FinishWCA")
-    private static Event1Arg<String> onFinishWCA;
+    @DisplayName("FinishProject")
+    private static Event1Arg<String> onFinishProject;
 
     // buyer, identifier, return to buyer amount, return to creator amount
     @DisplayName("Refund")
     private static Event4Args<Hash160, String, Integer, Integer> onRefund;
 
     // identifier
-    @DisplayName("CancelWCA")
-    private static Event1Arg<String> onCancelWCA;
+    @DisplayName("CancelProject")
+    private static Event1Arg<String> onCancelProject;
 
 
     @OnNEP17Payment
@@ -76,10 +76,10 @@ public class WCAContract {
         require(CAT_TOKEN_HASH == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_CALLER);
         require(amount > 0, ExceptionMessages.INVALID_AMOUNT);
         String identifier = (String) data;
-        ByteString wcaId = getWCAId(identifier);
+        ByteString projectId = getProjectId(identifier);
 
-        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
-        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+        ProjectStaticContent staticContent = getStaticContent(projectId);
+        ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
 
         if (staticContent.owner.equals(from)) {
             // owner paying stake
@@ -87,32 +87,33 @@ public class WCAContract {
             require(staticContent.getTotalStake() == amount, ExceptionMessages.INCORRECT_AMOUNT);
             // unpaid before, amount is correct, set to ONGOING
             dynamicContent.status = 1;
+            onPayStake.fire(from, identifier, amount);
         } else {
             require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
             require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
-            require(dynamicContent.remainTokenCount >= amount, "Insufficient token remain in this WCA.");
+            require(dynamicContent.remainTokenCount >= amount, ExceptionMessages.INSUFFICIENT_AMOUNT_REMAIN);
             dynamicContent.remainTokenCount -= amount;
             dynamicContent.totalPurchasedAmount += amount;
             dynamicContent.buyerCounter++;
             // update purchase record
-            ByteString purchaseId = wcaId.concat(from.toByteString());
-            Integer value = wcaPurchaseRecordMap.getInteger(purchaseId);
+            ByteString purchaseId = projectId.concat(from.toByteString());
+            Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
             if (value == null) value = 0;
             value += amount;
-            wcaPurchaseRecordMap.put(purchaseId, value);
+            projectPurchaseRecordMap.put(purchaseId, value);
+            onPurchaseProject.fire(from, identifier, amount);
         }
-        updateWCADynamicContent(wcaId, dynamicContent);
-        onBuyWCA.fire(from, identifier, amount);
+        updateDynamicContent(projectId, dynamicContent);
     }
 
-    public static String queryWCA(String identifier) {
+    public static String queryProject(String identifier) {
         try {
-            ByteString wcaId = getWCAId(identifier);
-            WCAStaticContent staticContent = getWCAStaticContent(wcaId);
-            WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
-            WCAMilestone[] milestones = getWCAMilestones(wcaId, staticContent);
+            ByteString projectId = getProjectId(identifier);
+            ProjectStaticContent staticContent = getStaticContent(projectId);
+            ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
+            ProjectMilestone[] milestones = getMilestones(projectId, staticContent);
 
-            WCAPojo pojo = new WCAPojo(identifier, staticContent, dynamicContent, milestones);
+            ProjectPojo pojo = new ProjectPojo(identifier, staticContent, dynamicContent, milestones);
             return StdLib.jsonSerialize(pojo);
         } catch (Exception e) {
             return "";
@@ -121,8 +122,8 @@ public class WCAContract {
 
     public static int queryPurchase(String identifier, Hash160 buyer) {
         try {
-            ByteString wcaId = getWCAId(identifier);
-            Integer value = wcaPurchaseRecordMap.getInteger(wcaId.concat(buyer.toByteString()));
+            ByteString projectId = getProjectId(identifier);
+            Integer value = projectPurchaseRecordMap.getInteger(projectId.concat(buyer.toByteString()));
             return value == null ? 0 : value;
         } catch (Exception e) {
             return 0;
@@ -136,14 +137,14 @@ public class WCAContract {
         require(size >= 1, ExceptionMessages.INVALID_SIZE);
         int offset = (page - 1) * size;
         int count = 0;
-        List<WCAPojo> result = new List<>();
+        List<ProjectPojo> result = new List<>();
         Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, "ID", FindOptions.RemovePrefix);
         while (result.size() < size && iter.next()) {
             String identifier = iter.get().key.toString();
-            ByteString wcaId = iter.get().value;
-            WCAStaticContent staticContent = getWCAStaticContent(wcaId);
-            WCAMilestone[] milestonesInfo = getWCAMilestones(wcaId, staticContent);
-            WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+            ByteString projectId = iter.get().value;
+            ProjectStaticContent staticContent = getStaticContent(projectId);
+            ProjectMilestone[] milestonesInfo = getMilestones(projectId, staticContent);
+            ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
 
             if (!staticContent.bePublic) {
                 continue;
@@ -157,11 +158,11 @@ public class WCAContract {
             }
             if (buyer != null && buyer != Hash160.zero()) {
                 // filter buyer
-                if (wcaPurchaseRecordMap.get(wcaId.concat(buyer.toByteString())) == null) {
+                if (projectPurchaseRecordMap.get(projectId.concat(buyer.toByteString())) == null) {
                     continue;
                 }
             }
-            WCAPojo pojo = new WCAPojo(identifier, staticContent, dynamicContent, milestonesInfo);
+            ProjectPojo pojo = new ProjectPojo(identifier, staticContent, dynamicContent, milestonesInfo);
             if (count >= offset) {
                 result.add(pojo);
             }
@@ -170,8 +171,8 @@ public class WCAContract {
         return StdLib.jsonSerialize(result);
     }
 
-    public static String createWCA(
-            Hash160 owner, String wcaDescription,
+    public static String declareProject(
+            Hash160 owner, String projectDescription,
             int stakePer100Token, int maxTokenSoldCount,
             String[] milestoneTitles, String[] milestoneDescriptions, int[] endTimestamps,
             int thresholdIndex, int coolDownInterval,
@@ -179,15 +180,15 @@ public class WCAContract {
     ) throws Exception {
         require(Hash160.isValid(owner), ExceptionMessages.INVALID_HASH160);
         require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
-        // wcaId should be unique
-        require(wcaIdentifierMap.get(identifier) == null, ExceptionMessages.DUPLICATED_ID);
+        // projectId should be unique
+        require(projectIdentifierMap.get(identifier) == null, ExceptionMessages.DUPLICATED_ID);
         Integer counter = Storage.getInteger(CTX, COUNTER_KEY);
         if (counter == null) counter = 0;
-        wcaIdentifierMap.put(identifier, ++counter);
+        projectIdentifierMap.put(identifier, ++counter);
         Storage.put(CTX, COUNTER_KEY, counter);
-        ByteString wcaId = Utils.intToByteString(counter);
+        ByteString projectId = Utils.intToByteString(counter);
 
-        require(wcaDescription != null, ExceptionMessages.NULL_DESCRIPTION);
+        require(projectDescription != null, ExceptionMessages.NULL_DESCRIPTION);
         require(stakePer100Token > 0, ExceptionMessages.INVALID_STAKE_RATE);
         require(maxTokenSoldCount > 0, ExceptionMessages.INVALID_MAX_SELL_AMOUNT);
 
@@ -202,35 +203,35 @@ public class WCAContract {
             int t = endTimestamps[i];
             require(lastTimestamp < t, ExceptionMessages.INVALID_TIMESTAMP);
             lastTimestamp = t;
-            updateMilestone(wcaId, i, new WCAMilestone(milestoneTitles[i], milestoneDescriptions[i], t));
+            updateMilestone(projectId, i, new ProjectMilestone(milestoneTitles[i], milestoneDescriptions[i], t));
         }
         require(thresholdIndex >= 0 && thresholdIndex < milestoneCount, ExceptionMessages.INVALID_THRESHOLD_INDEX);
         require(coolDownInterval > 0, ExceptionMessages.INVALID_COOL_DOWN_INTERVAL);
 
-        // create wca info obj
-        WCAStaticContent staticContent = new WCAStaticContent(
-                owner, wcaDescription, stakePer100Token, maxTokenSoldCount,
+        // create project info obj
+        ProjectStaticContent staticContent = new ProjectStaticContent(
+                owner, projectDescription, stakePer100Token, maxTokenSoldCount,
                 milestoneCount, thresholdIndex, coolDownInterval,
                 endTimestamps[thresholdIndex], endTimestamps[milestoneCount - 1],
                 bePublic
         );
 
         // store
-        wcaStaticContentMap.put(wcaId, StdLib.serialize(staticContent));
-        updateWCADynamicContent(wcaId, new WCADynamicContent(maxTokenSoldCount));
+        projectStaticContentMap.put(projectId, StdLib.serialize(staticContent));
+        updateDynamicContent(projectId, new ProjectDynamicContent(maxTokenSoldCount));
         // fire event and done
-        onCreateWCA.fire(owner, identifier, milestoneTitles.length);
+        onDeclareProject.fire(owner, identifier, milestoneTitles.length);
         return identifier;
     }
 
     public static void finishMilestone(String identifier, int index, String proofOfWork) throws Exception {
-        ByteString wcaId = getWCAId(identifier);
-        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
-        // only creator can update WCA to finished
+        ByteString projectId = getProjectId(identifier);
+        ProjectStaticContent staticContent = getStaticContent(projectId);
+        // only creator can update project to finished
         require(Runtime.checkWitness(staticContent.owner) || staticContent.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
-        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+        ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
         require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
-        WCAMilestone ms = getWCAMilestone(wcaId, index);
+        ProjectMilestone ms = getMilestone(projectId, index);
         require(ms != null, ExceptionMessages.RECORD_NOT_FOUND);
         // check cool-down time first
         int currentTime = Runtime.getTime();
@@ -253,34 +254,34 @@ public class WCAContract {
         }
 
         // store it back
-        updateWCADynamicContent(wcaId, dynamicContent);
-        updateMilestone(wcaId, index, ms);
+        updateDynamicContent(projectId, dynamicContent);
+        updateMilestone(projectId, index, ms);
         onFinishMilestone.fire(identifier, index);
 
-        // if whole WCA is finished
+        // if whole project is finished
         if (checkIfReadyToFinish(staticContent, dynamicContent)) {
-            finishWCA(identifier);
+            finishProject(identifier);
         }
     }
 
-    public static void finishWCA(String identifier) throws Exception {
-        ByteString wcaId = getWCAId(identifier);
-        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
-        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+    public static void finishProject(String identifier) throws Exception {
+        ByteString projectId = getProjectId(identifier);
+        ProjectStaticContent staticContent = getStaticContent(projectId);
+        ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
         require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
 
         if (!Runtime.checkWitness(staticContent.owner)) {
-            // only owner can finish an unfinished WCA
+            // only owner can finish an unfinished project
             require(checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH);
         }
-        // get wca buyer info obj
+        // get project buyer info obj
         int remainTokens = staticContent.getTotalStake() + dynamicContent.totalPurchasedAmount;
         int totalMilestones = staticContent.milestoneCount;
         int unfinishedMilestones = totalMilestones - dynamicContent.finishedMilestoneCount;
 
         // for each buyer, return their token based on unfinished ms count
         // also remove stakes for that unfinished one
-        ByteString prefix = new ByteString("PR").concat(wcaId);
+        ByteString prefix = new ByteString("PR").concat(projectId);
         Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
         while (iter.next()) {
             Iterator.Struct<ByteString, ByteString> elem = iter.get();
@@ -299,21 +300,21 @@ public class WCAContract {
         dynamicContent.status = 2;
         dynamicContent.lastUpdateTime = Runtime.getTime();
         // store it back
-        updateWCADynamicContent(wcaId, dynamicContent);
-        onFinishWCA.fire(identifier);
+        updateDynamicContent(projectId, dynamicContent);
+        onFinishProject.fire(identifier);
     }
 
     public static void refund(String identifier, Hash160 buyer) throws Exception {
         require(Hash160.isValid(buyer), ExceptionMessages.INVALID_HASH160);
         require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
-        ByteString wcaId = getWCAId(identifier);
-        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
-        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+        ByteString projectId = getProjectId(identifier);
+        ProjectStaticContent staticContent = getStaticContent(projectId);
+        ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
         require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
 
         require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
-        ByteString purchaseId = wcaId.concat(buyer.toByteString());
-        Integer value = wcaPurchaseRecordMap.getInteger(purchaseId);
+        ByteString purchaseId = projectId.concat(buyer.toByteString());
+        Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
         if (value == null) value = 0;
         if (checkIfThresholdMet(staticContent, dynamicContent)) {
             // after the threshold
@@ -327,16 +328,16 @@ public class WCAContract {
             transferTokenTo(buyer, amount, identifier);
             onRefund.fire(buyer, identifier, amount, 0);
         }
-        wcaPurchaseRecordMap.delete(purchaseId);
+        projectPurchaseRecordMap.delete(purchaseId);
         // update buyer info
-        updateWCADynamicContent(wcaId, dynamicContent);
+        updateDynamicContent(projectId, dynamicContent);
     }
 
-    public static void cancelWCA(String identifier) throws Exception {
-        ByteString wcaId = getWCAId(identifier);
+    public static void cancelProject(String identifier) throws Exception {
+        ByteString projectId = getProjectId(identifier);
         // get obj
-        WCAStaticContent staticContent = getWCAStaticContent(wcaId);
-        WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
+        ProjectStaticContent staticContent = getStaticContent(projectId);
+        ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
 
         // check signature
         require(Hash160.isValid(staticContent.owner), ExceptionMessages.INVALID_HASH160);
@@ -352,14 +353,14 @@ public class WCAContract {
                 // to creator
                 transferTokenTo(staticContent.owner, staticContent.getTotalStake(), identifier);
                 // to buyers
-                ByteString prefix = new ByteString("PR").concat(wcaId);
+                ByteString prefix = new ByteString("PR").concat(projectId);
                 Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
                 while (iter.next()) {
                     Iterator.Struct<ByteString, ByteString> elem = iter.get();
                     Hash160 buyer = new Hash160(elem.key);
                     int purchaseAmount = elem.value.toInteger();
                     // delete record
-                    wcaPurchaseRecordMap.delete(wcaId.concat(buyer.toByteString()));
+                    projectPurchaseRecordMap.delete(projectId.concat(buyer.toByteString()));
                     transferTokenTo(buyer, purchaseAmount, identifier);
                 }
                 break;
@@ -368,17 +369,17 @@ public class WCAContract {
                 throw new Exception(ExceptionMessages.INVALID_STATUS_ALLOW_PENDING_AND_ONGOING);
         }
         // delete this id
-        wcaIdentifierMap.delete(identifier);
-        wcaStaticContentMap.delete(wcaId);
-        wcaDynamicContentMap.delete(wcaId);
+        projectIdentifierMap.delete(identifier);
+        projectStaticContentMap.delete(projectId);
+        projectDynamicContentMap.delete(projectId);
         // delete milestones
-        ByteString prefix = new ByteString("MS").concat(wcaId);
+        ByteString prefix = new ByteString("MS").concat(projectId);
         Iterator<ByteString> iter = Storage.find(CTX, prefix, FindOptions.KeysOnly);
         while (iter.next()) {
             Storage.delete(CTX, iter.get());
         }
 
-        onCancelWCA.fire(identifier);
+        onCancelProject.fire(identifier);
     }
 
     public static void update(ByteString script, String manifest) throws Exception {
@@ -407,52 +408,52 @@ public class WCAContract {
     }
 
     /**
-     * Check and get the wcaId of the given identifier.
+     * Check and get the id of the given identifier.
      * If identifier not exist, exception will be thrown.
      */
-    private static ByteString getWCAId(String identifier) throws Exception {
-        ByteString id = wcaIdentifierMap.get(identifier);
+    private static ByteString getProjectId(String identifier) throws Exception {
+        ByteString id = projectIdentifierMap.get(identifier);
         require(id != null, ExceptionMessages.RECORD_NOT_FOUND);
         return id;
     }
 
-    private static WCAStaticContent getWCAStaticContent(ByteString wcaId) {
-        ByteString data = wcaStaticContentMap.get(wcaId);
-        return (WCAStaticContent) StdLib.deserialize(data);
+    private static ProjectStaticContent getStaticContent(ByteString projectId) {
+        ByteString data = projectStaticContentMap.get(projectId);
+        return (ProjectStaticContent) StdLib.deserialize(data);
     }
 
-    private static WCADynamicContent getWCADynamicContent(ByteString wcaId) {
-        ByteString data = wcaDynamicContentMap.get(wcaId);
-        return (WCADynamicContent) StdLib.deserialize(data);
+    private static ProjectDynamicContent getDynamicContent(ByteString projectId) {
+        ByteString data = projectDynamicContentMap.get(projectId);
+        return (ProjectDynamicContent) StdLib.deserialize(data);
     }
 
-    private static WCAMilestone getWCAMilestone(ByteString wcaId, int index) throws Exception {
-        // Since wcaId has no fixed length, thus milestone index must have fixed length
+    private static ProjectMilestone getMilestone(ByteString projectId, int index) throws Exception {
+        // Since projectId has no fixed length, thus milestone index must have fixed length
         // otherwise there will be [010][1010] = [0101][010]
-        ByteString data = wcaMilestoneMap.get(
-                wcaId.concat(
+        ByteString data = projectMilestoneMap.get(
+                projectId.concat(
                         Utils.paddingByteString(Utils.intToByteString(index), 20)
                 ));
         if (data == null)
             return null;
-        return (WCAMilestone) StdLib.deserialize(data);
+        return (ProjectMilestone) StdLib.deserialize(data);
     }
 
-    private static WCAMilestone[] getWCAMilestones(ByteString wcaId, WCAStaticContent staticContent) throws Exception {
-        WCAMilestone[] result = new WCAMilestone[staticContent.milestoneCount];
+    private static ProjectMilestone[] getMilestones(ByteString projectId, ProjectStaticContent staticContent) throws Exception {
+        ProjectMilestone[] result = new ProjectMilestone[staticContent.milestoneCount];
         for (int i = 0; i < result.length; i++) {
-            result[i] = getWCAMilestone(wcaId, i);
+            result[i] = getMilestone(projectId, i);
         }
         return result;
     }
 
-    private static void updateWCADynamicContent(ByteString wcaId, WCADynamicContent data) {
-        wcaDynamicContentMap.put(wcaId, StdLib.serialize(data));
+    private static void updateDynamicContent(ByteString projectId, ProjectDynamicContent data) {
+        projectDynamicContentMap.put(projectId, StdLib.serialize(data));
     }
 
-    private static void updateMilestone(ByteString wcaId, int index, WCAMilestone data) throws Exception {
-        wcaMilestoneMap.put(
-                wcaId.concat(
+    private static void updateMilestone(ByteString projectId, int index, ProjectMilestone data) throws Exception {
+        projectMilestoneMap.put(
+                projectId.concat(
                         Utils.paddingByteString(Utils.intToByteString(index), 20)
                 ),
                 StdLib.serialize(data)

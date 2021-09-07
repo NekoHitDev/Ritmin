@@ -2,7 +2,7 @@ package com.nekohit.neo.domain;
 
 import io.neow3j.devpack.Runtime;
 
-public class WCAMilestone {
+public class ProjectMilestone {
     /**
      * The title of this milestone
      */
@@ -24,7 +24,7 @@ public class WCAMilestone {
      */
     public String proofOfWork;
 
-    public WCAMilestone(String title, String description, int endTimestamp) {
+    public ProjectMilestone(String title, String description, int endTimestamp) {
         this.title = title;
         this.description = description;
         this.endTimestamp = endTimestamp;
@@ -32,7 +32,7 @@ public class WCAMilestone {
     }
 
     /**
-     * {@link WCAMilestone#proofOfWork} is considered a proof of milestone.
+     * {@link ProjectMilestone#proofOfWork} is considered a proof of milestone.
      * If that is not null, then this milestone is finished.
      *
      * @return true if finished; false if not.
@@ -42,7 +42,7 @@ public class WCAMilestone {
     }
 
     /**
-     * When {@link WCAMilestone#endTimestamp} is passed, then the milestone
+     * When {@link ProjectMilestone#endTimestamp} is passed, then the milestone
      * is considering as expired, and you can't change it anymore.
      *
      * @return true if this milestone is already expired.

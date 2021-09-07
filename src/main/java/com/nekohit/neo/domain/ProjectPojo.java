@@ -3,14 +3,14 @@ package com.nekohit.neo.domain;
 import com.nekohit.neo.contract.WCAAuxiliary;
 import io.neow3j.devpack.contracts.StdLib;
 
-public class WCAPojo {
+public class ProjectPojo {
     /**
-     * The identifier of this wca.
+     * The identifier of this project.
      */
     public final String identifier;
 
     /**
-     * The description of this wca.
+     * The description of this project.
      */
     public final String description;
 
@@ -21,7 +21,7 @@ public class WCAPojo {
     public final String ownerHashBase64;
 
     /**
-     * The timestamp indicate when this wca is created.
+     * The timestamp indicate when this project is created.
      */
     public final int creationTimestamp;
 
@@ -43,7 +43,7 @@ public class WCAPojo {
     /**
      * Array of milestones.
      */
-    public final WCAMilestone[] milestones;
+    public final ProjectMilestone[] milestones;
 
     /**
      * The index of the threshold milestone.
@@ -56,7 +56,7 @@ public class WCAPojo {
     public final int coolDownInterval;
 
     /**
-     * The timestamp indicate when the wca is updated.
+     * The timestamp indicate when the project is updated.
      */
     public final int lastUpdateTimestamp;
 
@@ -88,7 +88,7 @@ public class WCAPojo {
      */
     public final String stage;
 
-    public WCAPojo(String identifier, WCAStaticContent staticContent, WCADynamicContent dynamicContent, WCAMilestone[] milestones) {
+    public ProjectPojo(String identifier, ProjectStaticContent staticContent, ProjectDynamicContent dynamicContent, ProjectMilestone[] milestones) {
         // This is a workaround since Hash160 convert to int is too big for
         // StdLib.jsonSerialize, so encoded by Base64 first
         this.identifier = identifier;
