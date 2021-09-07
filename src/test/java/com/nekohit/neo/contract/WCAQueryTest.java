@@ -185,7 +185,6 @@ public class WCAQueryTest extends ContractTestFramework {
         );
         ContractInvokeHelper.finishMilestone(getWcaContract(), finishedWCA, 0, "123", this.creatorWallet);
 
-        // TODO toggle those to test
         System.out.println(assertDoesNotThrow(() -> ContractInvokeHelper.advanceQuery(
                 getWcaContract(),
                 this.creatorWallet.getDefaultAccount().getScriptHash(),
