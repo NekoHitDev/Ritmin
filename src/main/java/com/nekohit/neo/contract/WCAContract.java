@@ -231,6 +231,7 @@ public class WCAContract {
         WCADynamicContent dynamicContent = getWCADynamicContent(wcaId);
         require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
         WCAMilestone ms = getWCAMilestone(wcaId, index);
+        require(ms != null, ExceptionMessages.RECORD_NOT_FOUND);
         // check cool-down time first
         int currentTime = Runtime.getTime();
         require(dynamicContent.lastUpdateTime + staticContent.coolDownInterval <= currentTime, ExceptionMessages.COOL_DOWN_TIME_NOT_MET);
@@ -243,7 +244,8 @@ public class WCAContract {
         dynamicContent.nextMilestoneIndex = index + 1;
         dynamicContent.finishedMilestoneCount++;
         dynamicContent.lastUpdateTime = currentTime;
-        if (index == staticContent.thresholdIndex) {
+        if (index >= staticContent.thresholdIndex) {
+            // in case creator skip the threshold milestone
             dynamicContent.thresholdMilestoneFinished = true;
         }
         if (index == staticContent.milestoneCount - 1) {
@@ -431,6 +433,8 @@ public class WCAContract {
                 wcaId.concat(
                         Utils.paddingByteString(Utils.intToByteString(index), 20)
                 ));
+        if (data == null)
+            return null;
         return (WCAMilestone) StdLib.deserialize(data);
     }
 
