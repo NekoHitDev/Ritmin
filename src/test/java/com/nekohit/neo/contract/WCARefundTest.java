@@ -63,7 +63,7 @@ public class WCARefundTest extends ContractTestFramework {
 
     @Test
     void testRefundUnpaid() throws Throwable {
-        var identifier = ContractInvokeHelper.createWCA(
+        var identifier = ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -90,7 +90,7 @@ public class WCARefundTest extends ContractTestFramework {
 
     @Test
     void testLastMilestoneFinished() throws Throwable {
-        var identifier = ContractInvokeHelper.createAndPayWCA(
+        var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -120,7 +120,7 @@ public class WCARefundTest extends ContractTestFramework {
 
     @Test
     void testLastMilestoneExpired() throws Throwable {
-        var identifier = ContractInvokeHelper.createAndPayWCA(
+        var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -148,7 +148,7 @@ public class WCARefundTest extends ContractTestFramework {
 
     @Test
     void testRecordNotFoundBeforeThreshold() throws Throwable {
-        var identifier = ContractInvokeHelper.createAndPayWCA(
+        var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -177,7 +177,7 @@ public class WCARefundTest extends ContractTestFramework {
 
     @Test
     void testRecordNotFoundAfterThreshold() throws Throwable {
-        var identifier = ContractInvokeHelper.createAndPayWCA(
+        var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -210,7 +210,7 @@ public class WCARefundTest extends ContractTestFramework {
 
     @Test
     void testNormalRefundBeforeThreshold() throws Throwable {
-        var identifier = ContractInvokeHelper.createAndPayWCA(
+        var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1000_00,
@@ -243,7 +243,7 @@ public class WCARefundTest extends ContractTestFramework {
     @Test
     void testNormalRefundAfterThreshold() throws Throwable {
         var stakeRate = 1_00;
-        var identifier = ContractInvokeHelper.createAndPayWCA(
+        var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 stakeRate, 1000_00,

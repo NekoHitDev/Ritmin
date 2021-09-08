@@ -26,13 +26,13 @@ public class WCAQueryTest extends ContractTestFramework {
     void testInvalidQueryWCA() {
         assertEquals(
                 "",
-                assertDoesNotThrow(() -> ContractInvokeHelper.queryWCA(getWcaContract(), "some_invalid_id"))
+                assertDoesNotThrow(() -> ContractInvokeHelper.queryProject(getWcaContract(), "some_invalid_id"))
         );
     }
 
     @Test
     void testValidQueryWCA() throws Throwable {
-        var identifier = ContractInvokeHelper.createWCA(
+        var identifier = ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -45,7 +45,7 @@ public class WCAQueryTest extends ContractTestFramework {
         );
         assertNotEquals(
                 "",
-                assertDoesNotThrow(() -> ContractInvokeHelper.queryWCA(getWcaContract(), identifier))
+                assertDoesNotThrow(() -> ContractInvokeHelper.queryProject(getWcaContract(), identifier))
         );
     }
 
@@ -62,7 +62,7 @@ public class WCAQueryTest extends ContractTestFramework {
     @Test
     void testInvalidBuyerQueryPurchase() throws Throwable {
         // create WCA
-        var identifier = ContractInvokeHelper.createAndPayWCA(
+        var identifier = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
@@ -88,7 +88,7 @@ public class WCAQueryTest extends ContractTestFramework {
     void testValidBuyerQueryPurchase() throws Throwable {
         var purchaseAmount = 1000_00;
         // create WCA
-        var identifier = ContractInvokeHelper.createAndPayWCA(
+        var identifier = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, purchaseAmount,
                 new String[]{"milestone1"},
@@ -127,7 +127,7 @@ public class WCAQueryTest extends ContractTestFramework {
     @Test
     void testAdvancedQuery() throws Throwable {
         var buyerWallet = getTestWallet();
-        var unpaidWCA = ContractInvokeHelper.createWCA(
+        var unpaidWCA = ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
@@ -141,7 +141,7 @@ public class WCAQueryTest extends ContractTestFramework {
                 "test_advanced_unpaid_" + System.currentTimeMillis(),
                 this.creatorWallet
         );
-        var canPurchaseWCA = ContractInvokeHelper.createAndPayWCA(
+        var canPurchaseWCA = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 2_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
@@ -156,7 +156,7 @@ public class WCAQueryTest extends ContractTestFramework {
                 this.creatorWallet
         );
         transferToken(getCatToken(), buyerWallet, getWcaContractAddress(), 1_00, canPurchaseWCA, false);
-        var onGoingWCA = ContractInvokeHelper.createAndPayWCA(
+        var onGoingWCA = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
@@ -171,7 +171,7 @@ public class WCAQueryTest extends ContractTestFramework {
                 this.creatorWallet
         );
         ContractInvokeHelper.finishMilestone(getWcaContract(), onGoingWCA, 0, "123", this.creatorWallet);
-        var finishedWCA = ContractInvokeHelper.createAndPayWCA(
+        var finishedWCA = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},

@@ -37,7 +37,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
     void testInvalidSigner() throws Throwable {
         var identifier = "test_invalid_owner_sign_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -63,7 +63,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
     void testFinishUnpaid() throws Throwable {
         var identifier = "test_finish_ms_unpaid_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -89,7 +89,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
     void testCoolDownInterval() throws Throwable {
         var identifier = "test_cool_down_interval_not_met_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2"},
@@ -120,7 +120,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
     void testFinishMissedMilestone() throws Throwable {
         var identifier = "test_finish_misses_milestone_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
@@ -155,7 +155,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
     void testDoubleFinishMilestone() throws Throwable {
         var identifier = "test_double_finish_milestone_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2"},
@@ -189,7 +189,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
     void testFinishExpired() throws Throwable {
         var identifier = "test_finish_expired_milestone_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2"},
@@ -221,7 +221,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
     void testNullProofOfWork() throws Throwable {
         var identifier = "test_finish_null_proof_of_work_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2"},
@@ -251,7 +251,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
     void testNormalFinish() throws Throwable {
         var identifier = "test_finish_normal_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2"},

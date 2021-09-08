@@ -23,7 +23,7 @@ public class WCACancelTest extends ContractTestFramework {
     void testCancelNotFound() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.cancelWCA(
+                () -> ContractInvokeHelper.cancelProject(
                         getWcaContract(), "some_invalid_id", this.creatorWallet
                 )
         );
@@ -37,7 +37,7 @@ public class WCACancelTest extends ContractTestFramework {
     void testCancelNotOwner() throws Throwable {
         var identifier = "test_cancel_wca_not_owner" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -49,7 +49,7 @@ public class WCACancelTest extends ContractTestFramework {
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.cancelWCA(
+                () -> ContractInvokeHelper.cancelProject(
                         getWcaContract(), identifier, this.testWallet
                 )
         );
@@ -63,7 +63,7 @@ public class WCACancelTest extends ContractTestFramework {
     void testCancelPending() throws Throwable {
         var identifier = "test_cancel_pending" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -74,7 +74,7 @@ public class WCACancelTest extends ContractTestFramework {
         );
 
         assertDoesNotThrow(
-                () -> ContractInvokeHelper.cancelWCA(
+                () -> ContractInvokeHelper.cancelProject(
                         getWcaContract(), identifier, this.creatorWallet
                 )
         );
@@ -91,7 +91,7 @@ public class WCACancelTest extends ContractTestFramework {
         var stakeRate = 10;
         var identifier = "test_cancel_open_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 stakeRate, totalAmount,
                 new String[]{"milestone1", "milestone2", "milestone3"},
@@ -123,7 +123,7 @@ public class WCACancelTest extends ContractTestFramework {
         var buyer1OldBalance = getCatToken().getBalanceOf(buyerWallet1.getDefaultAccount()).longValue();
         var buyer2OldBalance = getCatToken().getBalanceOf(buyerWallet2.getDefaultAccount()).longValue();
 
-        ContractInvokeHelper.cancelWCA(getWcaContract(), identifier, testWallet);
+        ContractInvokeHelper.cancelProject(getWcaContract(), identifier, testWallet);
 
         var creatorNewBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
         var buyer1NewBalance = getCatToken().getBalanceOf(buyerWallet1.getDefaultAccount()).longValue();
@@ -140,7 +140,7 @@ public class WCACancelTest extends ContractTestFramework {
     void testCancelActive() throws Throwable {
         var identifier = "test_cancel_active" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1", "milestone2"},
@@ -159,7 +159,7 @@ public class WCACancelTest extends ContractTestFramework {
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.cancelWCA(
+                () -> ContractInvokeHelper.cancelProject(
                         getWcaContract(), identifier, this.creatorWallet
                 )
         );
@@ -173,7 +173,7 @@ public class WCACancelTest extends ContractTestFramework {
     void testCancelFinished() throws Throwable {
         var identifier = "test_cancel_finished" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -183,11 +183,11 @@ public class WCACancelTest extends ContractTestFramework {
                 identifier, this.creatorWallet
         );
 
-        ContractInvokeHelper.finishWCA(getWcaContract(), identifier, this.creatorWallet);
+        ContractInvokeHelper.finishProject(getWcaContract(), identifier, this.creatorWallet);
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.cancelWCA(
+                () -> ContractInvokeHelper.cancelProject(
                         getWcaContract(), identifier, this.creatorWallet
                 )
         );
@@ -201,7 +201,7 @@ public class WCACancelTest extends ContractTestFramework {
     void testDoubleCancel() throws Throwable {
         var identifier = "test_double_cancel" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -212,14 +212,14 @@ public class WCACancelTest extends ContractTestFramework {
         );
 
         assertDoesNotThrow(
-                () -> ContractInvokeHelper.cancelWCA(
+                () -> ContractInvokeHelper.cancelProject(
                         getWcaContract(), identifier, this.creatorWallet
                 )
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.cancelWCA(
+                () -> ContractInvokeHelper.cancelProject(
                         getWcaContract(), identifier, this.creatorWallet
                 )
         );
