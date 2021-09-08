@@ -18,9 +18,9 @@ public class ContractInvokeHelper {
     /**
      * Query WCA details, return NeoVM json
      */
-    public static String queryWCA(SmartContract contract, String trueId) throws Throwable {
+    public static String queryProject(SmartContract contract, String trueId) throws Throwable {
         var result = ContractTestFramework.testInvoke(
-                contract, "queryWCA",
+                contract, "queryProject",
                 new ContractParameter[]{
                         ContractParameter.string(trueId)
                 },
@@ -62,7 +62,7 @@ public class ContractInvokeHelper {
     /**
      * Create WCA, return the identifier
      */
-    public static String createWCA(
+    public static String declareProject(
             SmartContract contract, String wcaDescription,
             int stakePer100Token, long totalAmount,
             String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
@@ -70,7 +70,7 @@ public class ContractInvokeHelper {
             String identifier, Wallet wallet
     ) throws Throwable {
         var appLog = ContractTestFramework.invokeFunction(
-                contract, "createWCA",
+                contract, "declareProject",
                 new ContractParameter[]{
                         ContractParameter.hash160(wallet.getDefaultAccount()),
                         ContractParameter.string(wcaDescription),
@@ -92,14 +92,14 @@ public class ContractInvokeHelper {
         return appLog.getExecutions().get(0).getStack().get(0).getString();
     }
 
-    public static String createAndPayWCA(
+    public static String createAndPayProject(
             SmartContract contract, String wcaDescription,
             int stakePer100Token, long totalAmount,
             String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
             int thresholdIndex, long coolDownInterval, boolean bePublic,
             String identifier, Wallet wallet
     ) throws Throwable {
-        var result = createWCA(
+        var result = declareProject(
                 contract, wcaDescription, stakePer100Token, totalAmount,
                 milestoneTitles, milestoneDescriptions, endTimestamps,
                 thresholdIndex, coolDownInterval, bePublic, identifier, wallet
@@ -150,11 +150,11 @@ public class ContractInvokeHelper {
         );
     }
 
-    public static void finishWCA(
+    public static void finishProject(
             SmartContract contract, String identifier, Wallet wallet
     ) throws Throwable {
         ContractTestFramework.invokeFunction(
-                contract, "finishWCA",
+                contract, "finishProject",
                 new ContractParameter[]{
                         ContractParameter.string(identifier)
                 },
@@ -165,11 +165,11 @@ public class ContractInvokeHelper {
         );
     }
 
-    public static void cancelWCA(
+    public static void cancelProject(
             SmartContract contract, String identifier, Wallet wallet
     ) throws Throwable {
         ContractTestFramework.invokeFunction(
-                contract, "cancelWCA",
+                contract, "cancelProject",
                 new ContractParameter[]{
                         ContractParameter.string(identifier)
                 },

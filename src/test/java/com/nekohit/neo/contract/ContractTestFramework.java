@@ -1,6 +1,5 @@
 package com.nekohit.neo.contract;
 
-import com.nekohit.neo.compile.CompileAndDeployUtils;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractManagement;

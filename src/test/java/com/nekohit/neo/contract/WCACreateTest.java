@@ -27,7 +27,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testNegativeStakeRate() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         -100, 10,
                         new String[]{"milestone"},
@@ -48,7 +48,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testZeroStakeRate() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         0, 10,
                         new String[]{"milestone"},
@@ -69,7 +69,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testNegativeTokenCount() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, -100,
                         new String[]{"milestone"},
@@ -90,7 +90,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testZeroTokenCount() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 0,
                         new String[]{"milestone"},
@@ -113,7 +113,7 @@ public class WCACreateTest extends ContractTestFramework {
                 TransactionConfigurationException.class,
                 () -> {
                     ContractTestFramework.invokeFunction(
-                            getWcaContract(), "createWCA",
+                            getWcaContract(), "declareProject",
                             new ContractParameter[]{
                                     ContractParameter.hash160(Account.create()),
                                     ContractParameter.string("Something"),
@@ -143,7 +143,7 @@ public class WCACreateTest extends ContractTestFramework {
     @Test
     void testDuplicateIdentifier() throws Throwable {
         var identifier = "test_duplicate_id_" + System.currentTimeMillis();
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 100, 1000,
                 new String[]{"milestone"},
@@ -154,7 +154,7 @@ public class WCACreateTest extends ContractTestFramework {
         );
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 0,
                         new String[]{"milestone"},
@@ -174,7 +174,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testDifferentMilestoneCount() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 1000,
                         new String[]{"milestone1", "milestone2"},
@@ -195,7 +195,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testDecreaseEndTimestamp() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 1000,
                         new String[]{"milestone1", "milestone2"},
@@ -216,7 +216,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testExpiredEndTimestamp() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 1000,
                         new String[]{"milestone1"},
@@ -241,7 +241,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testInvalidThresholdMilestone() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 1000,
                         new String[]{"milestone1"},
@@ -259,7 +259,7 @@ public class WCACreateTest extends ContractTestFramework {
 
         throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 1000,
                         new String[]{"milestone1"},
@@ -280,7 +280,7 @@ public class WCACreateTest extends ContractTestFramework {
     void testInvalidCoolDownInterval() throws Throwable {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 1000,
                         new String[]{"milestone1"},
@@ -300,7 +300,7 @@ public class WCACreateTest extends ContractTestFramework {
     @Test
     void testNormalOperation() throws Throwable {
         assertDoesNotThrow(
-                () -> ContractInvokeHelper.createWCA(
+                () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
                         100, 1000,
                         new String[]{"milestone1"},

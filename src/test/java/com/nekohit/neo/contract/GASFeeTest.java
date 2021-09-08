@@ -27,7 +27,7 @@ public class GASFeeTest extends ContractTestFramework{
         }
 
         logger.info("Creating WCA...");
-        String id = ContractInvokeHelper.createWCA(
+        String id = ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 100, 1000,
                 wcaS,
@@ -75,7 +75,7 @@ public class GASFeeTest extends ContractTestFramework{
         );
 
         logger.info("Finish WCA");
-        ContractInvokeHelper.finishWCA(
+        ContractInvokeHelper.finishProject(
                 getWcaContract(), id, this.creatorWallet
         );
     }
