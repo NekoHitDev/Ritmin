@@ -8,7 +8,6 @@ import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.events.Event3Args;
 
-import static com.nekohit.neo.helper.Utils.require;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
 @SuppressWarnings("unused")
@@ -53,10 +52,15 @@ public class CatToken {
     }
 
     public static boolean transfer(Hash160 from, Hash160 to, int amount, Object data) throws Exception {
-        require(Hash160.isValid(from) && Hash160.isValid(to), "From or To address is not a valid address.");
-        require(amount >= 0, "The transfer amount was negative.");
-        require(Runtime.checkWitness(from) || from == Runtime.getCallingScriptHash(),
-                "Invalid sender signature. The sender of the tokens needs to be the signing account.");
+        if (!Hash160.isValid(from) || !Hash160.isValid(to)) {
+            throw new Exception("From or To address is not a valid address.");
+        }
+        if (amount < 0) {
+            throw new Exception("The transfer amount was negative.");
+        }
+        if (!Runtime.checkWitness(from) && from != Runtime.getCallingScriptHash()) {
+            throw new Exception("Invalid sender signature. The sender of the tokens needs to be the signing account.");
+        }
 
         if (getBalance(from) < amount) {
             return false;
@@ -75,14 +79,18 @@ public class CatToken {
     }
 
     public static int balanceOf(Hash160 account) throws Exception {
-        require(Hash160.isValid(account), "Argument is not a valid address.");
+        if (!Hash160.isValid(account)) {
+            throw new Exception("Argument is not a valid address.");
+        }
         return getBalance(account);
     }
 
     @OnDeployment
     public static void deploy(Object data, boolean update) throws Exception {
         if (!update) {
-            require(getTotalSupply() == 0, "Contract was already deployed.");
+            if(getTotalSupply() != 0) {
+                throw new Exception("Contract was already deployed.");
+            }
             // Initialize supply
             StorageHelper.put(sc, TOTAL_SUPPLY_KEY, INITIAL_SUPPLY);
             // And allocate all tokens to the contract owner.
