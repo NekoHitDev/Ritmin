@@ -24,7 +24,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
     void testInvalidId() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.finishWCA(
+                () -> ContractInvokeHelper.finishProject(
                         getWcaContract(), "some_invalid_id", this.creatorWallet
                 )
         );
@@ -38,7 +38,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
     void testFinishUnpaid() throws Throwable {
         var identifier = "test_finish_unpaid_wca_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -50,7 +50,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.finishWCA(
+                () -> ContractInvokeHelper.finishProject(
                         getWcaContract(), identifier, this.creatorWallet
                 )
         );
@@ -64,7 +64,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
     void testNotFinished() throws Throwable {
         var identifier = "test_finish_not_ready_wca_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -76,7 +76,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.finishWCA(
+                () -> ContractInvokeHelper.finishProject(
                         getWcaContract(), identifier, this.buyerWallet1
                 )
         );
@@ -90,7 +90,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
     void testOwnerOverride() throws Throwable {
         var identifier = "test_finish_owner_override_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -101,7 +101,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         );
 
         assertDoesNotThrow(
-                () -> ContractInvokeHelper.finishWCA(
+                () -> ContractInvokeHelper.finishProject(
                         getWcaContract(), identifier, this.creatorWallet
                 )
         );
@@ -111,7 +111,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
     void testDoubleFinish() throws Throwable {
         var identifier = "test_double_finish_wca_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -121,13 +121,13 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 identifier, this.creatorWallet
         );
 
-        ContractInvokeHelper.finishWCA(
+        ContractInvokeHelper.finishProject(
                 getWcaContract(), identifier, this.creatorWallet
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.finishWCA(
+                () -> ContractInvokeHelper.finishProject(
                         getWcaContract(), identifier, this.buyerWallet1
                 )
         );
@@ -141,7 +141,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
     void testFinishFinished() throws Throwable {
         var identifier = "test_finish_finished_wca_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -157,7 +157,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         // By finish the last ms, WCA is finished.
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.finishWCA(
+                () -> ContractInvokeHelper.finishProject(
                         getWcaContract(), identifier, this.buyerWallet1
                 )
         );
@@ -171,7 +171,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
     void testFinishExpired() throws Throwable {
         var identifier = "test_finish_expired_wca_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1_00,
                 new String[]{"milestone1"},
@@ -185,7 +185,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         Thread.sleep(2 * 1000);
 
         assertDoesNotThrow(
-                () -> ContractInvokeHelper.finishWCA(
+                () -> ContractInvokeHelper.finishProject(
                         getWcaContract(), identifier, this.buyerWallet1
                 )
         );
@@ -199,7 +199,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         var stakeRate = 10;
         var identifier = "test_finish_token_distr_wca_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 stakeRate, totalAmount,
                 new String[]{"milestone1", "milestone2", "milestone3"},

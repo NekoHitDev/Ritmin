@@ -1,20 +1,22 @@
 package com.nekohit.neo;
 
-import com.nekohit.neo.compile.CompileAndDeployUtils;
 import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
+import io.neow3j.contract.ContractManagement;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.protocol.http.HttpService;
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
+import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 import org.apache.commons.codec.binary.Hex;
 
@@ -81,11 +83,9 @@ public class DeployContract {
         System.out.println("Deploying contract... Do not stop this program!");
 
         if (REALLY_DEPLOY_FLAG) {
-            Transaction tx = CompileAndDeployUtils.deployContract(
+            Transaction tx = deployContract(
                     compileResult,
-                    deployWallet.getDefaultAccount(),
-                    deployWallet,
-                    NEOW3J
+                    deployWallet.getDefaultAccount()
             );
             System.out.println("Deployed tx: 0x" + tx.getTxId());
             Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
@@ -121,5 +121,23 @@ public class DeployContract {
 
         Await.waitUntilTransactionIsExecuted(tx.getSendRawTransaction().getHash(), NEOW3J);
         System.out.println("Transfer tx: 0x" + tx.getSendRawTransaction().getHash());
+    }
+
+    private static Transaction deployContract(
+            CompilationUnit res,
+            Account account
+    ) throws Throwable {
+        Transaction tx = new ContractManagement(DeployContract.NEOW3J)
+                .deploy(res.getNefFile(), res.getManifest())
+                .signers(AccountSigner.global(account))
+                .sign();
+        NeoSendRawTransaction response = tx.send();
+        if (response.hasError()) {
+            throw new Exception(String.format("Deployment failed: "
+                    + "'%s'\n", response.getError().getMessage()));
+        } else {
+            Await.waitUntilTransactionIsExecuted(tx.getTxId(), DeployContract.NEOW3J);
+        }
+        return tx;
     }
 }

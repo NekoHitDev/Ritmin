@@ -71,7 +71,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
     void testDoublePayStake() throws Throwable {
         var identifier = "test_double_pay_stake_" + System.currentTimeMillis();
         // create and pay WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -100,7 +100,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
     void testPayWrongAmount() throws Throwable {
         var identifier = "test_pay_wrong_amount_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -129,7 +129,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
     void testNormalPayStake() throws Throwable {
         var identifier = "test_normal_pay_stake_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -153,7 +153,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
     void testPurchaseUnpaid() throws Throwable {
         var identifier = "test_purchase_unpaid_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createWCA(
+        ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -183,7 +183,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
         var identifier = "test_purchase_finish_" + System.currentTimeMillis();
         var firstEndTimestamp = System.currentTimeMillis() + 3 * 1000;
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -216,7 +216,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
     void testPurchaseInsufficient() throws Throwable {
         var identifier = "test_purchase_insufficient_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
                 1_00, 1_00,
@@ -237,7 +237,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Insufficient token remain in this WCA."),
+                throwable.getMessage().contains(ExceptionMessages.INSUFFICIENT_AMOUNT_REMAIN),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -246,7 +246,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
     void testOneShotPurchase() throws Throwable {
         var identifier = "test_one_shot_purchase_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1000_00,
                 new String[]{"milestone"},
@@ -269,7 +269,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
     void testMultiPurchase() throws Throwable {
         var identifier = "test_multi_purchase_" + System.currentTimeMillis();
         // create WCA
-        ContractInvokeHelper.createAndPayWCA(
+        ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
                 1_00, 1000_00,
                 new String[]{"milestone"},

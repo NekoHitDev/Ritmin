@@ -3,14 +3,14 @@ package com.nekohit.neo.domain;
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.Runtime;
 
-public class WCAStaticContent {
+public class ProjectStaticContent {
     /**
      * The ScriptHash of owner.
      */
     public final Hash160 owner;
 
     /**
-     * The description of wca.
+     * The description of project.
      */
     public final String description;
 
@@ -43,7 +43,7 @@ public class WCAStaticContent {
     public final int coolDownInterval;
 
     /**
-     * The timestamp indicate when this wca is created.
+     * The timestamp indicate when this project is created.
      */
     public final int creationTimestamp;
 
@@ -64,13 +64,13 @@ public class WCAStaticContent {
     public final int lastMilestoneExpireTime;
 
     /**
-     * If this wca will be listed in the result of {@link com.nekohit.neo.contract.WCAContract#advanceQuery(Hash160, Hash160, int, int)},
+     * If this project will be listed in the result of {@link com.nekohit.neo.contract.WCAContract#advanceQuery(Hash160, Hash160, int, int)},
      * but this won't prevent somebody brute force your identifier or
      * read the storage area directly.
      */
     public final boolean bePublic;
 
-    public WCAStaticContent(
+    public ProjectStaticContent(
             Hash160 owner, String description,
             int stakePer100Token, int maxTokenSoldCount,
             int milestoneCount, int thresholdIndex,

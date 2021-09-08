@@ -4,7 +4,7 @@ import com.nekohit.neo.helper.Pair;
 
 import static com.nekohit.neo.helper.Utils.require;
 
-public class WCADynamicContent {
+public class ProjectDynamicContent {
     /**
      * How many tokens remained for sale.
      */
@@ -47,14 +47,14 @@ public class WCADynamicContent {
     public int nextMilestoneIndex;
 
     /**
-     * Status of this WCA.<br>
+     * Status of this project.<br>
      * 0 - PENDING, the initialized status, only payStake and cancel is allowed.<br>
      * 1 - ONGOING, from PENDING, after pay the stake, ready to operate.<br>
-     * 2 - FINISHED, from ONGOING, after creator finish this WCA.<br>
+     * 2 - FINISHED, from ONGOING, after creator finish this project.<br>
      */
     public int status;
 
-    public WCADynamicContent(int remainTokenCount) {
+    public ProjectDynamicContent(int remainTokenCount) {
         this.remainTokenCount = remainTokenCount;
         this.totalPurchasedAmount = 0;
         this.buyerCounter = 0;
@@ -69,11 +69,11 @@ public class WCADynamicContent {
     /**
      * Calculate the partial refund amount.
      *
-     * @param staticContent of a given WCA
+     * @param staticContent of a given project
      * @return Pair(to buyer amount, to creator amount)
      * @throws Exception if partial refund is not available
      */
-    public Pair<Integer, Integer> partialRefund(WCAStaticContent staticContent, int buyerPurchaseAmount) throws Exception {
+    public Pair<Integer, Integer> partialRefund(ProjectStaticContent staticContent, int buyerPurchaseAmount) throws Exception {
         require(buyerPurchaseAmount != 0, ExceptionMessages.RECORD_NOT_FOUND);
 
         int totalMilestones = staticContent.milestoneCount;

@@ -1,7 +1,7 @@
 package com.nekohit.neo.contract;
 
-import com.nekohit.neo.domain.WCADynamicContent;
-import com.nekohit.neo.domain.WCAStaticContent;
+import com.nekohit.neo.domain.ProjectDynamicContent;
+import com.nekohit.neo.domain.ProjectStaticContent;
 
 /**
  * This class contains some helper function specific to WCAContract
@@ -9,11 +9,11 @@ import com.nekohit.neo.domain.WCAStaticContent;
 public class WCAAuxiliary {
 
     /**
-     * @param staticContent  {@link WCAStaticContent} of the given wca.
-     * @param dynamicContent {@link WCADynamicContent} of the given wca.
-     * @return true if the wca is ready to finish. (last milestone is finished or expired)
+     * @param staticContent  {@link ProjectStaticContent} of the given project.
+     * @param dynamicContent {@link ProjectDynamicContent} of the given project.
+     * @return true if the project is ready to finish. (last milestone is finished or expired)
      */
-    public static boolean checkIfReadyToFinish(WCAStaticContent staticContent, WCADynamicContent dynamicContent) {
+    public static boolean checkIfReadyToFinish(ProjectStaticContent staticContent, ProjectDynamicContent dynamicContent) {
         if (dynamicContent.status != 1) {
             return false;
         }
@@ -21,11 +21,11 @@ public class WCAAuxiliary {
     }
 
     /**
-     * @param staticContent  {@link WCAStaticContent} of the given wca.
-     * @param dynamicContent {@link WCADynamicContent} of the given wca.
+     * @param staticContent  {@link ProjectStaticContent} of the given project.
+     * @param dynamicContent {@link ProjectDynamicContent} of the given project.
      * @return true if the threshold milestone is finished or expired.
      */
-    public static boolean checkIfThresholdMet(WCAStaticContent staticContent, WCADynamicContent dynamicContent) {
+    public static boolean checkIfThresholdMet(ProjectStaticContent staticContent, ProjectDynamicContent dynamicContent) {
         if (dynamicContent.status != 1) {
             return false;
         }

@@ -17,7 +17,10 @@ import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Wallet;
+import okhttp3.OkHttpClient;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -25,8 +28,14 @@ import java.util.Scanner;
 import static com.nekohit.neo.helper.Utils.getGasFeeFromTx;
 
 public class UpdateContract {
+    private static final OkHttpClient client = new OkHttpClient.Builder()
+            .proxy(new Proxy(
+                    Proxy.Type.SOCKS,
+                    new InetSocketAddress("127.0.0.1", 1080)
+            ))
+            .build();
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("https://testnet1.neo.coz.io")
+            new HttpService("https://testnet1.neo.coz.io", client)
     );
 
     private static final boolean REALLY_DEPLOY_FLAG = false;
