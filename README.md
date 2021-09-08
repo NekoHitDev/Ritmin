@@ -54,24 +54,24 @@ This is the token accepted by other contracts (currently only the WCA Contract.)
 
 Deployed: 
 
-+ RC4 Test net: [`0x4a4a9314f68ffaf68e5767491fb56f50743322ae`](https://neo3.testnet.neotube.io/contract/0x4a4a9314f68ffaf68e5767491fb56f50743322ae)
++ RC4 Test net: [`0x199cd12a70bc554f7d3b0b91c5069546b15c0129`](https://neo3.testnet.neotube.io/contract/0x199cd12a70bc554f7d3b0b91c5069546b15c0129)
 
 + Main net: `TODO`
 
 Note: 
 
 + Currently only Cat Token can make a transfer to this contract. Aka only Cat Token can invoke `onNEP17Payment` method. Otherwise there will be exception.
-+ Due to limitations from Neo node implementation, **the identifier of WCA must not longer than 54 bytes**. (Max key size is 64bytes, and all map prefix takes 10 ascii-chars/bytes)
++ Due to limitations from Neo node implementation, **the identifier of WCA must not longer than 62 bytes**. (Max key size is 64bytes, and all map prefix takes 2 ascii-chars/bytes)
 
 ### Events and Methods
 
-See the code, repo wiki, and the whitepaper.
+See the code, repo wiki, and the white paper.
 
 ### How to use
 
 You can use our client to do that, see [NekoHitDev/ritmin-frontend](https://github.com/NekoHitDev/ritmin-frontend).
 
-Or you can manually invoke the methods. 
+Or you can manually invoke the methods, see [wiki](https://github.com/NekoHitDev/Ritmin/wiki) for the details.
 
 ### Group
 
