@@ -1,5 +1,6 @@
 package com.nekohit.neo;
 
+import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
