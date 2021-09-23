@@ -178,7 +178,7 @@ public class WCAContract {
     public static String declareProject(
             Hash160 owner, String projectDescription,
             int stakePer100Token, int maxTokenSoldCount,
-            String[] milestoneTitles, String[] milestoneDescriptions, int[] endTimestamps,
+            ProjectMilestone[] milestones,
             int thresholdIndex, int coolDownInterval,
             boolean bePublic, String identifier
     ) throws Exception {
@@ -201,17 +201,19 @@ public class WCAContract {
         require(maxTokenSoldCount > 0, ExceptionMessages.INVALID_MAX_SELL_AMOUNT);
 
         // check milestone
-        int milestoneCount = endTimestamps.length;
-        require(milestoneTitles.length == milestoneCount, ExceptionMessages.INVALID_MILESTONES_COUNT);
-        require(milestoneCount == milestoneDescriptions.length, ExceptionMessages.INVALID_MILESTONES_COUNT);
+        int milestoneCount = milestones.length;
+        require(milestoneCount != 0, ExceptionMessages.INVALID_MILESTONES_COUNT);
 
         int lastTimestamp = 0;
-        require(endTimestamps[0] > Runtime.getTime(), ExceptionMessages.EXPIRED_TIMESTAMP);
+        require(milestones[0].endTimestamp > Runtime.getTime(), ExceptionMessages.EXPIRED_TIMESTAMP);
         for (int i = 0; i < milestoneCount; i++) {
-            int t = endTimestamps[i];
+            ProjectMilestone m = milestones[i];
+            // set proof of work to null
+            m.proofOfWork = null;
+            int t = m.endTimestamp;
             require(lastTimestamp < t, ExceptionMessages.INVALID_TIMESTAMP);
             lastTimestamp = t;
-            updateMilestone(projectId, i, new ProjectMilestone(milestoneTitles[i], milestoneDescriptions[i], t));
+            updateMilestone(projectId, i, m);
         }
         require(thresholdIndex >= 0 && thresholdIndex < milestoneCount, ExceptionMessages.INVALID_THRESHOLD_INDEX);
         require(coolDownInterval > 0, ExceptionMessages.INVALID_COOL_DOWN_INTERVAL);
@@ -220,7 +222,7 @@ public class WCAContract {
         ProjectStaticContent staticContent = new ProjectStaticContent(
                 owner, projectDescription, stakePer100Token, maxTokenSoldCount,
                 milestoneCount, thresholdIndex, coolDownInterval,
-                endTimestamps[thresholdIndex], endTimestamps[milestoneCount - 1],
+                milestones[thresholdIndex].endTimestamp, milestones[milestoneCount - 1].endTimestamp,
                 bePublic
         );
 
@@ -228,7 +230,7 @@ public class WCAContract {
         projectStaticContentMap.put(projectId, StdLib.serialize(staticContent));
         updateDynamicContent(projectId, new ProjectDynamicContent(maxTokenSoldCount));
         // fire event and done
-        onDeclareProject.fire(owner, identifier, milestoneTitles.length);
+        onDeclareProject.fire(owner, identifier, milestones.length);
         return identifier;
     }
 

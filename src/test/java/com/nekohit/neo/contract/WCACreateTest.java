@@ -119,9 +119,7 @@ public class WCACreateTest extends ContractTestFramework {
                                     ContractParameter.string("Something"),
                                     ContractParameter.integer(100),
                                     ContractParameter.integer(1000),
-                                    ContractParameter.array(Arrays.asList("milestone")),
-                                    ContractParameter.array(Arrays.asList("milestone")),
-                                    ContractParameter.array(Arrays.asList(System.currentTimeMillis() + 60 * 1000)),
+                                    ContractParameter.array(ContractParameter.array("milestone", "milestone", System.currentTimeMillis() + 60 * 1000, "")),
                                     ContractParameter.integer(0),
                                     ContractParameter.integer(100),
                                     ContractParameter.bool(false),
@@ -166,27 +164,6 @@ public class WCACreateTest extends ContractTestFramework {
         );
         assertTrue(
                 throwable.getMessage().contains(ExceptionMessages.DUPLICATED_ID),
-                "Unknown exception: " + throwable.getMessage()
-        );
-    }
-
-    @Test
-    void testDifferentMilestoneCount() throws Throwable {
-        var throwable = assertThrows(
-                TransactionConfigurationException.class,
-                () -> ContractInvokeHelper.declareProject(
-                        getWcaContract(), "description",
-                        100, 1000,
-                        new String[]{"milestone1", "milestone2"},
-                        new String[]{"milestone1", "milestone2"},
-                        new Long[]{System.currentTimeMillis() + 60 * 1000},
-                        0, 100, false,
-                        "test_different_milestone_count_" + System.currentTimeMillis(),
-                        this.testWallet
-                )
-        );
-        assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_MILESTONES_COUNT),
                 "Unknown exception: " + throwable.getMessage()
         );
     }

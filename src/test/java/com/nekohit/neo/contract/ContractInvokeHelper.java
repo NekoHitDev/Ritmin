@@ -9,6 +9,7 @@ import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -69,6 +70,17 @@ public class ContractInvokeHelper {
             int thresholdIndex, long coolDownInterval, boolean bePublic,
             String identifier, Wallet wallet
     ) throws Throwable {
+        var milestones = new ArrayList<ContractParameter>();
+        for (int i = 0; i < milestoneTitles.length; i++) {
+            milestones.add(
+                    ContractParameter.array(
+                            milestoneTitles[i],
+                            milestoneDescriptions[i],
+                            endTimestamps[i],
+                            ContractParameter.string("")
+                    )
+            );
+        }
         var appLog = ContractTestFramework.invokeFunction(
                 contract, "declareProject",
                 new ContractParameter[]{
@@ -76,9 +88,7 @@ public class ContractInvokeHelper {
                         ContractParameter.string(wcaDescription),
                         ContractParameter.integer(stakePer100Token),
                         ContractParameter.integer(BigInteger.valueOf(totalAmount)),
-                        ContractParameter.array(Arrays.asList(milestoneTitles)),
-                        ContractParameter.array(Arrays.asList(milestoneDescriptions)),
-                        ContractParameter.array(Arrays.asList(endTimestamps)),
+                        ContractParameter.array(milestones),
                         ContractParameter.integer(thresholdIndex),
                         ContractParameter.integer(BigInteger.valueOf(coolDownInterval)),
                         ContractParameter.bool(bePublic),
