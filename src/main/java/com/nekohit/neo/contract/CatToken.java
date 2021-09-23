@@ -11,9 +11,10 @@ import io.neow3j.devpack.events.Event3Args;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
 @SuppressWarnings("unused")
-@ManifestExtra(key = "name", value = "CAT Token Contract")
+@ManifestExtra(key = "name", value = "CAT Token")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
+@ManifestExtra(key = "version", value = "v1-RC1")
 // Contract as receiver
 @Permission(contract = "*", methods = "onNEP17Payment")
 // ContractManagement::update
@@ -46,7 +47,7 @@ public class CatToken {
         return getTotalSupply();
     }
 
-    static int getTotalSupply() {
+    private static int getTotalSupply() {
         Integer i = Storage.getInteger(sc, TOTAL_SUPPLY_KEY);
         return i == null ? 0 : i;
     }

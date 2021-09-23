@@ -24,6 +24,8 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
+@ManifestExtra(key = "version", value = "v1-RC1")
+// CatToken::transfer
 @Permission(contract = "<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", methods = {"transfer"})
 // ContractManagement::update
 @Permission(contract = "0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", methods = {"update"})
@@ -98,7 +100,9 @@ public class WCAContract {
             // update purchase record
             ByteString purchaseId = projectId.concat(from.toByteString());
             Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
-            if (value == null) value = 0;
+            if (value == null) {
+                value = 0;
+            }
             value += amount;
             projectPurchaseRecordMap.put(purchaseId, value);
             onPurchaseProject.fire(from, identifier, amount);
@@ -183,10 +187,14 @@ public class WCAContract {
         // projectId should be unique
         require(projectIdentifierMap.get(identifier) == null, ExceptionMessages.DUPLICATED_ID);
         Integer counter = Storage.getInteger(CTX, COUNTER_KEY);
-        if (counter == null) counter = 0;
-        projectIdentifierMap.put(identifier, ++counter);
+        if (counter == null) {
+            counter = 0;
+        }
+        counter++; // update counter
         Storage.put(CTX, COUNTER_KEY, counter);
+        // save project id
         ByteString projectId = Utils.intToByteString(counter);
+        projectIdentifierMap.put(identifier, projectId);
 
         require(projectDescription != null, ExceptionMessages.NULL_DESCRIPTION);
         require(stakePer100Token > 0, ExceptionMessages.INVALID_STAKE_RATE);
@@ -274,23 +282,26 @@ public class WCAContract {
             // only owner can finish an unfinished project
             require(checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH);
         }
-        // get project buyer info obj
+
         int remainTokens = staticContent.getTotalStake() + dynamicContent.totalPurchasedAmount;
         int totalMilestones = staticContent.milestoneCount;
         int unfinishedMilestones = totalMilestones - dynamicContent.finishedMilestoneCount;
 
-        // for each buyer, return their token based on unfinished ms count
-        // also remove stakes for that unfinished one
-        ByteString prefix = new ByteString("PR").concat(projectId);
-        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
-        while (iter.next()) {
-            Iterator.Struct<ByteString, ByteString> elem = iter.get();
-            Hash160 buyer = new Hash160(elem.key);
-            int purchaseAmount = elem.value.toInteger();
-            int totalAmount = purchaseAmount + purchaseAmount * staticContent.stakePer100Token / 100;
-            int returnAmount = totalAmount * unfinishedMilestones / totalMilestones;
-            transferTokenTo(buyer, returnAmount, identifier);
-            remainTokens -= returnAmount;
+        // If there are unfinished milestone, refund
+        if (unfinishedMilestones != 0) {
+            // for each buyer, return their token based on unfinished ms count
+            // also remove stakes for that unfinished one
+            ByteString prefix = new ByteString("PR").concat(projectId);
+            Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
+            while (iter.next()) {
+                Iterator.Struct<ByteString, ByteString> elem = iter.get();
+                Hash160 buyer = new Hash160(elem.key);
+                int purchaseAmount = elem.value.toInteger();
+                int totalAmount = purchaseAmount + purchaseAmount * staticContent.stakePer100Token / 100;
+                int returnAmount = totalAmount * unfinishedMilestones / totalMilestones;
+                transferTokenTo(buyer, returnAmount, identifier);
+                remainTokens -= returnAmount;
+            }
         }
         // considering all decimals are floored, so totalTokens > 0
         // return the reset of total tokens to creator
@@ -315,7 +326,9 @@ public class WCAContract {
         require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
         ByteString purchaseId = projectId.concat(buyer.toByteString());
         Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
-        if (value == null) value = 0;
+        if (value == null) {
+            value = 0;
+        }
         if (checkIfThresholdMet(staticContent, dynamicContent)) {
             // after the threshold
             Pair<Integer, Integer> buyerAndCreator = dynamicContent.partialRefund(staticContent, value);
@@ -434,8 +447,9 @@ public class WCAContract {
                 projectId.concat(
                         Utils.paddingByteString(Utils.intToByteString(index), 20)
                 ));
-        if (data == null)
+        if (data == null) {
             return null;
+        }
         return (ProjectMilestone) StdLib.deserialize(data);
     }
 
