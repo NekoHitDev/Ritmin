@@ -1,4 +1,4 @@
-package com.nekohit.neo;
+package com.nekohit.neo.testnet;
 
 import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;

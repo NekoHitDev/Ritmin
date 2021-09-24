@@ -12,9 +12,9 @@ Supported standard: `NEP-17`
 
 Deployed: 
 
-+ RC4 Test net: [`0xf461dff74f454e5016421341f115a2e789eadbd7`](https://neo3.testnet.neotube.io/contract/0xf461dff74f454e5016421341f115a2e789eadbd7)
++ Test net: [`TODO`](https://neo3.testnet.neotube.io/contract/TODO)
 
-+ Main net: `TODO`
++ Main net: [`TODO`](https://neo3.neotube.io/contract/TODO)
 
 ### Events and Methods
 
@@ -54,13 +54,13 @@ This is the token accepted by other contracts (currently only the WCA Contract.)
 
 Deployed: 
 
-+ RC4 Test net: [`0x199cd12a70bc554f7d3b0b91c5069546b15c0129`](https://neo3.testnet.neotube.io/contract/0x199cd12a70bc554f7d3b0b91c5069546b15c0129)
++ Test net: [`TODO`](https://neo3.testnet.neotube.io/contract/TODO)
 
-+ Main net: `TODO`
++ Main net: [`TODO`](https://neo3.neotube.io/contract/TODO)
 
 Note: 
 
-+ Currently only Cat Token can make a transfer to this contract. Aka only Cat Token can invoke `onNEP17Payment` method. Otherwise there will be exception.
++ Currently, only Cat Token can make a transfer to this contract. Aka only Cat Token can invoke `onNEP17Payment` method. Otherwise, there will be exception.
 + Due to limitations from Neo node implementation, **the identifier of WCA must not longer than 62 bytes**. (Max key size is 64bytes, and all map prefix takes 2 ascii-chars/bytes)
 
 ### Events and Methods
@@ -79,6 +79,14 @@ Telegram group (Chinese): https://t.me/NekoHitCommunity
 
 Discord Server (English): https://discord.gg/DfSjhXuWyT
 
-
-
 Feel free to join the group and ask questions, or submit your ideas. We're glad to hear from you.
+
+## Donate
+
+If you like this project, and want to help the development of this project, please
+considering donate some GAS or NEO to this address (Neo N3):
+
+NYukb9Nj59pQZ7SzubZeJUodrhczkXKD1Y
+
+Deploy and update contract use a lot of GAS. Your donation will make our deployment easier.
+

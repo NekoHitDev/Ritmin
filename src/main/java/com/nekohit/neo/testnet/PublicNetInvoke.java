@@ -1,4 +1,4 @@
-package com.nekohit.neo;
+package com.nekohit.neo.testnet;
 
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.contract.FungibleToken;
