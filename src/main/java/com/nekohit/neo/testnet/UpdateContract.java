@@ -1,6 +1,5 @@
 package com.nekohit.neo.testnet;
 
-import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
@@ -38,9 +37,12 @@ public class UpdateContract {
             new HttpService("https://testnet1.neo.coz.io", client)
     );
 
-    private static final boolean REALLY_DEPLOY_FLAG = false;
-    private static final Class<?> CONTRACT_CLASS = CatToken.class;
-    private static final Hash160 CONTRACT_HASH = new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7");
+    // CatToken
+//    private static final Class<?> CONTRACT_CLASS = CatToken.class;
+//    private static final Hash160 CONTRACT_HASH = new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7");
+    // WCA contract
+    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
+    private static final Hash160 CONTRACT_HASH = new Hash160("0x199cd12a70bc554f7d3b0b91c5069546b15c0129");
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {
@@ -79,28 +81,23 @@ public class UpdateContract {
 
         System.out.println("Updating contract... Do not stop this program!");
 
-        if (REALLY_DEPLOY_FLAG) {
-            byte[] manifestBytes = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(compileResult.getManifest());
-            Transaction tx = CONTRACT
-                    .invokeFunction(
-                            "update",
-                            ContractParameter.byteArray(compileResult.getNefFile().toArray()),
-                            ContractParameter.byteArray(manifestBytes)
-                    )
-                    .signers(AccountSigner.calledByEntry(deployWallet.getDefaultAccount()))
-//                    .wallet(deployWallet)
-                    .sign();
-            NeoSendRawTransaction response = tx.send();
-            if (response.hasError()) {
-                throw new Exception(String.format("Update failed: "
-                        + "'%s'\n", response.getError().getMessage()));
-            }
-            System.out.println("Updated tx: 0x" + tx.getTxId());
-            Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
-            System.out.println("Gas fee: " + getGasFeeFromTx(tx));
-        } else {
-            System.err.println("This is a simulation. No contract is deployed.");
+        byte[] manifestBytes = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(compileResult.getManifest());
+        Transaction tx = CONTRACT
+                .invokeFunction(
+                        "update",
+                        ContractParameter.byteArray(compileResult.getNefFile().toArray()),
+                        ContractParameter.byteArray(manifestBytes)
+                )
+                .signers(AccountSigner.calledByEntry(deployWallet.getDefaultAccount()))
+                .sign();
+        NeoSendRawTransaction response = tx.send();
+        if (response.hasError()) {
+            throw new Exception(String.format("Update failed: "
+                    + "'%s'\n", response.getError().getMessage()));
         }
+        System.out.println("Updated tx: 0x" + tx.getTxId());
+        Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
+        System.out.println("Gas fee: " + getGasFeeFromTx(tx));
 
         System.out.println("Done.");
     }

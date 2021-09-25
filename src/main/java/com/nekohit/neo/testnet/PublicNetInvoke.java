@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 @SuppressWarnings({"unused", "SameParameterValue"})
+@Deprecated
 public final class PublicNetInvoke {
     private static final Logger logger = LoggerFactory.getLogger(PublicNetInvoke.class);
 
