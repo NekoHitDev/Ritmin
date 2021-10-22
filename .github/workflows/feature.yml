@@ -22,7 +22,7 @@ jobs:
           sudo apt-get install -y apt-transport-https
           sudo apt-get install -y dotnet-sdk-5.0
           sudo apt-get install libsnappy-dev libc6-dev librocksdb-dev -y
-          dotnet tool install --global Neo.Express --version 3.0.5
+          dotnet tool install --global Neo.Express --version 3.0.21
       
       # Set up JDK 11
       - name: Set up JDK 11
