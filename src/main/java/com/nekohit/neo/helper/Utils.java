@@ -57,6 +57,10 @@ public class Utils {
     }
 
     public static Wallet readWalletWIF() {
+        return Wallet.withAccounts(readAccountWIF());
+    }
+
+    public static Account readAccountWIF() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Paste account WIF:");
         String walletWIF = scanner.nextLine();
@@ -64,6 +68,6 @@ public class Utils {
         for (int i = 0; i < 2000; i++) {
             System.out.println();
         }
-        return Wallet.withAccounts(Account.fromWIF(walletWIF));
+        return Account.fromWIF(walletWIF);
     }
 }

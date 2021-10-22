@@ -296,7 +296,7 @@ public class WCAContract {
             while (iter.next()) {
                 Iterator.Struct<ByteString, ByteString> elem = iter.get();
                 Hash160 buyer = new Hash160(elem.key);
-                int purchaseAmount = elem.value.toInteger();
+                int purchaseAmount = elem.value.toIntOrZero();
                 int totalAmount = purchaseAmount + purchaseAmount * staticContent.stakePer100Token / 100;
                 int returnAmount = totalAmount * unfinishedMilestones / totalMilestones;
                 transferTokenTo(buyer, returnAmount, identifier);
@@ -371,7 +371,7 @@ public class WCAContract {
                 while (iter.next()) {
                     Iterator.Struct<ByteString, ByteString> elem = iter.get();
                     Hash160 buyer = new Hash160(elem.key);
-                    int purchaseAmount = elem.value.toInteger();
+                    int purchaseAmount = elem.value.toIntOrZero();
                     // delete record
                     projectPurchaseRecordMap.delete(projectId.concat(buyer.toByteString()));
                     transferTokenTo(buyer, purchaseAmount, identifier);
