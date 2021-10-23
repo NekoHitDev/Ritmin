@@ -56,7 +56,7 @@ public class DistributeToken {
         if (resp.hasError()) {
             throw new Exception(String.format("Transfer failed: '%s'\n", resp.getError().getMessage()));
         } else {
-            System.out.println(tx.getTxId());
+            System.out.println("Done. Tx: 0x" + tx.getTxId());
         }
     }
 }
