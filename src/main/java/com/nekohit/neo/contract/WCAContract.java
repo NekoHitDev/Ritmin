@@ -283,6 +283,12 @@ public class WCAContract {
             require(checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH);
         }
 
+        // Update status first to prevent re-entry attack
+        dynamicContent.status = 2;
+        dynamicContent.lastUpdateTime = Runtime.getTime();
+        updateDynamicContent(projectId, dynamicContent);
+        // At this time, the project is finished, no more operation is allowed
+
         int remainTokens = staticContent.getTotalStake() + dynamicContent.totalPurchasedAmount;
         int totalMilestones = staticContent.milestoneCount;
         int unfinishedMilestones = totalMilestones - dynamicContent.finishedMilestoneCount;
@@ -308,10 +314,6 @@ public class WCAContract {
         if (remainTokens > 0) {
             transferTokenTo(staticContent.owner, remainTokens, identifier);
         }
-        dynamicContent.status = 2;
-        dynamicContent.lastUpdateTime = Runtime.getTime();
-        // store it back
-        updateDynamicContent(projectId, dynamicContent);
         onFinishProject.fire(identifier);
     }
 
@@ -326,9 +328,11 @@ public class WCAContract {
         require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
         ByteString purchaseId = projectId.concat(buyer.toByteString());
         Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
-        if (value == null) {
-            value = 0;
-        }
+        require(value != null && value > 0, ExceptionMessages.RECORD_NOT_FOUND);
+        // After get the purchase record, delete it.
+        // Re-entry attack will get record not found exception at next call.
+        projectPurchaseRecordMap.delete(purchaseId);
+
         if (checkIfThresholdMet(staticContent, dynamicContent)) {
             // after the threshold
             Pair<Integer, Integer> buyerAndCreator = dynamicContent.partialRefund(staticContent, value);
@@ -341,13 +345,14 @@ public class WCAContract {
             transferTokenTo(buyer, amount, identifier);
             onRefund.fire(buyer, identifier, amount, 0);
         }
-        projectPurchaseRecordMap.delete(purchaseId);
         // update buyer info
         updateDynamicContent(projectId, dynamicContent);
     }
 
     public static void cancelProject(String identifier) throws Exception {
         ByteString projectId = getProjectId(identifier);
+        // Delete project id. Re-entry attack will fail since the id has been deleted.
+        projectIdentifierMap.delete(identifier);
         // get obj
         ProjectStaticContent staticContent = getStaticContent(projectId);
         ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
@@ -382,7 +387,6 @@ public class WCAContract {
                 throw new Exception(ExceptionMessages.INVALID_STATUS_ALLOW_PENDING_AND_ONGOING);
         }
         // delete this id
-        projectIdentifierMap.delete(identifier);
         projectStaticContentMap.delete(projectId);
         projectDynamicContentMap.delete(projectId);
         // delete milestones
