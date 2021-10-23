@@ -88,6 +88,7 @@ public class CatToken {
 
     @OnDeployment
     public static void deploy(Object data, boolean update) throws Exception {
+        throwIfSignerIsNotOwner();
         if (!update) {
             if(getTotalSupply() != 0) {
                 throw new Exception("Contract was already deployed.");
@@ -108,8 +109,9 @@ public class CatToken {
     }
 
     @OnVerification
-    public static boolean verify() {
-        return false;
+    public static boolean verify() throws Exception {
+        throwIfSignerIsNotOwner();
+        return true;
     }
 
     /**

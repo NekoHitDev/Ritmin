@@ -93,7 +93,7 @@ public class ContractTestFramework {
         var compileResult = new Compiler().compile(contractClass.getCanonicalName(), replaceMap);
 
         var contractHash = SmartContract.calcContractHash(
-                GENESIS_WALLET.getDefaultAccount().getScriptHash(),
+                CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
                 compileResult.getNefFile().getCheckSumAsInteger(),
                 compileResult.getManifest().getName()
         );
@@ -101,12 +101,9 @@ public class ContractTestFramework {
         try {
             Transaction tx = new ContractManagement(NEOW3J)
                     .deploy(compileResult.getNefFile(), compileResult.getManifest())
-                    .signers(AccountSigner.none(GENESIS_ACCOUNT))
-                    .getUnsignedTransaction();
-            Witness multiSigWitness = Witness.createMultiSigWitness(
-                    List.of(Sign.signMessage(tx.getHashData(), NODE_ACCOUNT.getECKeyPair())),
-                    GENESIS_ACCOUNT.getVerificationScript());
-            NeoSendRawTransaction response = tx.addWitness(multiSigWitness).send();
+                    .signers(AccountSigner.global(CONTRACT_OWNER_WALLET.getDefaultAccount()))
+                    .sign();
+            NeoSendRawTransaction response = tx.send();
             if (response.hasError()) {
                 throw new Exception(String.format("Deployment failed: "
                         + "'%s'\n", response.getError().getMessage()));

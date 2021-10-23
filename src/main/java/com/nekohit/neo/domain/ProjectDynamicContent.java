@@ -71,11 +71,8 @@ public class ProjectDynamicContent {
      *
      * @param staticContent of a given project
      * @return Pair(to buyer amount, to creator amount)
-     * @throws Exception if partial refund is not available
      */
-    public Pair<Integer, Integer> partialRefund(ProjectStaticContent staticContent, int buyerPurchaseAmount) throws Exception {
-        require(buyerPurchaseAmount != 0, ExceptionMessages.RECORD_NOT_FOUND);
-
+    public Pair<Integer, Integer> partialRefund(ProjectStaticContent staticContent, int buyerPurchaseAmount) {
         int totalMilestones = staticContent.milestoneCount;
         // finished milestone belongs to creator
         int toCreatorAmount = buyerPurchaseAmount * this.finishedMilestoneCount / totalMilestones;
@@ -94,10 +91,8 @@ public class ProjectDynamicContent {
      *
      * @param amount the purchase record
      * @return the amount of refund
-     * @throws Exception if purchase record is 0 (aka not found)
      */
-    public int fullRefund(int amount) throws Exception {
-        require(amount != 0, ExceptionMessages.RECORD_NOT_FOUND);
+    public int fullRefund(int amount) {
         // add to remain token
         this.remainTokenCount += amount;
         // remove from total sold amount
