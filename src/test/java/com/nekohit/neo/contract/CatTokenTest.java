@@ -38,25 +38,22 @@ public class CatTokenTest extends ContractTestFramework {
     }
 
     @Test
-    void testIsOwner() {
-        assertDoesNotThrow(
-                () -> {
-                    invokeFunction(
-                            getCatToken(),
-                            "verify",
-                            new ContractParameter[0],
-                            new Signer[]{
-                                    AccountSigner.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
-                            },
-                            CONTRACT_OWNER_WALLET
-                    );
-                }
+    void testIsOwner() throws Throwable {
+        assertTrue(invokeFunction(
+                        getCatToken(),
+                        "verify",
+                        new ContractParameter[0],
+                        new Signer[]{
+                                AccountSigner.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
+                        },
+                        CONTRACT_OWNER_WALLET
+                ).getExecutions().get(0).getStack().get(0).getBoolean()
         );
     }
 
     @Test
-    void testNotOwner() throws Throwable {
-        assertFalse(invokeFunction(
+    void testNotOwner() {
+        assertThrows(TransactionConfigurationException.class, () -> invokeFunction(
                 getCatToken(),
                 "verify",
                 new ContractParameter[0],
@@ -64,7 +61,7 @@ public class CatTokenTest extends ContractTestFramework {
                         AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())
                 },
                 this.testWallet
-        ).getExecutions().get(0).getStack().get(0).getBoolean());
+        ));
     }
 
     @Test
