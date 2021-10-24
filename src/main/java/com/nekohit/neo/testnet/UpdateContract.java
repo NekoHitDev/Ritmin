@@ -1,5 +1,6 @@
 package com.nekohit.neo.testnet;
 
+import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
@@ -15,6 +16,7 @@ import io.neow3j.transaction.Transaction;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
+import io.neow3j.wallet.Account;
 import io.neow3j.wallet.Wallet;
 import okhttp3.OkHttpClient;
 
@@ -38,20 +40,21 @@ public class UpdateContract {
     );
 
     // CatToken
-//    private static final Class<?> CONTRACT_CLASS = CatToken.class;
-//    private static final Hash160 CONTRACT_HASH = new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7");
+    private static final Class<?> CONTRACT_CLASS = CatToken.class;
+    private static final Hash160 CONTRACT_HASH = new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7");
     // WCA contract
-    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
-    private static final Hash160 CONTRACT_HASH = new Hash160("0x199cd12a70bc554f7d3b0b91c5069546b15c0129");
+//    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
+//    private static final Hash160 CONTRACT_HASH = new Hash160("0x199cd12a70bc554f7d3b0b91c5069546b15c0129");
+
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {
-        Wallet deployWallet = Utils.readWalletWIF();
         Scanner scanner = new Scanner(System.in);
+        Account deployAccount = Utils.readAccountWIF(scanner);
 
         // here we don't check the address, since only owner can update.
         Map<String, String> replaceMap = new HashMap<>();
-        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployWallet.getDefaultAccount().getAddress());
+        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployAccount.getAddress());
         if (CONTRACT_CLASS == WCAContract.class) {
             System.out.println("Paste CatToken address in hash160 (0x...): ");
             String catHash = scanner.nextLine();
@@ -71,7 +74,7 @@ public class UpdateContract {
         System.out.println("Update following contract on public net:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
         System.out.println("Contract address: 0x" + CONTRACT_HASH);
-        System.out.println("Contract owner account: " + deployWallet.getDefaultAccount().getAddress());
+        System.out.println("Contract owner account: " + deployAccount.getAddress());
 
         System.out.println("Type 'continue' to continue...");
         System.err.println("Note: Once confirmed, you CANNOT abort this process.");
@@ -88,7 +91,7 @@ public class UpdateContract {
                         ContractParameter.byteArray(compileResult.getNefFile().toArray()),
                         ContractParameter.byteArray(manifestBytes)
                 )
-                .signers(AccountSigner.calledByEntry(deployWallet.getDefaultAccount()))
+                .signers(AccountSigner.global(deployAccount))
                 .sign();
         NeoSendRawTransaction response = tx.send();
         if (response.hasError()) {

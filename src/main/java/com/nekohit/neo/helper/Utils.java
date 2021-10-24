@@ -56,12 +56,7 @@ public class Utils {
         return fraction / Math.pow(10, 8);
     }
 
-    public static Wallet readWalletWIF() {
-        return Wallet.withAccounts(readAccountWIF());
-    }
-
-    public static Account readAccountWIF() {
-        Scanner scanner = new Scanner(System.in);
+    public static Account readAccountWIF(Scanner scanner) {
         System.out.println("Paste account WIF:");
         String walletWIF = scanner.nextLine();
         // flush WIF out of screen

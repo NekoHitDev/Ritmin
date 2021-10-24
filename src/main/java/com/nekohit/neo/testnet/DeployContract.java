@@ -34,15 +34,15 @@ public class DeployContract {
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
 
     public static void main(String[] args) throws Throwable {
-        Wallet deployWallet = Utils.readWalletWIF();
         Scanner scanner = new Scanner(System.in);
+        Account deployAccount = Utils.readAccountWIF(scanner);
 
         System.out.println("Expected contract owner address: ");
-        Utils.require(deployWallet.getDefaultAccount().getAddress().equals(scanner.nextLine()),
+        Utils.require(deployAccount.getAddress().equals(scanner.nextLine()),
                 "Contract owner address doesn't match your deploy account!");
 
         Map<String, String> replaceMap = new HashMap<>();
-        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployWallet.getDefaultAccount().getAddress());
+        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployAccount.getAddress());
         if (CONTRACT_CLASS == WCAContract.class) {
             System.out.println("Paste CatToken address in hash160 (0x...): ");
             String catHash = scanner.nextLine();
@@ -61,7 +61,7 @@ public class DeployContract {
         System.out.println(CONTRACT_CLASS.getCanonicalName());
 
         Hash160 contractHash = SmartContract.calcContractHash(
-                deployWallet.getDefaultAccount().getScriptHash(),
+                deployAccount.getScriptHash(),
                 compileResult.getNefFile().getCheckSumAsInteger(),
                 compileResult.getManifest().getName()
         );
@@ -69,7 +69,7 @@ public class DeployContract {
         System.out.println("Deploy following contract to public net:");
         System.out.println(CONTRACT_CLASS.getCanonicalName());
         System.out.println("Will deployed to 0x" + contractHash);
-        System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
+        System.out.println("Using account: " + deployAccount.getAddress());
         System.out.println("Parameters:");
         replaceMap.forEach((k, v) -> System.out.println("\t" + k + ": " + v));
 
@@ -85,7 +85,7 @@ public class DeployContract {
         if (REALLY_DEPLOY_FLAG) {
             Transaction tx = deployContract(
                     compileResult,
-                    deployWallet.getDefaultAccount()
+                    deployAccount
             );
             System.out.println("Deployed tx: 0x" + tx.getTxId());
             Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
@@ -94,7 +94,7 @@ public class DeployContract {
             System.err.println("This is a simulation. No contract is deployed.");
         }
 
-        System.out.println("Using account: " + deployWallet.getDefaultAccount().getAddress());
+        System.out.println("Using account: " + deployAccount.getAddress());
         System.out.println("Contract: " + CONTRACT_CLASS.getCanonicalName());
         System.out.println("Deployed address: " + contractHash.toAddress());
         System.out.println("Deployed hash: 0x" + contractHash);
@@ -102,17 +102,17 @@ public class DeployContract {
 
         if (REALLY_DEPLOY_FLAG && CONTRACT_CLASS == CatToken.class) {
             FungibleToken token = new FungibleToken(contractHash, NEOW3J);
-            transferToken(token, deployWallet, deployWallet.getDefaultAccount().getScriptHash(), 1_00, null);
-            System.out.println(token.getBalanceOf(deployWallet.getDefaultAccount()));
+            transferToken(token, deployAccount, deployAccount.getScriptHash(), 1_00, null);
+            System.out.println(token.getBalanceOf(deployAccount));
         }
 
     }
 
     public static void transferToken(
-            FungibleToken token, Wallet wallet, Hash160 to, long amount, String identifier
+            FungibleToken token, Account account, Hash160 to, long amount, String identifier
     ) throws Throwable {
         NeoSendRawTransaction tx = token.transfer(
-                wallet.getDefaultAccount(), to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
+                account, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
         ).sign().send();
 
         if (tx.hasError()) {

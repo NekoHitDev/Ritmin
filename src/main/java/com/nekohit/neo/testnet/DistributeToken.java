@@ -23,10 +23,10 @@ public class DistributeToken {
     private static final BigInteger SATURATE_AMOUNT = BigInteger.valueOf(200_00L);
 
     public static void main(String[] args) throws Throwable {
-        Account account = Utils.readAccountWIF();
+        Scanner scanner = new Scanner(System.in);
+        Account account = Utils.readAccountWIF(scanner);
         System.out.println("Account address: " + account.getAddress());
         System.out.println("Account balance: " + queryBalance(account.getScriptHash()));
-        Scanner scanner = new Scanner(System.in);
         System.out.println("Paste address: ");
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
