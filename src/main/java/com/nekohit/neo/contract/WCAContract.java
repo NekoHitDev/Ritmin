@@ -218,7 +218,7 @@ public class WCAContract {
 
         // create project info obj
         ProjectStaticContent staticContent = new ProjectStaticContent(
-                owner, projectDescription, stakePer100Token, maxTokenSoldCount,
+                owner, projectDescription, CAT_TOKEN_HASH, stakePer100Token, maxTokenSoldCount,
                 milestoneCount, thresholdIndex, coolDownInterval,
                 endTimestamps[thresholdIndex], endTimestamps[milestoneCount - 1],
                 bePublic

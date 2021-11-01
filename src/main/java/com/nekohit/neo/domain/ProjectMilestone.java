@@ -19,6 +19,11 @@ public class ProjectMilestone {
     public int endTimestamp;
 
     /**
+     * Not used, preserved for future.
+     * */
+    public int weight = -1;
+
+    /**
      * The proof of work, or the result of this milestone.
      * Null if not finished yet.
      */
