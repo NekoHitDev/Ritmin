@@ -15,11 +15,6 @@ public class ProjectStaticContent {
     public final String description;
 
     /**
-     * Which token is used.
-     * */
-    public final Hash160 tokenHash;
-
-    /**
      * Stake rate. Since NeoVM cannot process float number,
      * so we have to multiply the decimals to convert it into
      * an integer. (aka the fraction representation)
@@ -74,6 +69,23 @@ public class ProjectStaticContent {
      * read the storage area directly.
      */
     public final boolean bePublic;
+
+    /**
+     * Which token is used.
+     * */
+    public final Hash160 tokenHash;
+
+    // Preserved for future use
+    public Object preserved0 = null;
+    public Object preserved1 = null;
+    public Object preserved2 = null;
+    public Object preserved3 = null;
+    public Object preserved4 = null;
+    public Object preserved5 = null;
+    public Object preserved6 = null;
+    public Object preserved7 = null;
+    public Object preserved8 = null;
+    public Object preserved9 = null;
 
     public ProjectStaticContent(
             Hash160 owner, String description, Hash160 tokenHash,

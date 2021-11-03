@@ -46,6 +46,18 @@ public class ProjectDynamicContent {
      */
     public int nextMilestoneIndex;
 
+    // Preserved for future use
+    public Object preserved0 = null;
+    public Object preserved1 = null;
+    public Object preserved2 = null;
+    public Object preserved3 = null;
+    public Object preserved4 = null;
+    public Object preserved5 = null;
+    public Object preserved6 = null;
+    public Object preserved7 = null;
+    public Object preserved8 = null;
+    public Object preserved9 = null;
+
     /**
      * Status of this project.<br>
      * 0 - PENDING, the initialized status, only payStake and cancel is allowed.<br>
