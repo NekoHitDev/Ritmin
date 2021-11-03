@@ -54,7 +54,7 @@ This is the token accepted by other contracts (currently only the WCA Contract.)
 
 Deployed: 
 
-+ Test net: [`0x199cd12a70bc554f7d3b0b91c5069546b15c0129`](https://neo3.testnet.neotube.io/contract/0x199cd12a70bc554f7d3b0b91c5069546b15c0129)
++ Test net: [`0x514e4dc6398ba12a8c3a5ed96187d606998c4d93`](https://neo3.testnet.neotube.io/contract/0x514e4dc6398ba12a8c3a5ed96187d606998c4d93)
 
 + Main net: [`TODO`](https://neo3.neotube.io/contract/TODO)
 
