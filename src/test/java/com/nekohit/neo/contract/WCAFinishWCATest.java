@@ -40,7 +40,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -66,7 +66,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -92,7 +92,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -113,7 +113,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -143,7 +143,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -173,7 +173,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 2 * 1000},
@@ -201,7 +201,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                stakeRate, totalAmount,
+                getCatTokenAddress(), stakeRate, totalAmount,
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new Long[]{

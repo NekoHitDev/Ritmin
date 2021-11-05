@@ -44,11 +44,12 @@ public class ContractInvokeHelper {
     }
 
     public static String advanceQuery(
-            SmartContract contract, Hash160 creator, Hash160 buyer, int page, int size
+            Hash160 token, SmartContract contract, Hash160 creator, Hash160 buyer, int page, int size
     ) throws Throwable {
         var result = ContractTestFramework.testInvoke(
                 contract, "advanceQuery",
                 new ContractParameter[]{
+                        ContractParameter.hash160(token),
                         ContractParameter.hash160(creator),
                         ContractParameter.hash160(buyer),
                         ContractParameter.integer(page),
@@ -64,7 +65,7 @@ public class ContractInvokeHelper {
      */
     public static String declareProject(
             SmartContract contract, String wcaDescription,
-            int stakePer100Token, long totalAmount,
+            Hash160 token, int stakeRate100, long totalAmount,
             String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
             int thresholdIndex, long coolDownInterval, boolean bePublic,
             String identifier, Wallet wallet
@@ -74,7 +75,8 @@ public class ContractInvokeHelper {
                 new ContractParameter[]{
                         ContractParameter.hash160(wallet.getDefaultAccount()),
                         ContractParameter.string(wcaDescription),
-                        ContractParameter.integer(stakePer100Token),
+                        ContractParameter.hash160(token),
+                        ContractParameter.integer(stakeRate100),
                         ContractParameter.integer(BigInteger.valueOf(totalAmount)),
                         ContractParameter.array(Arrays.asList(milestoneTitles)),
                         ContractParameter.array(Arrays.asList(milestoneDescriptions)),
@@ -94,20 +96,20 @@ public class ContractInvokeHelper {
 
     public static String createAndPayProject(
             SmartContract contract, String wcaDescription,
-            int stakePer100Token, long totalAmount,
+            Hash160 token, int stakePer100Token, long totalAmount,
             String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
             int thresholdIndex, long coolDownInterval, boolean bePublic,
             String identifier, Wallet wallet
     ) throws Throwable {
         var result = declareProject(
-                contract, wcaDescription, stakePer100Token, totalAmount,
+                contract, wcaDescription, token, stakePer100Token, totalAmount,
                 milestoneTitles, milestoneDescriptions, endTimestamps,
                 thresholdIndex, coolDownInterval, bePublic, identifier, wallet
         );
 
         // pay stake
         ContractTestFramework.transferToken(
-                ContractTestFramework.getCatToken(), wallet,
+                ContractTestFramework.tokenFromAddress(token), wallet,
                 ContractTestFramework.getWcaContractAddress(),
                 stakePer100Token * totalAmount / 100,
                 identifier, true

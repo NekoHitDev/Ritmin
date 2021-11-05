@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 /**
  * This test measure the gas usage for each WCA operation.
  * No function is tested.
- * */
+ */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class GASFeeTest extends ContractTestFramework{
+public class GASFeeTest extends ContractTestFramework {
     private final Logger logger = LoggerFactory.getLogger(GASFeeTest.class);
     private final Wallet creatorWallet = getTestWallet();
     private final Wallet buyer1Wallet = getTestWallet();
@@ -26,19 +26,17 @@ public class GASFeeTest extends ContractTestFramework{
             wcaL[i] = System.currentTimeMillis() + 60 * 1000 * (i + 1) * 2;
         }
 
-        logger.info("Creating WCA...");
+        this.logger.info("Creating WCA...");
         String id = ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
-                100, 1000,
-                wcaS,
-                wcaS,
-                wcaL,
+                getCatTokenAddress(), 100, 1000,
+                wcaS, wcaS, wcaL,
                 0, 100, false,
                 "test_gas_usage_" + System.currentTimeMillis(),
                 this.creatorWallet
         );
 
-        logger.info("Pay stake...");
+        this.logger.info("Pay stake...");
         transferToken(
                 getCatToken(), this.creatorWallet,
                 getWcaContractAddress(),
@@ -46,7 +44,7 @@ public class GASFeeTest extends ContractTestFramework{
                 id, true
         );
 
-        logger.info("User1 buy");
+        this.logger.info("User1 buy");
         transferToken(
                 getCatToken(), this.buyer1Wallet,
                 getWcaContractAddress(),
@@ -54,7 +52,7 @@ public class GASFeeTest extends ContractTestFramework{
                 id, true
         );
 
-        logger.info("User2 buy");
+        this.logger.info("User2 buy");
         transferToken(
                 getCatToken(), this.buyer2Wallet,
                 getWcaContractAddress(),
@@ -62,19 +60,19 @@ public class GASFeeTest extends ContractTestFramework{
                 id, true
         );
 
-        logger.info("Finish MS#1");
+        this.logger.info("Finish MS#1");
         ContractInvokeHelper.finishMilestone(
                 getWcaContract(), id,
                 0, "proof-of-work",
                 this.creatorWallet
         );
 
-        logger.info("User1 refund");
+        this.logger.info("User1 refund");
         ContractInvokeHelper.refund(
                 getWcaContract(), id, this.buyer1Wallet
         );
 
-        logger.info("Finish WCA");
+        this.logger.info("Finish WCA");
         ContractInvokeHelper.finishProject(
                 getWcaContract(), id, this.creatorWallet
         );

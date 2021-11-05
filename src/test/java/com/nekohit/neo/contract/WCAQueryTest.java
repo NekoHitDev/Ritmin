@@ -35,7 +35,7 @@ public class WCAQueryTest extends ContractTestFramework {
         var identifier = ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -64,7 +64,7 @@ public class WCAQueryTest extends ContractTestFramework {
         // create WCA
         var identifier = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new Long[]{
@@ -90,7 +90,7 @@ public class WCAQueryTest extends ContractTestFramework {
         // create WCA
         var identifier = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, purchaseAmount,
+                getCatTokenAddress(), 1_00, purchaseAmount,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{
@@ -129,7 +129,7 @@ public class WCAQueryTest extends ContractTestFramework {
         var buyerWallet = getTestWallet();
         var unpaidWCA = ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new Long[]{
@@ -143,7 +143,7 @@ public class WCAQueryTest extends ContractTestFramework {
         );
         var canPurchaseWCA = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 2_00,
+                getCatTokenAddress(), 1_00, 2_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new Long[]{
@@ -158,7 +158,7 @@ public class WCAQueryTest extends ContractTestFramework {
         transferToken(getCatToken(), buyerWallet, getWcaContractAddress(), 1_00, canPurchaseWCA, false);
         var onGoingWCA = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new Long[]{
@@ -173,7 +173,7 @@ public class WCAQueryTest extends ContractTestFramework {
         ContractInvokeHelper.finishMilestone(getWcaContract(), onGoingWCA, 0, "123", this.creatorWallet);
         var finishedWCA = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{
@@ -186,7 +186,7 @@ public class WCAQueryTest extends ContractTestFramework {
         ContractInvokeHelper.finishMilestone(getWcaContract(), finishedWCA, 0, "123", this.creatorWallet);
 
         System.out.println(assertDoesNotThrow(() -> ContractInvokeHelper.advanceQuery(
-                getWcaContract(),
+                getCatTokenAddress(), getWcaContract(),
                 this.creatorWallet.getDefaultAccount().getScriptHash(),
                 Hash160.ZERO, 1, 20
         )));

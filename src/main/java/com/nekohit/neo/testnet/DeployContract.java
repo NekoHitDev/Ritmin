@@ -30,7 +30,7 @@ public class DeployContract {
             new HttpService("https://neo3-testnet.neoline.vip/")
     );
 
-    private static final boolean REALLY_DEPLOY_FLAG = false;
+    private static final boolean REALLY_DEPLOY_FLAG = true;
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
 
     public static void main(String[] args) throws Throwable {

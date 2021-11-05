@@ -70,6 +70,10 @@ public class ContractTestFramework {
         return Objects.requireNonNull(catToken);
     }
 
+    public static FungibleToken tokenFromAddress(Hash160 token) {
+        return new FungibleToken(token, NEOW3J);
+    }
+
     public static SmartContract getWcaContract() {
         return Objects.requireNonNull(wcaContract);
     }
