@@ -2,7 +2,7 @@ package com.nekohit.neo.domain;
 
 public class ExceptionMessages {
     public static final String INVALID_CALLER =
-            "Invalid caller. Only CatToken are allowed.";
+            "Invalid caller.";
 
     public static final String INVALID_AMOUNT =
             "Invalid amount. Only positive numbers are allowed.";

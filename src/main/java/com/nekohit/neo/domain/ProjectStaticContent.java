@@ -16,10 +16,9 @@ public class ProjectStaticContent {
 
     /**
      * Stake rate. Since NeoVM cannot process float number,
-     * so we have to multiply the decimals to convert it into
-     * an integer. (aka the fraction representation)
+     * so we have to limit this to 0.00 (2 decimals)
      */
-    public final int stakePer100Token;
+    public final int stakeRate100;
 
     /**
      * Total sold token. Represented in fraction.
@@ -89,7 +88,7 @@ public class ProjectStaticContent {
 
     public ProjectStaticContent(
             Hash160 owner, String description, Hash160 tokenHash,
-            int stakePer100Token, int maxTokenSoldCount,
+            int stakeRate100, int maxTokenSoldCount,
             int milestoneCount, int thresholdIndex,
             int coolDownInterval, int thresholdMilestoneExpireTime,
             int lastMilestoneExpireTime, boolean bePublic
@@ -97,7 +96,7 @@ public class ProjectStaticContent {
         this.owner = owner;
         this.description = description;
         this.tokenHash = tokenHash;
-        this.stakePer100Token = stakePer100Token;
+        this.stakeRate100 = stakeRate100;
         this.maxTokenSoldCount = maxTokenSoldCount;
         this.milestoneCount = milestoneCount;
         this.thresholdIndex = thresholdIndex;
@@ -116,7 +115,7 @@ public class ProjectStaticContent {
      * @return token count in fraction. 1.00 token means 100
      */
     public int getTotalStake() {
-        return this.stakePer100Token * this.maxTokenSoldCount / 100;
+        return this.stakeRate100 * this.maxTokenSoldCount / 100;
     }
 
     /**

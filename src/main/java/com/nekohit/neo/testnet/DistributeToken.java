@@ -47,16 +47,14 @@ public class DistributeToken {
     private static void transferToken(Account account, Hash160 to) throws Throwable {
         System.out.println("----------------------------------------");
         System.out.println("Transfer to: " + to);
-        if (queryBalance(to).compareTo(SATURATE_AMOUNT) >= 0) {
-            System.out.println("Address saturated, skip.");
-            return;
-        }
+
         Transaction tx = CAT_TOKEN.transfer(account, to, SATURATE_AMOUNT).sign();
         NeoSendRawTransaction resp = tx.send();
         if (resp.hasError()) {
             throw new Exception(String.format("Transfer failed: '%s'\n", resp.getError().getMessage()));
         } else {
             System.out.println("Done. Tx: 0x" + tx.getTxId());
+            System.out.println("Balance: " + queryBalance(to).longValue());
         }
     }
 }

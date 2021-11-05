@@ -21,14 +21,19 @@ public class ProjectPojo {
     public final String ownerHashBase64;
 
     /**
+     * The Base64 of token hash represented in little endian..
+     * */
+    public final String tokenHashBase64;
+
+    /**
      * The timestamp indicate when this project is created.
      */
     public final int creationTimestamp;
 
     /**
-     * Stake rate represented in fraction.
+     * Stake rate represented in fraction (2 decimals).
      */
-    public final int stakePer100Token;
+    public final int stakeRate100;
 
     /**
      * Total sold tokens represented in fraction.
@@ -94,8 +99,9 @@ public class ProjectPojo {
         this.identifier = identifier;
         this.description = staticContent.description;
         this.ownerHashBase64 = StdLib.base64Encode(staticContent.owner.toByteString());
+        this.tokenHashBase64 = StdLib.base64Encode(staticContent.tokenHash.toByteString());
         this.creationTimestamp = staticContent.creationTimestamp;
-        this.stakePer100Token = staticContent.stakePer100Token;
+        this.stakeRate100 = staticContent.stakeRate100;
         this.maxTokenSoldCount = staticContent.maxTokenSoldCount;
         this.milestonesCount = staticContent.milestoneCount;
         this.milestones = milestones;
