@@ -226,6 +226,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
         );
         // wait for first milestone expire
         while (System.currentTimeMillis() <= firstEndTimestamp) {
+            //noinspection BusyWait
             Thread.sleep(100);
         }
         // purchase

@@ -7,7 +7,6 @@ import io.neow3j.script.OpCode;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.types.StackItemType;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
 
 import java.math.BigInteger;
 import java.util.Scanner;

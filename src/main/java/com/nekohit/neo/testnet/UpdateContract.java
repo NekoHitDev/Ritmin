@@ -55,16 +55,9 @@ public class UpdateContract {
         // here we don't check the address, since only owner can update.
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployAccount.getAddress());
-        if (CONTRACT_CLASS == WCAContract.class) {
-            System.out.println("Paste CatToken address in hash160 (0x...): ");
-            String catHash = scanner.nextLine();
-            FungibleToken cat = new FungibleToken(new Hash160(catHash), NEOW3J);
-            Utils.require("CAT".equals(cat.getSymbol()), "Token symbol not match!");
-            Utils.require("CatToken".equals(cat.getName()), "Token name not match!");
-            replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", cat.getScriptHash().toAddress());
-            replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", cat.getScriptHash().toString());
-            System.out.println("Validate CatToken contract address: " + cat.getScriptHash().toAddress());
-        }
+        // no USD available on N3 for now, set to zero address
+        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", Hash160.ZERO.toAddress());
+        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", Hash160.ZERO.toString());
 
         // compile contract
         CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName(), replaceMap);

@@ -89,10 +89,8 @@ public class ContractTestFramework {
     private static <T> Hash160 compileAndDeploy(Class<T> contractClass) throws Throwable {
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_WALLET.getDefaultAccount().getAddress());
-        if (catTokenAddress != null) {
-            replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", catTokenAddress.toAddress());
-            replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", catTokenAddress.toString());
-        }
+        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", GAS_TOKEN.getScriptHash().toAddress());
+        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", GAS_TOKEN.getScriptHash().toString());
 
         var compileResult = new Compiler().compile(contractClass.getCanonicalName(), replaceMap);
 

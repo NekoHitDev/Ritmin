@@ -31,10 +31,6 @@ test {
     useJUnitPlatform()
 }
 
-tasks.withType(Test).configureEach {
-    maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
-}
-
 testlogger {
     showFullStackTraces true
     slowThreshold 5000
