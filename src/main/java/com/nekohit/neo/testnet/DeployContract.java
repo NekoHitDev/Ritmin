@@ -44,8 +44,9 @@ public class DeployContract {
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployAccount.getAddress());
         // no USD available on N3 for now, set to zero address
-        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", Hash160.ZERO.toAddress());
-        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", Hash160.ZERO.toString());
+        Hash160 placeholder = new Hash160("0000000000000000000000000000000000000001");
+        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", placeholder.toAddress());
+        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", placeholder.toString());
 
         // compile contract
         CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName(), replaceMap);

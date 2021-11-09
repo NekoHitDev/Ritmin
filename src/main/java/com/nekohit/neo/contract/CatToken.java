@@ -5,7 +5,6 @@ import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.ContractManagement;
-import io.neow3j.devpack.contracts.FungibleToken;
 import io.neow3j.devpack.events.Event2Args;
 import io.neow3j.devpack.events.Event3Args;
 
@@ -93,6 +92,9 @@ public class CatToken {
 
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int usdAmount, Object data) throws Exception {
+        if (true) {
+            throw new Exception("Not implemented");
+        }
         if (USD_TOKEN_HASH != Runtime.getCallingScriptHash()) {
             throw new Exception("Invalid caller.");
         }
@@ -128,6 +130,9 @@ public class CatToken {
     }
 
     public static boolean destroyToken(Hash160 from, int catAmount) throws Exception {
+        if (true) {
+            throw new Exception("Not implemented");
+        }
         if (!Hash160.isValid(from)) {
             throw new Exception("From address is not a valid address.");
         }

@@ -29,14 +29,8 @@ import java.util.Scanner;
 import static com.nekohit.neo.helper.Utils.getGasFeeFromTx;
 
 public class UpdateContract {
-    private static final OkHttpClient client = new OkHttpClient.Builder()
-            .proxy(new Proxy(
-                    Proxy.Type.SOCKS,
-                    new InetSocketAddress("127.0.0.1", 1080)
-            ))
-            .build();
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("https://testnet1.neo.coz.io", client)
+            new HttpService("https://neo3-testnet.neoline.vip/")
     );
 
     // CatToken
@@ -55,9 +49,10 @@ public class UpdateContract {
         // here we don't check the address, since only owner can update.
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployAccount.getAddress());
-        // no USD available on N3 for now, set to zero address
-        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", Hash160.ZERO.toAddress());
-        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", Hash160.ZERO.toString());
+        // TODO no USD available on N3 for now, set to zero address
+        Hash160 placeholder = new Hash160("0000000000000000000000000000000000000001");
+        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", placeholder.toAddress());
+        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", placeholder.toString());
 
         // compile contract
         CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName(), replaceMap);
