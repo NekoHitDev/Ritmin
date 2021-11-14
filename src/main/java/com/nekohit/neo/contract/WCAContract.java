@@ -190,6 +190,7 @@ public class WCAContract {
         require(Hash160.isValid(tokenHash), ExceptionMessages.INVALID_HASH160);
         require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
         // projectId should be unique
+        require(identifier.length() != 0, ExceptionMessages.EMPTY_ID);
         require(projectIdentifierMap.get(identifier) == null, ExceptionMessages.DUPLICATED_ID);
         Integer counter = Storage.getInteger(CTX, COUNTER_KEY);
         if (counter == null) {

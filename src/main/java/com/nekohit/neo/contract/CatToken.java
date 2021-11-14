@@ -166,14 +166,10 @@ public class CatToken {
 
     @OnDeployment
     public static void deploy(Object data, boolean update) throws Exception {
-        throwIfSignerIsNotOwner();
         if (!update) {
-            if (getTotalSupply() != 0) {
-                throw new Exception("Contract was already deployed.");
-            }
-
+            // first time deployment
             int initialSupply = 1_000_000_00;
-            // Initialize supply
+            // Set initialize supply
             Storage.put(sc, TOTAL_SUPPLY_KEY, initialSupply);
             // And allocate all tokens to the contract owner.
             Storage.put(sc, ASSET_PREFIX.concat(OWNER.toByteString()), initialSupply);

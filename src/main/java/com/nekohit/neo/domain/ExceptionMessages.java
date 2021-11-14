@@ -46,6 +46,9 @@ public class ExceptionMessages {
     public static final String INVALID_SIGNATURE =
             "Invalid signature.";
 
+    public static final String EMPTY_ID =
+            "Empty identifier.";
+
     public static final String DUPLICATED_ID =
             "Identifier duplicated.";
 

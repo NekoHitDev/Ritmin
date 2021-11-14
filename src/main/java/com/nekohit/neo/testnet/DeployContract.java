@@ -17,7 +17,6 @@ import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
 import org.apache.commons.codec.binary.Hex;
 
 import java.math.BigInteger;
@@ -123,7 +122,7 @@ public class DeployContract {
     ) throws Throwable {
         Transaction tx = new ContractManagement(DeployContract.NEOW3J)
                 .deploy(res.getNefFile(), res.getManifest())
-                .signers(AccountSigner.global(account))
+                .signers(AccountSigner.calledByEntry(account))
                 .sign();
         NeoSendRawTransaction response = tx.send();
         if (response.hasError()) {

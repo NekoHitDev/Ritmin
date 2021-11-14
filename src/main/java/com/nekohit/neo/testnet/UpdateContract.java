@@ -79,7 +79,7 @@ public class UpdateContract {
                         ContractParameter.byteArray(compileResult.getNefFile().toArray()),
                         ContractParameter.byteArray(manifestBytes)
                 )
-                .signers(AccountSigner.global(deployAccount))
+                .signers(AccountSigner.calledByEntry(deployAccount))
                 .sign();
         NeoSendRawTransaction response = tx.send();
         if (response.hasError()) {

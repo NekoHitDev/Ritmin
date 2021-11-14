@@ -103,7 +103,7 @@ public class ContractTestFramework {
         try {
             Transaction tx = new ContractManagement(NEOW3J)
                     .deploy(compileResult.getNefFile(), compileResult.getManifest())
-                    .signers(AccountSigner.global(CONTRACT_OWNER_WALLET.getDefaultAccount()))
+                    .signers(AccountSigner.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount()))
                     .sign();
             NeoSendRawTransaction response = tx.send();
             if (response.hasError()) {
