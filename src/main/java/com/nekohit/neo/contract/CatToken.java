@@ -25,17 +25,13 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 public class CatToken {
     private static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
     private static final Hash160 USD_TOKEN_HASH = addressToScriptHash("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>");
-    // assuming USD token has 8 decimal: 1USD = 1_0000_0000
-    // rate is 0.5 USD -> 1 CAT  <=>  0_5000_0000 -> 1_00
-    // thus: rate is 50_0000
-    private static final int EXCHANGE_RATE = 50_0000;
+    // assuming USD token has 6 decimal: 1USD = 1_000000
+    // rate is 0.5 USD -> 1 CAT  <=>  0_500000 -> 1_00
+    // thus: rate is 5000
+    private static final int EXCHANGE_RATE = 5000;
 
     @DisplayName("Transfer")
     private static Event3Args<Hash160, Hash160, Integer> onTransfer;
-    @DisplayName("Mint")
-    private static Event2Args<Hash160, Integer> onMint;
-    @DisplayName("Destroy")
-    private static Event2Args<Hash160, Integer> onDestroy;
 
     private static final int DECIMALS = 2;
     private static final ByteString ASSET_PREFIX = new ByteString("asset");
@@ -92,9 +88,6 @@ public class CatToken {
 
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int usdAmount, Object data) throws Exception {
-        if (true) {
-            throw new Exception("Not implemented");
-        }
         if (USD_TOKEN_HASH != Runtime.getCallingScriptHash()) {
             throw new Exception("Invalid caller.");
         }
@@ -126,13 +119,10 @@ public class CatToken {
             addToBalance(from, catAmount);
             addToTotalSupply(catAmount);
         }
-        onMint.fire(from, catAmount);
+        onTransfer.fire(null, from, catAmount);
     }
 
     public static boolean destroyToken(Hash160 from, int catAmount) throws Exception {
-        if (true) {
-            throw new Exception("Not implemented");
-        }
         if (!Hash160.isValid(from)) {
             throw new Exception("From address is not a valid address.");
         }
@@ -153,7 +143,7 @@ public class CatToken {
             deductFromBalance(from, catAmount);
             deductFromTotalSupply(catAmount);
         }
-        onDestroy.fire(from, catAmount);
+        onTransfer.fire(from, null, catAmount);
         if (usdAmount != 0) {
             // Might get false if we don't hold enough token
             // This might be useful when dev team want to destroy unsold token
@@ -163,12 +153,11 @@ public class CatToken {
         return true;
     }
 
-
     @OnDeployment
-    public static void deploy(Object data, boolean update) throws Exception {
+    public static void deploy(Object data, boolean update) {
         if (!update) {
             // first time deployment
-            int initialSupply = 1_000_000_00;
+            int initialSupply = 0;
             // Set initialize supply
             Storage.put(sc, TOTAL_SUPPLY_KEY, initialSupply);
             // And allocate all tokens to the contract owner.

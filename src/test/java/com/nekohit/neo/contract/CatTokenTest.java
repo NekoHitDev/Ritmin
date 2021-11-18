@@ -230,7 +230,7 @@ public class CatTokenTest extends ContractTestFramework {
 
     @Test
     void testNormalExchange() throws IOException {
-        var exchangeAmount = 1_0000_0000L;
+        var exchangeAmount = 1_000000L;
         // Query old balance
         var oldCatBalance = getCatToken().getBalanceOf(this.testWallet.getDefaultAccount()).longValue();
         var oldTotalSupply = new FungibleToken(getCatTokenAddress(), NEOW3J).getTotalSupply().longValue();
@@ -282,6 +282,6 @@ public class CatTokenTest extends ContractTestFramework {
         assertEquals(2_00, oldCatBalance - newCatBalance);
         assertEquals(2_00, oldTotalSupply - newTotalSupply);
         // need to account the gas fee
-        assertEquals(1_0000_0000L - 2123_1780L, newGasBalance - oldGasBalance);
+        assertEquals(1_000000L - 2123_1810L, newGasBalance - oldGasBalance);
     }
 }

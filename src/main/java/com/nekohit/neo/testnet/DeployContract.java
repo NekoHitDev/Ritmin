@@ -42,8 +42,8 @@ public class DeployContract {
 
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployAccount.getAddress());
-        // no USD available on N3 for now, set to zero address
-        Hash160 placeholder = new Hash160("0000000000000000000000000000000000000001");
+        // use fUSDT here
+        Hash160 placeholder = new Hash160("0x83c442b5dc4ee0ed0e5249352fa7c75f65d6bfd6");
         replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", placeholder.toAddress());
         replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", placeholder.toString());
 
