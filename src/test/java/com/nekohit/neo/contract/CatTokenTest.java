@@ -282,6 +282,6 @@ public class CatTokenTest extends ContractTestFramework {
         assertEquals(2_00, oldCatBalance - newCatBalance);
         assertEquals(2_00, oldTotalSupply - newTotalSupply);
         // need to account the gas fee
-        assertEquals(1_000000L - 2123_1810L, newGasBalance - oldGasBalance);
+        assertEquals(1_000000L - 2133_1810L, newGasBalance - oldGasBalance);
     }
 }

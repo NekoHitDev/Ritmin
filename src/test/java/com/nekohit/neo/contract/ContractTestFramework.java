@@ -6,7 +6,6 @@ import io.neow3j.contract.ContractManagement;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.GasToken;
 import io.neow3j.contract.SmartContract;
-import io.neow3j.crypto.Sign;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.core.response.InvocationResult;
 import io.neow3j.protocol.core.response.NeoApplicationLog;
@@ -15,7 +14,6 @@ import io.neow3j.protocol.http.HttpService;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.Transaction;
-import io.neow3j.transaction.Witness;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -259,11 +257,17 @@ public class ContractTestFramework {
             transferToken(
                     GAS_TOKEN, GENESIS_WALLET,
                     CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
-                    10000_00000000L, null, true
+                    5010000_00000000L, null, true
             );
             // deploy Cat Token
             catTokenAddress = compileAndDeploy(CAT_TOKEN_CLASS);
             catToken = new FungibleToken(catTokenAddress, NEOW3J);
+            // mint some cat
+            transferToken(
+                    GAS_TOKEN, CONTRACT_OWNER_WALLET, catTokenAddress,
+                    // 1_000_000_000 CAT -> 500_000_000 GAS
+                    500_000_000_000000L, null, false
+            );
             // deploy WCA Contract
             wcaContractAddress = compileAndDeploy(WCA_CONTRACT_CLASS);
             wcaContract = new SmartContract(wcaContractAddress, NEOW3J);

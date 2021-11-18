@@ -64,7 +64,7 @@ public class CatToken {
         }
 
         if (getBalance(from) < amount) {
-            return false;
+            throw new Exception("Insufficient balance.");
         }
         if (from != to && amount != 0) {
             deductFromBalance(from, amount);
