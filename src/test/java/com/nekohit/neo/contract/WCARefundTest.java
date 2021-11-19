@@ -51,8 +51,7 @@ public class WCARefundTest extends ContractTestFramework {
                         },
                         new Signer[]{
                                 AccountSigner.calledByEntry(this.creatorWallet.getDefaultAccount())
-                        },
-                        this.creatorWallet
+                        }
                 )
         );
         assertTrue(

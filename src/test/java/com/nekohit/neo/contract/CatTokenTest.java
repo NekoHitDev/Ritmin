@@ -42,8 +42,7 @@ public class CatTokenTest extends ContractTestFramework {
                         new ContractParameter[0],
                         new Signer[]{
                                 AccountSigner.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
-                        },
-                        CONTRACT_OWNER_WALLET
+                        }
                 ).getExecutions().get(0).getStack().get(0).getBoolean()
         );
     }
@@ -56,8 +55,7 @@ public class CatTokenTest extends ContractTestFramework {
                 new ContractParameter[0],
                 new Signer[]{
                         AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())
-                },
-                this.testWallet
+                }
         ));
     }
 
@@ -73,8 +71,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.integer(-100),
                                 ContractParameter.any(null)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
-                        this.testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())}
                 )
         );
         assertTrue(
@@ -96,8 +93,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.integer(100),
                                 ContractParameter.any(null)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
-                        this.testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())}
                 )
         );
         assertTrue(
@@ -143,8 +139,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.integer(100),
                                 ContractParameter.any(null)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
-                        this.testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())}
                 )
         );
         assertTrue(
@@ -163,8 +158,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.hash160(this.testWallet.getDefaultAccount()),
                                 ContractParameter.integer(Integer.MAX_VALUE)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
-                        this.testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())}
                 )
         );
         assertTrue(
@@ -183,8 +177,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.hash160(Account.create()),
                                 ContractParameter.integer(Integer.MAX_VALUE)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
-                        this.testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())}
                 )
         );
         assertTrue(
@@ -203,8 +196,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.hash160(this.testWallet.getDefaultAccount()),
                                 ContractParameter.integer(-100)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
-                        this.testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())}
                 )
         );
         assertTrue(
@@ -268,8 +260,7 @@ public class CatTokenTest extends ContractTestFramework {
                                 ContractParameter.hash160(this.testWallet.getDefaultAccount()),
                                 ContractParameter.integer(destroyAmount)
                         },
-                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())},
-                        this.testWallet
+                        new Signer[]{AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())}
                 )
         );
 

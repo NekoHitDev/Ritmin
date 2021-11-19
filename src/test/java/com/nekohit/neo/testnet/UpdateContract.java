@@ -1,5 +1,6 @@
 package com.nekohit.neo.testnet;
 
+import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
@@ -20,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import static com.nekohit.neo.helper.Utils.getGasFeeFromTx;
+import static com.nekohit.neo.TestUtils.getGasFeeFromTx;
 
 public class UpdateContract {
     private static final Neow3j NEOW3J = Neow3j.build(
@@ -39,7 +40,7 @@ public class UpdateContract {
     public static void main(String[] args) throws Throwable {
         System.out.println(CONTRACT_HASH.toAddress());
         Scanner scanner = new Scanner(System.in);
-        Account deployAccount = Utils.readAccountWIF(scanner);
+        Account deployAccount = TestUtils.readAccountWIF(scanner);
 
         // here we don't check the address, since only owner can update.
         Map<String, String> replaceMap = new HashMap<>();

@@ -24,7 +24,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1-RC1")
+@ManifestExtra(key = "version", value = "v1")
 // CatToken::transfer
 @Permission(contract = "*", methods = {"transfer"})
 // ContractManagement::update
@@ -138,7 +138,6 @@ public class WCAContract {
         require(page >= 1, ExceptionMessages.INVALID_PAGE);
         require(size >= 1, ExceptionMessages.INVALID_SIZE);
         int offset = (page - 1) * size;
-        int count = 0;
         List<ProjectPojo> result = new List<>();
         Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, "ID", FindOptions.RemovePrefix);
         while (result.size() < size && iter.next()) {
@@ -171,10 +170,7 @@ public class WCAContract {
                 }
             }
             ProjectPojo pojo = new ProjectPojo(identifier, staticContent, dynamicContent, milestonesInfo);
-            if (count >= offset) {
-                result.add(pojo);
-            }
-            count++;
+            result.add(pojo);
         }
         return StdLib.jsonSerialize(result);
     }

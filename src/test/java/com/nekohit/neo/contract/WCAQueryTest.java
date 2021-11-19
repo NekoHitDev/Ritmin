@@ -137,7 +137,7 @@ public class WCAQueryTest extends ContractTestFramework {
                         System.currentTimeMillis() + 61 * 1000,
                         System.currentTimeMillis() + 62 * 1000
                 },
-                0, 1, false,
+                0, 1, true,
                 "test_advanced_unpaid_" + System.currentTimeMillis(),
                 this.creatorWallet
         );
@@ -151,7 +151,7 @@ public class WCAQueryTest extends ContractTestFramework {
                         System.currentTimeMillis() + 61 * 1000,
                         System.currentTimeMillis() + 62 * 1000
                 },
-                0, 1, false,
+                0, 1, true,
                 "test_advanced_can_buy_" + System.currentTimeMillis(),
                 this.creatorWallet
         );
@@ -166,7 +166,7 @@ public class WCAQueryTest extends ContractTestFramework {
                         System.currentTimeMillis() + 61 * 1000,
                         System.currentTimeMillis() + 62 * 1000
                 },
-                0, 1, false,
+                0, 1, true,
                 "test_advanced_going_" + System.currentTimeMillis(),
                 this.creatorWallet
         );
@@ -179,16 +179,25 @@ public class WCAQueryTest extends ContractTestFramework {
                 new Long[]{
                         System.currentTimeMillis() + 60 * 1000
                 },
-                0, 1, false,
+                0, 1, true,
                 "test_advanced_finished_" + System.currentTimeMillis(),
                 this.creatorWallet
         );
         ContractInvokeHelper.finishMilestone(getWcaContract(), finishedWCA, 0, "123", this.creatorWallet);
 
         System.out.println(assertDoesNotThrow(() -> ContractInvokeHelper.advanceQuery(
-                getCatTokenAddress(), getWcaContract(),
+                getWcaContract(), getCatTokenAddress(),
                 this.creatorWallet.getDefaultAccount().getScriptHash(),
                 Hash160.ZERO, 1, 20
+        )));
+        System.out.println(assertDoesNotThrow(() -> ContractInvokeHelper.advanceQuery(
+                getWcaContract(), getCatTokenAddress(),
+                Hash160.ZERO,
+                buyerWallet.getDefaultAccount().getScriptHash(), 1, 20
+        )));
+        System.out.println(assertDoesNotThrow(() -> ContractInvokeHelper.advanceQuery(
+                getWcaContract(), getCatTokenAddress(),
+                Hash160.ZERO, Hash160.ZERO, 1, 20
         )));
     }
 }

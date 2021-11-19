@@ -56,6 +56,8 @@ Deployed:
 
 + Test net: [`0x514e4dc6398ba12a8c3a5ed96187d606998c4d93`](https://neo3.testnet.neotube.io/contract/0x514e4dc6398ba12a8c3a5ed96187d606998c4d93)
 
++ Test net: [`0x3d151c524c35ea5cd549323d98e782cfb7403951`](https://neo3.testnet.neotube.io/contract/0x3d151c524c35ea5cd549323d98e782cfb7403951)
+
 + Main net: [`TODO`](https://neo3.neotube.io/contract/TODO)
 
 Note: 

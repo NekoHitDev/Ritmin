@@ -44,7 +44,7 @@ public class ContractInvokeHelper {
     }
 
     public static String advanceQuery(
-            Hash160 token, SmartContract contract, Hash160 creator, Hash160 buyer, int page, int size
+            SmartContract contract, Hash160 token, Hash160 creator, Hash160 buyer, int page, int size
     ) throws Throwable {
         var result = ContractTestFramework.testInvoke(
                 contract, "advanceQuery",
@@ -88,8 +88,7 @@ public class ContractInvokeHelper {
                 },
                 new Signer[]{
                         AccountSigner.calledByEntry(wallet.getDefaultAccount())
-                },
-                wallet
+                }
         );
         return appLog.getExecutions().get(0).getStack().get(0).getString();
     }
@@ -131,8 +130,7 @@ public class ContractInvokeHelper {
                 },
                 new Signer[]{
                         AccountSigner.calledByEntry(wallet.getDefaultAccount())
-                },
-                wallet
+                }
         );
     }
 
@@ -147,8 +145,7 @@ public class ContractInvokeHelper {
                 },
                 new Signer[]{
                         AccountSigner.calledByEntry(buyerWallet.getDefaultAccount())
-                },
-                buyerWallet
+                }
         );
     }
 
@@ -162,8 +159,7 @@ public class ContractInvokeHelper {
                 },
                 new Signer[]{
                         AccountSigner.calledByEntry(wallet.getDefaultAccount())
-                },
-                wallet
+                }
         );
     }
 
@@ -177,8 +173,7 @@ public class ContractInvokeHelper {
                 },
                 new Signer[]{
                         AccountSigner.calledByEntry(wallet.getDefaultAccount())
-                },
-                wallet
+                }
         );
     }
 }

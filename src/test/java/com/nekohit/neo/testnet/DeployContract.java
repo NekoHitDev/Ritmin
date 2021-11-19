@@ -1,5 +1,6 @@
 package com.nekohit.neo.testnet;
 
+import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
@@ -34,7 +35,7 @@ public class DeployContract {
 
     public static void main(String[] args) throws Throwable {
         Scanner scanner = new Scanner(System.in);
-        Account deployAccount = Utils.readAccountWIF(scanner);
+        Account deployAccount = TestUtils.readAccountWIF(scanner);
 
         System.out.println("Expected contract owner address: ");
         Utils.require(deployAccount.getAddress().equals(scanner.nextLine()),
@@ -82,7 +83,7 @@ public class DeployContract {
             );
             System.out.println("Deployed tx: 0x" + tx.getTxId());
             Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
-            System.out.println("Gas fee: " + Utils.getGasFeeFromTx(tx));
+            System.out.println("Gas fee: " + TestUtils.getGasFeeFromTx(tx));
         } else {
             System.err.println("This is a simulation. No contract is deployed.");
         }

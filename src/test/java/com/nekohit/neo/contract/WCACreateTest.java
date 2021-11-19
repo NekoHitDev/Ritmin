@@ -129,8 +129,7 @@ public class WCACreateTest extends ContractTestFramework {
                         },
                         new Signer[]{
                                 AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())
-                        },
-                        this.testWallet
+                        }
                 )
         );
         assertTrue(

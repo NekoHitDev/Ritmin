@@ -5,7 +5,6 @@ import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.contracts.ContractManagement;
-import io.neow3j.devpack.events.Event2Args;
 import io.neow3j.devpack.events.Event3Args;
 
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
@@ -14,7 +13,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "CAT Token")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1-RC1")
+@ManifestExtra(key = "version", value = "v1")
 // Contract as receiver
 @Permission(contract = "*", methods = "onNEP17Payment")
 // USD token transfer
