@@ -1,11 +1,10 @@
 package com.nekohit.neo.testnet;
 
+import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.contract.CatToken;
-import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
-import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.ObjectMapperFactory;
@@ -17,26 +16,16 @@ import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
-import okhttp3.OkHttpClient;
 
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import static com.nekohit.neo.helper.Utils.getGasFeeFromTx;
+import static com.nekohit.neo.TestUtils.getGasFeeFromTx;
 
 public class UpdateContract {
-    private static final OkHttpClient client = new OkHttpClient.Builder()
-            .proxy(new Proxy(
-                    Proxy.Type.SOCKS,
-                    new InetSocketAddress("127.0.0.1", 1080)
-            ))
-            .build();
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("https://testnet1.neo.coz.io", client)
+            new HttpService("https://neo3-testnet.neoline.vip/")
     );
 
     // CatToken
@@ -49,22 +38,17 @@ public class UpdateContract {
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
     public static void main(String[] args) throws Throwable {
+        System.out.println(CONTRACT_HASH.toAddress());
         Scanner scanner = new Scanner(System.in);
-        Account deployAccount = Utils.readAccountWIF(scanner);
+        Account deployAccount = TestUtils.readAccountWIF(scanner);
 
         // here we don't check the address, since only owner can update.
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployAccount.getAddress());
-        if (CONTRACT_CLASS == WCAContract.class) {
-            System.out.println("Paste CatToken address in hash160 (0x...): ");
-            String catHash = scanner.nextLine();
-            FungibleToken cat = new FungibleToken(new Hash160(catHash), NEOW3J);
-            Utils.require("CAT".equals(cat.getSymbol()), "Token symbol not match!");
-            Utils.require("CatToken".equals(cat.getName()), "Token name not match!");
-            replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", cat.getScriptHash().toAddress());
-            replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", cat.getScriptHash().toString());
-            System.out.println("Validate CatToken contract address: " + cat.getScriptHash().toAddress());
-        }
+        // use fUSDT here
+        Hash160 placeholder = new Hash160("0x83c442b5dc4ee0ed0e5249352fa7c75f65d6bfd6");
+        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", placeholder.toAddress());
+        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", placeholder.toString());
 
         // compile contract
         CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName(), replaceMap);
@@ -91,7 +75,7 @@ public class UpdateContract {
                         ContractParameter.byteArray(compileResult.getNefFile().toArray()),
                         ContractParameter.byteArray(manifestBytes)
                 )
-                .signers(AccountSigner.global(deployAccount))
+                .signers(AccountSigner.calledByEntry(deployAccount))
                 .sign();
         NeoSendRawTransaction response = tx.send();
         if (response.hasError()) {

@@ -51,8 +51,7 @@ public class WCARefundTest extends ContractTestFramework {
                         },
                         new Signer[]{
                                 AccountSigner.calledByEntry(this.creatorWallet.getDefaultAccount())
-                        },
-                        this.creatorWallet
+                        }
                 )
         );
         assertTrue(
@@ -66,7 +65,7 @@ public class WCARefundTest extends ContractTestFramework {
         var identifier = ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -93,7 +92,7 @@ public class WCARefundTest extends ContractTestFramework {
         var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -123,7 +122,7 @@ public class WCARefundTest extends ContractTestFramework {
         var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 2 * 1000},
@@ -151,7 +150,7 @@ public class WCARefundTest extends ContractTestFramework {
         var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
@@ -180,7 +179,7 @@ public class WCARefundTest extends ContractTestFramework {
         var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1", "milestone2"},
                 new String[]{"milestone1", "milestone2"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 61 * 1000},
@@ -213,7 +212,7 @@ public class WCARefundTest extends ContractTestFramework {
         var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1000_00,
+                getCatTokenAddress(), 1_00, 1000_00,
                 new String[]{"milestone1", "milestone2"},
                 new String[]{"milestone1", "milestone2"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 61 * 1000},
@@ -246,7 +245,7 @@ public class WCARefundTest extends ContractTestFramework {
         var identifier = ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                stakeRate, 1000_00,
+                getCatTokenAddress(), stakeRate, 1000_00,
                 new String[]{"milestone1", "milestone2"},
                 new String[]{"milestone1", "milestone2"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 61 * 1000},

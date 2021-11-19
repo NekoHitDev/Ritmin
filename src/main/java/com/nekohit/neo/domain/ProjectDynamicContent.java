@@ -2,8 +2,6 @@ package com.nekohit.neo.domain;
 
 import com.nekohit.neo.helper.Pair;
 
-import static com.nekohit.neo.helper.Utils.require;
-
 public class ProjectDynamicContent {
     /**
      * How many tokens remained for sale.

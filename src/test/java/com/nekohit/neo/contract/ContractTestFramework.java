@@ -1,12 +1,11 @@
 package com.nekohit.neo.contract;
 
-import com.nekohit.neo.helper.Utils;
+import com.nekohit.neo.TestUtils;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractManagement;
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.GasToken;
 import io.neow3j.contract.SmartContract;
-import io.neow3j.crypto.Sign;
 import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.core.response.InvocationResult;
 import io.neow3j.protocol.core.response.NeoApplicationLog;
@@ -15,7 +14,6 @@ import io.neow3j.protocol.http.HttpService;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.Transaction;
-import io.neow3j.transaction.Witness;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -48,12 +46,12 @@ public class ContractTestFramework {
     protected static final Class<WCAContract> WCA_CONTRACT_CLASS = WCAContract.class;
 
     // the node address defined in neo-express
-    private static final Account NODE_ACCOUNT = Utils.createAccountFromPrivateKey("57363779306c5100ca960cc39055f93fb114640c63616f2c570af809dc4b5c8e");
+    private static final Account NODE_ACCOUNT = TestUtils.createAccountFromPrivateKey("57363779306c5100ca960cc39055f93fb114640c63616f2c570af809dc4b5c8e");
     private static final Account GENESIS_ACCOUNT = Account.createMultiSigAccount(
             List.of(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
     private static final Wallet GENESIS_WALLET = Wallet.withAccounts(GENESIS_ACCOUNT, NODE_ACCOUNT);
     protected static final Wallet CONTRACT_OWNER_WALLET = Wallet.withAccounts(
-            Utils.createAccountFromPrivateKey("4d742d3c83124e4fe037488ff1428f57d092e436b120cd45b4f808c45f6b4700"));
+            TestUtils.createAccountFromPrivateKey("4d742d3c83124e4fe037488ff1428f57d092e436b120cd45b4f808c45f6b4700"));
 
     protected static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
     protected static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
@@ -68,6 +66,10 @@ public class ContractTestFramework {
 
     public static FungibleToken getCatToken() {
         return Objects.requireNonNull(catToken);
+    }
+
+    public static FungibleToken tokenFromAddress(Hash160 token) {
+        return new FungibleToken(token, NEOW3J);
     }
 
     public static SmartContract getWcaContract() {
@@ -85,10 +87,8 @@ public class ContractTestFramework {
     private static <T> Hash160 compileAndDeploy(Class<T> contractClass) throws Throwable {
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_WALLET.getDefaultAccount().getAddress());
-        if (catTokenAddress != null) {
-            replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", catTokenAddress.toAddress());
-            replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", catTokenAddress.toString());
-        }
+        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", GAS_TOKEN.getScriptHash().toAddress());
+        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", GAS_TOKEN.getScriptHash().toString());
 
         var compileResult = new Compiler().compile(contractClass.getCanonicalName(), replaceMap);
 
@@ -101,7 +101,7 @@ public class ContractTestFramework {
         try {
             Transaction tx = new ContractManagement(NEOW3J)
                     .deploy(compileResult.getNefFile(), compileResult.getManifest())
-                    .signers(AccountSigner.global(CONTRACT_OWNER_WALLET.getDefaultAccount()))
+                    .signers(AccountSigner.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount()))
                     .sign();
             NeoSendRawTransaction response = tx.send();
             if (response.hasError()) {
@@ -111,7 +111,7 @@ public class ContractTestFramework {
                 Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
             }
             logger.info("Contract {} deployed at 0x{}, gas fee: {}",
-                    contractClass.getName(), contractHash, Utils.getGasFeeFromTx(tx));
+                    contractClass.getName(), contractHash, TestUtils.getGasFeeFromTx(tx));
         } catch (TransactionConfigurationException e) {
             if (!e.getMessage().contains("Contract Already Exists")) {
                 throw e;
@@ -168,7 +168,7 @@ public class ContractTestFramework {
                 "Transfer {} {} from {} to {}, gas: {}",
                 amount, token.getSymbol(),
                 wallet.getDefaultAccount().getAddress(),
-                to.toAddress(), Utils.getGasFeeFromTx(tx)
+                to.toAddress(), TestUtils.getGasFeeFromTx(tx)
         );
     }
 
@@ -198,13 +198,12 @@ public class ContractTestFramework {
      * @param function   the function
      * @param parameters the parameters
      * @param signers    the signers
-     * @param wallet     signer's wallet
      * @return NeoApplicationLog contains the returned stack
      * @throws Throwable if anything goes wrong
      */
     protected static NeoApplicationLog invokeFunction(
             SmartContract contract, String function,
-            ContractParameter[] parameters, Signer[] signers, Wallet wallet
+            ContractParameter[] parameters, Signer[] signers
     ) throws Throwable {
         var tx = contract
                 .invokeFunction(function, parameters)
@@ -217,7 +216,7 @@ public class ContractTestFramework {
         }
 //        logger.info("{} tx: {}", function, tx.getTxId());
         Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
-        logger.info("{} gas fee: {}", function, Utils.getGasFeeFromTx(tx));
+        logger.info("{} gas fee: {}", function, TestUtils.getGasFeeFromTx(tx));
         var appLog = tx.getApplicationLog();
         assertEquals(1, appLog.getExecutions().size());
         if (appLog.getExecutions().get(0).getState() != NeoVMStateType.HALT) {
@@ -257,11 +256,17 @@ public class ContractTestFramework {
             transferToken(
                     GAS_TOKEN, GENESIS_WALLET,
                     CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
-                    10000_00000000L, null, true
+                    5010000_00000000L, null, true
             );
             // deploy Cat Token
             catTokenAddress = compileAndDeploy(CAT_TOKEN_CLASS);
             catToken = new FungibleToken(catTokenAddress, NEOW3J);
+            // mint some cat
+            transferToken(
+                    GAS_TOKEN, CONTRACT_OWNER_WALLET, catTokenAddress,
+                    // 1_000_000_000 CAT -> 500_000_000 GAS
+                    500_000_000_000000L, null, false
+            );
             // deploy WCA Contract
             wcaContractAddress = compileAndDeploy(WCA_CONTRACT_CLASS);
             wcaContract = new SmartContract(wcaContractAddress, NEOW3J);

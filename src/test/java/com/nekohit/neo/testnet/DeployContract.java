@@ -1,5 +1,6 @@
 package com.nekohit.neo.testnet;
 
+import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
 import com.nekohit.neo.helper.Utils;
@@ -17,7 +18,6 @@ import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
 import org.apache.commons.codec.binary.Hex;
 
 import java.math.BigInteger;
@@ -30,12 +30,12 @@ public class DeployContract {
             new HttpService("https://neo3-testnet.neoline.vip/")
     );
 
-    private static final boolean REALLY_DEPLOY_FLAG = false;
+    private static final boolean REALLY_DEPLOY_FLAG = true;
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
 
     public static void main(String[] args) throws Throwable {
         Scanner scanner = new Scanner(System.in);
-        Account deployAccount = Utils.readAccountWIF(scanner);
+        Account deployAccount = TestUtils.readAccountWIF(scanner);
 
         System.out.println("Expected contract owner address: ");
         Utils.require(deployAccount.getAddress().equals(scanner.nextLine()),
@@ -43,16 +43,10 @@ public class DeployContract {
 
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", deployAccount.getAddress());
-        if (CONTRACT_CLASS == WCAContract.class) {
-            System.out.println("Paste CatToken address in hash160 (0x...): ");
-            String catHash = scanner.nextLine();
-            FungibleToken cat = new FungibleToken(new Hash160(catHash), NEOW3J);
-            Utils.require("CAT".equals(cat.getSymbol()), "Token symbol not match!");
-            Utils.require("CatToken".equals(cat.getName()), "Token name not match!");
-            replaceMap.put("<CAT_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", cat.getScriptHash().toAddress());
-            replaceMap.put("<CAT_TOKEN_CONTRACT_HASH_PLACEHOLDER>", cat.getScriptHash().toString());
-            System.out.println("Validate CatToken contract address: " + cat.getScriptHash().toAddress());
-        }
+        // use fUSDT here
+        Hash160 placeholder = new Hash160("0x83c442b5dc4ee0ed0e5249352fa7c75f65d6bfd6");
+        replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", placeholder.toAddress());
+        replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", placeholder.toString());
 
         // compile contract
         CompilationUnit compileResult = new Compiler().compile(CONTRACT_CLASS.getCanonicalName(), replaceMap);
@@ -89,7 +83,7 @@ public class DeployContract {
             );
             System.out.println("Deployed tx: 0x" + tx.getTxId());
             Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
-            System.out.println("Gas fee: " + Utils.getGasFeeFromTx(tx));
+            System.out.println("Gas fee: " + TestUtils.getGasFeeFromTx(tx));
         } else {
             System.err.println("This is a simulation. No contract is deployed.");
         }
@@ -129,7 +123,7 @@ public class DeployContract {
     ) throws Throwable {
         Transaction tx = new ContractManagement(DeployContract.NEOW3J)
                 .deploy(res.getNefFile(), res.getManifest())
-                .signers(AccountSigner.global(account))
+                .signers(AccountSigner.calledByEntry(account))
                 .sign();
         NeoSendRawTransaction response = tx.send();
         if (response.hasError()) {
