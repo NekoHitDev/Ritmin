@@ -22,7 +22,7 @@ public class ProjectDynamicContent {
     /**
      * If the threshold milestone has been finished by creator/owner.
      */
-    public boolean thresholdMilestoneFinished;
+    public boolean thresholdMilestonePassed;
 
     /**
      * If the last milestone has been finished by creator/owner.
@@ -68,7 +68,7 @@ public class ProjectDynamicContent {
         this.remainTokenCount = remainTokenCount;
         this.totalPurchasedAmount = 0;
         this.buyerCounter = 0;
-        this.thresholdMilestoneFinished = false;
+        this.thresholdMilestonePassed = false;
         this.lastMilestoneFinished = false;
         this.lastUpdateTime = -1;
         this.finishedMilestoneCount = 0;

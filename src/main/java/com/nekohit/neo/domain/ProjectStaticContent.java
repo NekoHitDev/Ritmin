@@ -63,7 +63,7 @@ public class ProjectStaticContent {
     public final int lastMilestoneExpireTime;
 
     /**
-     * If this project will be listed in the result of {@link com.nekohit.neo.contract.WCAContract#advanceQuery(Hash160, Hash160, int, int)},
+     * If this project will be listed in the result of {@link com.nekohit.neo.contract.WCAContract#advanceQuery(Hash160, Hash160, Hash160, int, int)},
      * but this won't prevent somebody brute force your identifier or
      * read the storage area directly.
      */

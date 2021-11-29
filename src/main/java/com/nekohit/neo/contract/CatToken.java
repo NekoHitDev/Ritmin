@@ -13,7 +13,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "CAT Token")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1")
+@ManifestExtra(key = "version", value = "v1.0.0")
 // Contract as receiver
 @Permission(contract = "*", methods = "onNEP17Payment")
 // USD token transfer
@@ -62,9 +62,6 @@ public class CatToken {
             throw new Exception("Invalid sender signature. The sender of the tokens needs to be the signing account.");
         }
 
-        if (getBalance(from) < amount) {
-            throw new Exception("Insufficient balance.");
-        }
         if (from != to && amount != 0) {
             deductFromBalance(from, amount);
             addToBalance(to, amount);
@@ -133,10 +130,6 @@ public class CatToken {
         }
 
         int usdAmount = catAmount * EXCHANGE_RATE;
-
-        if (getBalance(from) < catAmount) {
-            throw new Exception("Insufficient amount.");
-        }
 
         if (catAmount != 0) {
             deductFromBalance(from, catAmount);
@@ -212,8 +205,11 @@ public class CatToken {
         assetMap.put(key.toByteString(), getBalance(key) + value);
     }
 
-    private static void deductFromBalance(Hash160 key, int value) {
+    private static void deductFromBalance(Hash160 key, int value) throws Exception {
         int oldValue = getBalance(key);
+        if (oldValue < value) {
+            throw new Exception("Insufficient amount.");
+        }
         if (oldValue == value) {
             assetMap.delete(key.toByteString());
         } else {

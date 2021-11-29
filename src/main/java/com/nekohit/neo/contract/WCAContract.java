@@ -257,7 +257,7 @@ public class WCAContract {
         dynamicContent.lastUpdateTime = currentTime;
         if (index >= staticContent.thresholdIndex) {
             // in case creator skip the threshold milestone
-            dynamicContent.thresholdMilestoneFinished = true;
+            dynamicContent.thresholdMilestonePassed = true;
         }
         if (index == staticContent.milestoneCount - 1) {
             dynamicContent.lastMilestoneFinished = true;
