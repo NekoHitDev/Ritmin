@@ -20,11 +20,11 @@ import static com.nekohit.neo.contract.WCAAuxiliary.checkIfThresholdMet;
 import static com.nekohit.neo.helper.Utils.require;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "unchecked"})
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1")
+@ManifestExtra(key = "version", value = "v1.0.0")
 // CatToken::transfer
 @Permission(contract = "*", methods = {"transfer"})
 // ContractManagement::update
@@ -72,7 +72,7 @@ public class WCAContract {
 
     @OnNEP17Payment
     public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
-        require(amount > 0, ExceptionMessages.INVALID_AMOUNT);
+        require(amount >= 0, ExceptionMessages.INVALID_AMOUNT);
         String identifier = (String) data;
         ByteString projectId = getProjectId(identifier);
 
@@ -144,13 +144,9 @@ public class WCAContract {
             String identifier = iter.get().key.toString();
             ByteString projectId = iter.get().value;
             ProjectStaticContent staticContent = getStaticContent(projectId);
-            ProjectMilestone[] milestonesInfo = getMilestones(projectId, staticContent);
-            ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
-
             if (!staticContent.bePublic) {
                 continue;
             }
-
             if (token != null && token != Hash160.zero()) {
                 // filter token
                 if (staticContent.tokenHash != token) {
@@ -169,6 +165,9 @@ public class WCAContract {
                     continue;
                 }
             }
+            ProjectMilestone[] milestonesInfo = getMilestones(projectId, staticContent);
+            ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
+
             ProjectPojo pojo = new ProjectPojo(identifier, staticContent, dynamicContent, milestonesInfo);
             result.add(pojo);
         }
@@ -355,9 +354,11 @@ public class WCAContract {
         ByteString projectId = getProjectId(identifier);
         // Delete project id. Re-entry attack will fail since the id has been deleted.
         projectIdentifierMap.delete(identifier);
-        // get obj
+        // get obj and delete
         ProjectStaticContent staticContent = getStaticContent(projectId);
+        projectStaticContentMap.delete(projectId);
         ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
+        projectDynamicContentMap.delete(projectId);
 
         // check signature
         require(Hash160.isValid(staticContent.owner), ExceptionMessages.INVALID_HASH160);
@@ -388,9 +389,6 @@ public class WCAContract {
                 // Cancel is not available for the rest of status
                 throw new Exception(ExceptionMessages.INVALID_STATUS_ALLOW_PENDING_AND_ONGOING);
         }
-        // delete this id
-        projectStaticContentMap.delete(projectId);
-        projectDynamicContentMap.delete(projectId);
         // delete milestones
         ByteString prefix = new ByteString("MS").concat(projectId);
         Iterator<ByteString> iter = Storage.find(CTX, prefix, FindOptions.KeysOnly);
@@ -450,9 +448,7 @@ public class WCAContract {
         // Since projectId has no fixed length, thus milestone index must have fixed length
         // otherwise there will be [010][1010] = [0101][010]
         ByteString data = projectMilestoneMap.get(
-                projectId.concat(
-                        Utils.paddingByteString(Utils.intToByteString(index), 20)
-                ));
+                projectId.concat(Utils.intToPaddingByteString(index, 20)));
         if (data == null) {
             return null;
         }
@@ -473,9 +469,7 @@ public class WCAContract {
 
     private static void updateMilestone(ByteString projectId, int index, ProjectMilestone data) throws Exception {
         projectMilestoneMap.put(
-                projectId.concat(
-                        Utils.paddingByteString(Utils.intToByteString(index), 20)
-                ),
+                projectId.concat(Utils.intToPaddingByteString(index, 20)),
                 StdLib.serialize(data)
         );
     }
