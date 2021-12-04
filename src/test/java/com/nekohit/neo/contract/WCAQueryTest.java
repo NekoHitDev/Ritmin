@@ -1,5 +1,6 @@
 package com.nekohit.neo.contract;
 
+import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
@@ -122,6 +123,19 @@ public class WCAQueryTest extends ContractTestFramework {
         )));
 
         assertEquals(CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(), actualOwnerHexString);
+    }
+
+    @Test
+    void testIsOwner() throws Throwable {
+        assertTrue(invokeFunction(
+                        getWcaContract(),
+                        "verify",
+                        new ContractParameter[0],
+                        new Signer[]{
+                                AccountSigner.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount())
+                        }
+                ).getExecutions().get(0).getStack().get(0).getBoolean()
+        );
     }
 
     @Test
