@@ -1,8 +1,9 @@
 package com.nekohit.neo.contract;
 
-import io.neow3j.wallet.Wallet;
+import io.neow3j.wallet.Account;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,12 +11,12 @@ import org.slf4j.LoggerFactory;
  * This test measure the gas usage for each WCA operation.
  * No function is tested.
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestInstance(Lifecycle.PER_CLASS)
 public class GASFeeTest extends ContractTestFramework {
     private final Logger logger = LoggerFactory.getLogger(GASFeeTest.class);
-    private final Wallet creatorWallet = getTestWallet();
-    private final Wallet buyer1Wallet = getTestWallet();
-    private final Wallet buyer2Wallet = getTestWallet();
+    private final Account creatorAccount = getTestAccount();
+    private final Account buyer1Account = getTestAccount();
+    private final Account buyer2Account = getTestAccount();
 
     @Test
     void test() throws Throwable {
@@ -33,12 +34,12 @@ public class GASFeeTest extends ContractTestFramework {
                 wcaS, wcaS, wcaL,
                 0, 100, false,
                 "test_gas_usage_" + System.currentTimeMillis(),
-                this.creatorWallet
+                this.creatorAccount
         );
 
         this.logger.info("Pay stake...");
         transferToken(
-                getCatToken(), this.creatorWallet,
+                getCatToken(), this.creatorAccount,
                 getWcaContractAddress(),
                 100 * 1000 / 100,
                 id, true
@@ -46,7 +47,7 @@ public class GASFeeTest extends ContractTestFramework {
 
         this.logger.info("User1 buy");
         transferToken(
-                getCatToken(), this.buyer1Wallet,
+                getCatToken(), this.buyer1Account,
                 getWcaContractAddress(),
                 200,
                 id, true
@@ -54,7 +55,7 @@ public class GASFeeTest extends ContractTestFramework {
 
         this.logger.info("User2 buy");
         transferToken(
-                getCatToken(), this.buyer2Wallet,
+                getCatToken(), this.buyer2Account,
                 getWcaContractAddress(),
                 500,
                 id, true
@@ -64,17 +65,17 @@ public class GASFeeTest extends ContractTestFramework {
         ContractInvokeHelper.finishMilestone(
                 getWcaContract(), id,
                 0, "proof-of-work",
-                this.creatorWallet
+                this.creatorAccount
         );
 
         this.logger.info("User1 refund");
         ContractInvokeHelper.refund(
-                getWcaContract(), id, this.buyer1Wallet
+                getWcaContract(), id, this.buyer1Account
         );
 
         this.logger.info("Finish WCA");
         ContractInvokeHelper.finishProject(
-                getWcaContract(), id, this.creatorWallet
+                getWcaContract(), id, this.creatorAccount
         );
     }
 }

@@ -6,7 +6,6 @@ import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -21,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @TestInstance(Lifecycle.PER_CLASS)
 public class WCACreateTest extends ContractTestFramework {
-    private final Wallet testWallet = getTestWallet();
+    private final Account testAccount = getTestAccount();
 
     @Test
     void testNegativeStakeRate() {
@@ -35,7 +34,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_negative_stake_rate_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -56,7 +55,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_zero_stake_rate_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -77,7 +76,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_negative_token_count_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -98,7 +97,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_zero_token_count_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -128,7 +127,7 @@ public class WCACreateTest extends ContractTestFramework {
                                 ContractParameter.string("test_invalid_signer_" + System.currentTimeMillis())
                         },
                         new Signer[]{
-                                AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())
+                                AccountSigner.calledByEntry(this.testAccount)
                         }
                 )
         );
@@ -148,7 +147,7 @@ public class WCACreateTest extends ContractTestFramework {
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
@@ -159,7 +158,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new String[]{"milestone"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
-                        identifier, this.testWallet
+                        identifier, this.testAccount
                 )
         );
         assertTrue(
@@ -180,7 +179,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_different_milestone_count_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -201,7 +200,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 59 * 1000},
                         0, 100, false,
                         "test_decrease_end_timestamp_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -223,7 +222,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{12345L},
                         0, 100, false,
                         "test_expired_end_timestamp_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -231,9 +230,6 @@ public class WCACreateTest extends ContractTestFramework {
                 "Unknown exception: " + throwable.getMessage()
         );
     }
-
-    // TODO cannot test zero milestone, 
-    //      since neow3j require at least 1 element in a given array
 
     @Test
     void testInvalidThresholdMilestone() {
@@ -247,7 +243,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         -1, 100, false,
                         "test_invalid_threshold_milestone_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -265,7 +261,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         1, 100, false,
                         "test_invalid_threshold_milestone_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -286,7 +282,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, -100, false,
                         "test_invalid_cool_down_interval_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -306,7 +302,7 @@ public class WCACreateTest extends ContractTestFramework {
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_create_normal_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
     }

@@ -2,7 +2,7 @@ package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
-import io.neow3j.wallet.Wallet;
+import io.neow3j.wallet.Account;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -16,16 +16,16 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @TestInstance(Lifecycle.PER_CLASS)
 public class WCAFinishWCATest extends ContractTestFramework {
-    private final Wallet creatorWallet = getTestWallet();
-    private final Wallet buyerWallet1 = getTestWallet();
-    private final Wallet buyerWallet2 = getTestWallet();
+    private final Account creatorAccount = getTestAccount();
+    private final Account buyerAccount1 = getTestAccount();
+    private final Account buyerAccount2 = getTestAccount();
 
     @Test
     void testInvalidId() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishProject(
-                        getWcaContract(), "some_invalid_id", this.creatorWallet
+                        getWcaContract(), "some_invalid_id", this.creatorAccount
                 )
         );
         assertTrue(
@@ -45,13 +45,13 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishProject(
-                        getWcaContract(), identifier, this.creatorWallet
+                        getWcaContract(), identifier, this.creatorAccount
                 )
         );
         assertTrue(
@@ -71,13 +71,13 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishProject(
-                        getWcaContract(), identifier, this.buyerWallet1
+                        getWcaContract(), identifier, this.buyerAccount1
                 )
         );
         assertTrue(
@@ -97,12 +97,12 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         assertDoesNotThrow(
                 () -> ContractInvokeHelper.finishProject(
-                        getWcaContract(), identifier, this.creatorWallet
+                        getWcaContract(), identifier, this.creatorAccount
                 )
         );
     }
@@ -118,17 +118,17 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         ContractInvokeHelper.finishProject(
-                getWcaContract(), identifier, this.creatorWallet
+                getWcaContract(), identifier, this.creatorAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishProject(
-                        getWcaContract(), identifier, this.buyerWallet1
+                        getWcaContract(), identifier, this.buyerAccount1
                 )
         );
         assertTrue(
@@ -148,17 +148,17 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 0, "something", this.creatorWallet
+                getWcaContract(), identifier, 0, "something", this.creatorAccount
         );
         // By finish the last ms, WCA is finished.
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishProject(
-                        getWcaContract(), identifier, this.buyerWallet1
+                        getWcaContract(), identifier, this.buyerAccount1
                 )
         );
         assertTrue(
@@ -178,7 +178,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 2 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         // let the last one expire
@@ -186,7 +186,7 @@ public class WCAFinishWCATest extends ContractTestFramework {
 
         assertDoesNotThrow(
                 () -> ContractInvokeHelper.finishProject(
-                        getWcaContract(), identifier, this.buyerWallet1
+                        getWcaContract(), identifier, this.buyerAccount1
                 )
         );
     }
@@ -210,37 +210,37 @@ public class WCAFinishWCATest extends ContractTestFramework {
                         System.currentTimeMillis() + 62 * 1000
                 },
                 0, 1, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         // purchase
         // NOTE: one purchase per WCA per block. Since only one write operation will be accepted 
         //       by committee, rest of them will be discarded and become invalid.
         transferToken(
-                getCatToken(), this.buyerWallet1,
+                getCatToken(), this.buyerAccount1,
                 getWcaContractAddress(),
                 buyer1Purchase, identifier, true
         );
         transferToken(
-                getCatToken(), this.buyerWallet2,
+                getCatToken(), this.buyerAccount2,
                 getWcaContractAddress(),
                 buyer2Purchase, identifier, true
         );
 
-        var creatorOldBalance = getCatToken().getBalanceOf(this.creatorWallet.getDefaultAccount()).longValue();
-        var buyer1OldBalance = getCatToken().getBalanceOf(this.buyerWallet1.getDefaultAccount()).longValue();
-        var buyer2OldBalance = getCatToken().getBalanceOf(this.buyerWallet2.getDefaultAccount()).longValue();
+        var creatorOldBalance = getCatToken().getBalanceOf(this.creatorAccount).longValue();
+        var buyer1OldBalance = getCatToken().getBalanceOf(this.buyerAccount1).longValue();
+        var buyer2OldBalance = getCatToken().getBalanceOf(this.buyerAccount2).longValue();
         // buyer1: 400.00, buyer2: 500.00, remain: 100.0
         // finish ms [0] and [2], thus creator lose 1/3 token
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 0, "something", this.creatorWallet
+                getWcaContract(), identifier, 0, "something", this.creatorAccount
         );
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 2, "something", this.creatorWallet
+                getWcaContract(), identifier, 2, "something", this.creatorAccount
         );
-        var creatorNewBalance = getCatToken().getBalanceOf(this.creatorWallet.getDefaultAccount()).longValue();
-        var buyer1NewBalance = getCatToken().getBalanceOf(this.buyerWallet1.getDefaultAccount()).longValue();
-        var buyer2NewBalance = getCatToken().getBalanceOf(this.buyerWallet2.getDefaultAccount()).longValue();
+        var creatorNewBalance = getCatToken().getBalanceOf(this.creatorAccount).longValue();
+        var buyer1NewBalance = getCatToken().getBalanceOf(this.buyerAccount1).longValue();
+        var buyer2NewBalance = getCatToken().getBalanceOf(this.buyerAccount2).longValue();
 
         // buy this time:
         var buyer1Total = buyer1Purchase + buyer1Purchase * stakeRate / 100;

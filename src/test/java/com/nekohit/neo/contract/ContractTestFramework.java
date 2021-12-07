@@ -20,13 +20,16 @@ import io.neow3j.types.Hash160;
 import io.neow3j.types.NeoVMStateType;
 import io.neow3j.utils.Await;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
+import static com.nekohit.neo.contract.TestConstants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -44,14 +47,6 @@ public class ContractTestFramework {
 
     protected static final Class<CatToken> CAT_TOKEN_CLASS = CatToken.class;
     protected static final Class<WCAContract> WCA_CONTRACT_CLASS = WCAContract.class;
-
-    // the node address defined in neo-express
-    private static final Account NODE_ACCOUNT = TestUtils.createAccountFromPrivateKey("57363779306c5100ca960cc39055f93fb114640c63616f2c570af809dc4b5c8e");
-    private static final Account GENESIS_ACCOUNT = Account.createMultiSigAccount(
-            List.of(NODE_ACCOUNT.getECKeyPair().getPublicKey()), 1);
-    private static final Wallet GENESIS_WALLET = Wallet.withAccounts(GENESIS_ACCOUNT, NODE_ACCOUNT);
-    protected static final Wallet CONTRACT_OWNER_WALLET = Wallet.withAccounts(
-            TestUtils.createAccountFromPrivateKey("4d742d3c83124e4fe037488ff1428f57d092e436b120cd45b4f808c45f6b4700"));
 
     protected static final Neow3j NEOW3J = Neow3j.build(new HttpService("http://127.0.0.1:50012"));
     protected static final GasToken GAS_TOKEN = new GasToken(NEOW3J);
@@ -86,14 +81,14 @@ public class ContractTestFramework {
      */
     private static <T> Hash160 compileAndDeploy(Class<T> contractClass) throws Throwable {
         Map<String, String> replaceMap = new HashMap<>();
-        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_WALLET.getDefaultAccount().getAddress());
+        replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_ACCOUNT.getAddress());
         replaceMap.put("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", GAS_TOKEN.getScriptHash().toAddress());
         replaceMap.put("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", GAS_TOKEN.getScriptHash().toString());
 
         var compileResult = new Compiler().compile(contractClass.getCanonicalName(), replaceMap);
 
         var contractHash = SmartContract.calcContractHash(
-                CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
+                CONTRACT_OWNER_ACCOUNT.getScriptHash(),
                 compileResult.getNefFile().getCheckSumAsInteger(),
                 compileResult.getManifest().getName()
         );
@@ -101,7 +96,7 @@ public class ContractTestFramework {
         try {
             Transaction tx = new ContractManagement(NEOW3J)
                     .deploy(compileResult.getNefFile(), compileResult.getManifest())
-                    .signers(AccountSigner.calledByEntry(CONTRACT_OWNER_WALLET.getDefaultAccount()))
+                    .signers(AccountSigner.calledByEntry(CONTRACT_OWNER_ACCOUNT))
                     .sign();
             NeoSendRawTransaction response = tx.send();
             if (response.hasError()) {
@@ -128,7 +123,7 @@ public class ContractTestFramework {
      * Transfer some token with additional string as payload
      *
      * @param token      token type
-     * @param wallet     from wallet, use default account
+     * @param account    from account
      * @param to         dest
      * @param amount     in fraction
      * @param identifier the payload
@@ -136,10 +131,10 @@ public class ContractTestFramework {
      * @throws Throwable if anything goes wrong
      */
     protected static void transferToken(
-            FungibleToken token, Wallet wallet, Hash160 to, long amount, String identifier, boolean wait
+            FungibleToken token, Account account, Hash160 to, long amount, String identifier, boolean wait
     ) throws Throwable {
         Transaction tx;
-        if (wallet.getDefaultAccount() == GENESIS_ACCOUNT) {
+        if (account == GENESIS_ACCOUNT) {
             // multi sign
             tx = token.transfer(
                             GENESIS_ACCOUNT, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
@@ -150,7 +145,7 @@ public class ContractTestFramework {
         } else {
             // normal account
             tx = token.transfer(
-                    wallet.getDefaultAccount(), to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
+                    account, to, BigInteger.valueOf(amount), ContractParameter.string(identifier)
             ).sign();
         }
 
@@ -167,28 +162,28 @@ public class ContractTestFramework {
         logger.info(
                 "Transfer {} {} from {} to {}, gas: {}",
                 amount, token.getSymbol(),
-                wallet.getDefaultAccount().getAddress(),
+                account.getAddress(),
                 to.toAddress(), TestUtils.getGasFeeFromTx(tx)
         );
     }
 
-    protected static Wallet getTestWallet() {
-        Wallet wallet = Wallet.create();
+    protected static Account getTestAccount() {
+        Account account = Account.create();
         try {
             transferToken(
-                    catToken, CONTRACT_OWNER_WALLET,
-                    wallet.getDefaultAccount().getScriptHash(),
+                    catToken, CONTRACT_OWNER_ACCOUNT,
+                    account.getScriptHash(),
                     10000_00, null, false
             );
             transferToken(
-                    GAS_TOKEN, GENESIS_WALLET,
-                    wallet.getDefaultAccount().getScriptHash(),
+                    GAS_TOKEN, GENESIS_ACCOUNT,
+                    account.getScriptHash(),
                     10000_00000000L, null, true
             );
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
-        return wallet;
+        return account;
     }
 
     /**
@@ -208,7 +203,6 @@ public class ContractTestFramework {
         var tx = contract
                 .invokeFunction(function, parameters)
                 .signers(signers)
-//                .wallet(wallet)
                 .sign();
         var response = tx.send();
         if (response.hasError()) {
@@ -254,8 +248,8 @@ public class ContractTestFramework {
         try {
             // give contract owner some gas to play with
             transferToken(
-                    GAS_TOKEN, GENESIS_WALLET,
-                    CONTRACT_OWNER_WALLET.getDefaultAccount().getScriptHash(),
+                    GAS_TOKEN, GENESIS_ACCOUNT,
+                    CONTRACT_OWNER_ACCOUNT.getScriptHash(),
                     5010000_00000000L, null, true
             );
             // deploy Cat Token
@@ -263,7 +257,7 @@ public class ContractTestFramework {
             catToken = new FungibleToken(catTokenAddress, NEOW3J);
             // mint some cat
             transferToken(
-                    GAS_TOKEN, CONTRACT_OWNER_WALLET, catTokenAddress,
+                    GAS_TOKEN, CONTRACT_OWNER_ACCOUNT, catTokenAddress,
                     // 1_000_000_000 CAT -> 500_000_000 GAS
                     500_000_000_000000L, null, false
             );

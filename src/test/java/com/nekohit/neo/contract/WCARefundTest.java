@@ -6,7 +6,6 @@ import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -20,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @TestInstance(Lifecycle.PER_CLASS)
 public class WCARefundTest extends ContractTestFramework {
-    private final Wallet creatorWallet = getTestWallet();
-    private final Wallet testWallet = getTestWallet();
+    private final Account creatorAccount = getTestAccount();
+    private final Account testAccount = getTestAccount();
 
     @Test
     void testInvalidId() {
@@ -30,7 +29,7 @@ public class WCARefundTest extends ContractTestFramework {
                 () -> ContractInvokeHelper.refund(
                         getWcaContract(),
                         "some_invalid_id",
-                        this.creatorWallet
+                        this.creatorAccount
                 )
         );
         assertTrue(
@@ -50,7 +49,7 @@ public class WCARefundTest extends ContractTestFramework {
                                 ContractParameter.hash160(Account.create())
                         },
                         new Signer[]{
-                                AccountSigner.calledByEntry(this.creatorWallet.getDefaultAccount())
+                                AccountSigner.calledByEntry(this.creatorAccount)
                         }
                 )
         );
@@ -71,14 +70,14 @@ public class WCARefundTest extends ContractTestFramework {
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
                 "test_refund_unpaid_" + System.currentTimeMillis(),
-                this.creatorWallet
+                this.creatorAccount
         );
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.refund(
                         getWcaContract(),
                         identifier,
-                        this.creatorWallet
+                        this.creatorAccount
                 )
         );
         assertTrue(
@@ -98,17 +97,17 @@ public class WCARefundTest extends ContractTestFramework {
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
                 "test_refund_last_ms_finished_" + System.currentTimeMillis(),
-                this.creatorWallet
+                this.creatorAccount
         );
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 0, "proofOfWork", this.creatorWallet
+                getWcaContract(), identifier, 0, "proofOfWork", this.creatorAccount
         );
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.refund(
                         getWcaContract(),
                         identifier,
-                        this.creatorWallet
+                        this.creatorAccount
                 )
         );
         assertTrue(
@@ -128,7 +127,7 @@ public class WCARefundTest extends ContractTestFramework {
                 new Long[]{System.currentTimeMillis() + 2 * 1000},
                 0, 100, false,
                 "test_refund_last_ms_expired_" + System.currentTimeMillis(),
-                this.creatorWallet
+                this.creatorAccount
         );
         Thread.sleep(3 * 1000);
         var throwable = assertThrows(
@@ -136,7 +135,7 @@ public class WCARefundTest extends ContractTestFramework {
                 () -> ContractInvokeHelper.refund(
                         getWcaContract(),
                         identifier,
-                        this.creatorWallet
+                        this.creatorAccount
                 )
         );
         assertTrue(
@@ -156,7 +155,7 @@ public class WCARefundTest extends ContractTestFramework {
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
                 "test_record_404_before_thrshd_" + System.currentTimeMillis(),
-                this.creatorWallet
+                this.creatorAccount
         );
 
         var throwable = assertThrows(
@@ -164,7 +163,7 @@ public class WCARefundTest extends ContractTestFramework {
                 () -> ContractInvokeHelper.refund(
                         getWcaContract(),
                         identifier,
-                        this.testWallet
+                        this.testAccount
                 )
         );
 
@@ -185,11 +184,11 @@ public class WCARefundTest extends ContractTestFramework {
                 new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 61 * 1000},
                 0, 100, false,
                 "test_record_404_after_thrshd_" + System.currentTimeMillis(),
-                this.creatorWallet
+                this.creatorAccount
         );
 
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 0, "proofOfWork", this.creatorWallet
+                getWcaContract(), identifier, 0, "proofOfWork", this.creatorAccount
         );
 
         var throwable = assertThrows(
@@ -197,7 +196,7 @@ public class WCARefundTest extends ContractTestFramework {
                 () -> ContractInvokeHelper.refund(
                         getWcaContract(),
                         identifier,
-                        this.testWallet
+                        this.testAccount
                 )
         );
 
@@ -218,12 +217,12 @@ public class WCARefundTest extends ContractTestFramework {
                 new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 61 * 1000},
                 0, 100, false,
                 "test_normal_refund_before_threshold_" + System.currentTimeMillis(),
-                this.creatorWallet
+                this.creatorAccount
         );
-        var oldBalance = getCatToken().getBalanceOf(this.testWallet.getDefaultAccount()).longValue();
+        var oldBalance = getCatToken().getBalanceOf(this.testAccount).longValue();
         // purchase
         transferToken(
-                getCatToken(), this.testWallet, getWcaContractAddress(),
+                getCatToken(), this.testAccount, getWcaContractAddress(),
                 1000_00, identifier, true
         );
 
@@ -231,10 +230,10 @@ public class WCARefundTest extends ContractTestFramework {
                 () -> ContractInvokeHelper.refund(
                         getWcaContract(),
                         identifier,
-                        this.testWallet
+                        this.testAccount
                 )
         );
-        var newBalance = getCatToken().getBalanceOf(this.testWallet.getDefaultAccount()).longValue();
+        var newBalance = getCatToken().getBalanceOf(this.testAccount).longValue();
 
         assertEquals(oldBalance, newBalance);
     }
@@ -251,31 +250,31 @@ public class WCARefundTest extends ContractTestFramework {
                 new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 61 * 1000},
                 0, 100, false,
                 "test_normal_refund_after_threshold_" + System.currentTimeMillis(),
-                this.creatorWallet
+                this.creatorAccount
         );
 
         var purchaseAmount = 1000_00;
-        var oldBuyerBalance = getCatToken().getBalanceOf(this.testWallet.getDefaultAccount()).longValue();
-        var oldCreatorBalance = getCatToken().getBalanceOf(this.creatorWallet.getDefaultAccount()).longValue();
+        var oldBuyerBalance = getCatToken().getBalanceOf(this.testAccount).longValue();
+        var oldCreatorBalance = getCatToken().getBalanceOf(this.creatorAccount).longValue();
         // purchase
         transferToken(
-                getCatToken(), this.testWallet, getWcaContractAddress(),
+                getCatToken(), this.testAccount, getWcaContractAddress(),
                 purchaseAmount, identifier, true
         );
 
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 0, "proofOfWork", this.creatorWallet
+                getWcaContract(), identifier, 0, "proofOfWork", this.creatorAccount
         );
 
         assertDoesNotThrow(
                 () -> ContractInvokeHelper.refund(
                         getWcaContract(),
                         identifier,
-                        this.testWallet
+                        this.testAccount
                 )
         );
-        var newBuyerBalance = getCatToken().getBalanceOf(this.testWallet.getDefaultAccount()).longValue();
-        var newCreatorBalance = getCatToken().getBalanceOf(this.creatorWallet.getDefaultAccount()).longValue();
+        var newBuyerBalance = getCatToken().getBalanceOf(this.testAccount).longValue();
+        var newCreatorBalance = getCatToken().getBalanceOf(this.creatorAccount).longValue();
 
         assertEquals(oldBuyerBalance - purchaseAmount / 2, newBuyerBalance);
         assertEquals(oldCreatorBalance + purchaseAmount * stakeRate / 100 / 2, newCreatorBalance);

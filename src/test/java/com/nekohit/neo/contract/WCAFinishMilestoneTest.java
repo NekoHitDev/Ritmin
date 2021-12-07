@@ -2,7 +2,7 @@ package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
-import io.neow3j.wallet.Wallet;
+import io.neow3j.wallet.Account;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -17,14 +17,14 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @TestInstance(Lifecycle.PER_CLASS)
 public class WCAFinishMilestoneTest extends ContractTestFramework {
-    private final Wallet testWallet = getTestWallet();
+    private final Account testAccount = getTestAccount();
 
     @Test
     void testInvalidId() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), "some_invalid_id", 0, "proofOfWork", this.testWallet
+                        getWcaContract(), "some_invalid_id", 0, "proofOfWork", this.testAccount
                 )
         );
         assertTrue(
@@ -44,13 +44,13 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), identifier, 0, "proofOfWork", Wallet.create()
+                        getWcaContract(), identifier, 0, "proofOfWork", Account.create()
                 )
         );
         assertTrue(
@@ -70,13 +70,13 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, true,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), identifier, 0, "proofOfWork", this.testWallet
+                        getWcaContract(), identifier, 0, "proofOfWork", this.testAccount
                 )
         );
         assertTrue(
@@ -96,17 +96,17 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                 new String[]{"milestone1", "milestone2"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 61 * 1000},
                 0, 60 * 1000, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
 
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 0, "proofOfWork", this.testWallet
+                getWcaContract(), identifier, 0, "proofOfWork", this.testAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), identifier, 1, "proofOfWork", this.testWallet
+                        getWcaContract(), identifier, 1, "proofOfWork", this.testAccount
                 )
         );
 
@@ -131,17 +131,17 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                         System.currentTimeMillis() + 62 * 1000
                 },
                 0, 1, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
 
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 1, "proofOfWork", this.testWallet
+                getWcaContract(), identifier, 1, "proofOfWork", this.testAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), identifier, 0, "proofOfWork", this.testWallet
+                        getWcaContract(), identifier, 0, "proofOfWork", this.testAccount
                 )
         );
 
@@ -165,17 +165,17 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                         System.currentTimeMillis() + 61 * 1000
                 },
                 0, 1, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
 
         ContractInvokeHelper.finishMilestone(
-                getWcaContract(), identifier, 0, "proofOfWork", this.testWallet
+                getWcaContract(), identifier, 0, "proofOfWork", this.testAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), identifier, 0, "proofOfWork", this.testWallet
+                        getWcaContract(), identifier, 0, "proofOfWork", this.testAccount
                 )
         );
 
@@ -199,7 +199,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                         System.currentTimeMillis() + 61 * 1000
                 },
                 0, 1, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
 
         Thread.sleep(3 * 1000);
@@ -207,7 +207,7 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), identifier, 0, "proofOfWork", this.testWallet
+                        getWcaContract(), identifier, 0, "proofOfWork", this.testAccount
                 )
         );
 
@@ -231,13 +231,13 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                         System.currentTimeMillis() + 61 * 1000
                 },
                 0, 1, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), identifier, 0, null, this.testWallet
+                        getWcaContract(), identifier, 0, null, this.testAccount
                 )
         );
 
@@ -261,12 +261,12 @@ public class WCAFinishMilestoneTest extends ContractTestFramework {
                         System.currentTimeMillis() + 61 * 1000
                 },
                 0, 1, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
 
         assertDoesNotThrow(
                 () -> ContractInvokeHelper.finishMilestone(
-                        getWcaContract(), identifier, 0, "Somethine", this.testWallet
+                        getWcaContract(), identifier, 0, "Somethine", this.testAccount
                 )
         );
     }
