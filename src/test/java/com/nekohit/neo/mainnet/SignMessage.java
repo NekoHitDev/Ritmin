@@ -1,8 +1,8 @@
 package com.nekohit.neo.mainnet;
 
 import com.nekohit.neo.TestUtils;
-import io.neow3j.crypto.ECDSASignature;
 import io.neow3j.crypto.ECKeyPair;
+import io.neow3j.crypto.Sign;
 import io.neow3j.wallet.Account;
 
 import javax.xml.bind.DatatypeConverter;
@@ -48,9 +48,10 @@ public class SignMessage {
     }
 
     private static void signAndPrint(byte[] message, ECKeyPair keyPair) {
-        ECDSASignature signature = keyPair.signAndGetECDSASignature(message);
-        System.out.println("Signature r: `" + signature.r.toString(16) + "`");
-        System.out.println("Signature s: `" + signature.s.toString(16) + "`");
+        Sign.SignatureData signature = Sign.signMessage(message, keyPair);
+        System.out.println("Signature r: `" + DatatypeConverter.printHexBinary(signature.getR()) + "`");
+        System.out.println("Signature s: `" + DatatypeConverter.printHexBinary(signature.getS()) + "`");
+        System.out.println("Signature v: `" + DatatypeConverter.printHexBinary(new byte[]{signature.getV()}) + "`");
         System.out.println("\n----");
     }
 }
