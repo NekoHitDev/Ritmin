@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static com.nekohit.neo.contract.TestConstants.CONTRACT_OWNER_ACCOUNT;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

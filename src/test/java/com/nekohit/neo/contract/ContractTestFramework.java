@@ -28,7 +28,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static com.nekohit.neo.contract.TestConstants.CONTRACT_OWNER_ACCOUNT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -42,6 +41,7 @@ public class ContractTestFramework {
     @RegisterExtension
     private static final ContractTestExtension ext = new ContractTestExtension();
 
+    protected static final Account CONTRACT_OWNER_ACCOUNT = TestUtils.createAccountFromPrivateKey("4d742d3c83124e4fe037488ff1428f57d092e436b120cd45b4f808c45f6b4700");
     protected static FungibleToken catToken = null;
     protected static SmartContract wcaContract = null;
     protected static Neow3j neow3j = null;

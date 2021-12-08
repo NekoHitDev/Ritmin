@@ -11,7 +11,6 @@ import org.bouncycastle.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.nekohit.neo.contract.TestConstants.CONTRACT_OWNER_ACCOUNT;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
