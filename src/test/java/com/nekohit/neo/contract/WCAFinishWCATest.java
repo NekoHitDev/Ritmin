@@ -1,11 +1,11 @@
 package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.wallet.Account;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,11 +14,21 @@ import static org.junit.jupiter.api.Assertions.*;
  * Including invalid id, unpaid, not ready to finish(last ms not finished nor expired),
  * owner override, double finished, normal op(check token distribution)
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class WCAFinishWCATest extends ContractTestFramework {
-    private final Account creatorAccount = getTestAccount();
-    private final Account buyerAccount1 = getTestAccount();
-    private final Account buyerAccount2 = getTestAccount();
+    private Account creatorAccount;
+    private Account buyerAccount1;
+    private Account buyerAccount2;
+
+    @BeforeEach
+    void setUp() {
+        creatorAccount = getTestAccount();
+        buyerAccount1 = getTestAccount();
+        buyerAccount2 = getTestAccount();
+    }
 
     @Test
     void testInvalidId() {

@@ -1,5 +1,6 @@
 package com.nekohit.neo.contract;
 
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
@@ -7,21 +8,28 @@ import io.neow3j.types.Hash160;
 import io.neow3j.wallet.Account;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.util.Arrays;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 
-import static com.nekohit.neo.contract.TestConstants.CONTRACT_OWNER_ACCOUNT;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This class test query methods for WCA.
  * Including valid response and invalid or expection handle.
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class WCAQueryTest extends ContractTestFramework {
-    private final Account creatorAccount = getTestAccount();
-    private final Account testAccount = getTestAccount();
+    private Account creatorAccount;
+    private Account testAccount;
+
+    @BeforeEach
+    void setUp() {
+        creatorAccount = getTestAccount();
+        testAccount = getTestAccount();
+    }
 
     @Test
     void testInvalidQueryWCA() {
@@ -141,7 +149,7 @@ public class WCAQueryTest extends ContractTestFramework {
     @Test
     void testAdvancedQuery() throws Throwable {
         var buyerAccount = getTestAccount();
-        var unpaidWCA = ContractInvokeHelper.declareProject(
+        ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
                 getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1", "milestone2", "milestone3"},

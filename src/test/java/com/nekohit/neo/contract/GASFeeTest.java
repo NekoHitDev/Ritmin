@@ -1,9 +1,9 @@
 package com.nekohit.neo.contract;
 
+import io.neow3j.test.ContractTest;
 import io.neow3j.wallet.Account;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,12 +11,22 @@ import org.slf4j.LoggerFactory;
  * This test measure the gas usage for each WCA operation.
  * No function is tested.
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class GASFeeTest extends ContractTestFramework {
     private final Logger logger = LoggerFactory.getLogger(GASFeeTest.class);
-    private final Account creatorAccount = getTestAccount();
-    private final Account buyer1Account = getTestAccount();
-    private final Account buyer2Account = getTestAccount();
+    private Account creatorAccount;
+    private Account buyer1Account;
+    private Account buyer2Account;
+
+    @BeforeEach
+    void setUp() {
+        creatorAccount = getTestAccount();
+        buyer1Account = getTestAccount();
+        buyer2Account = getTestAccount();
+    }
 
     @Test
     void test() throws Throwable {

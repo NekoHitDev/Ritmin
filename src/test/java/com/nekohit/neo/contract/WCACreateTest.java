@@ -1,14 +1,14 @@
 package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.wallet.Account;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import java.util.List;
 
@@ -18,9 +18,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * This class test the creation of WCA.
  * Including invalid parameter, invalid milestones, duplicate identifier, etc.
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class WCACreateTest extends ContractTestFramework {
-    private final Account testAccount = getTestAccount();
+    private Account testAccount;
+
+    @BeforeEach
+    void setUp() {
+        testAccount = getTestAccount();
+    }
 
     @Test
     void testNegativeStakeRate() {

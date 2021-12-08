@@ -1,11 +1,11 @@
 package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.wallet.Account;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,10 +16,19 @@ import static org.junit.jupiter.api.Assertions.*;
  * purchase(unpaid, already start, first ms not finished but expired, insufficient remain,
  * normal op(one shot, multiple purchase)).
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class WCAPurchaseTest extends ContractTestFramework {
-    private final Account creatorAccount = getTestAccount();
-    private final Account testAccount = getTestAccount();
+    private Account creatorAccount;
+    private Account testAccount;
+
+    @BeforeEach
+    void setUp() {
+        creatorAccount = getTestAccount();
+        testAccount = getTestAccount();
+    }
 
     @Test
     void testInvalidId() {
@@ -116,7 +125,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> transferToken(
-                        GAS_TOKEN, this.creatorAccount,
+                        gasToken, this.creatorAccount,
                         getWcaContractAddress(),
                         1_00, identifier, false
                 )
@@ -198,7 +207,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> transferToken(
-                        GAS_TOKEN, this.testAccount,
+                        gasToken, this.testAccount,
                         getWcaContractAddress(),
                         10, identifier, false
                 )

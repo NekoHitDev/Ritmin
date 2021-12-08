@@ -2,27 +2,33 @@ package com.nekohit.neo.contract;
 
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.exceptions.UnexpectedReturnTypeException;
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.wallet.Account;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import java.io.IOException;
 
-import static com.nekohit.neo.contract.TestConstants.CONTRACT_OWNER_ACCOUNT;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the CatToken.
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+})
 public class CatTokenTest extends ContractTestFramework {
-    private final Account testAccount = getTestAccount();
+    private Account testAccount;
+
+    @BeforeEach
+    void setUp() {
+        testAccount = getTestAccount();
+    }
 
     @Test
     void testSymbol() throws UnexpectedReturnTypeException, IOException {
@@ -210,7 +216,7 @@ public class CatTokenTest extends ContractTestFramework {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> transferToken(
-                        GAS_TOKEN, this.testAccount, getCatTokenAddress(),
+                        gasToken, this.testAccount, getCatTokenAddress(),
                         1, null, false
                 )
         );
@@ -225,19 +231,19 @@ public class CatTokenTest extends ContractTestFramework {
         var exchangeAmount = 1_000000L;
         // Query old balance
         var oldCatBalance = getCatToken().getBalanceOf(this.testAccount).longValue();
-        var oldTotalSupply = new FungibleToken(getCatTokenAddress(), NEOW3J).getTotalSupply().longValue();
+        var oldTotalSupply = new FungibleToken(getCatTokenAddress(), neow3j).getTotalSupply().longValue();
 
         // do the transfer
         assertDoesNotThrow(
                 () -> transferToken(
-                        GAS_TOKEN, this.testAccount, getCatTokenAddress(),
+                        gasToken, this.testAccount, getCatTokenAddress(),
                         exchangeAmount, null, true
                 )
         );
 
         // query new balance
         var newCatBalance = getCatToken().getBalanceOf(this.testAccount).longValue();
-        var newTotalSupply = new FungibleToken(getCatTokenAddress(), NEOW3J).getTotalSupply().longValue();
+        var newTotalSupply = new FungibleToken(getCatTokenAddress(), neow3j).getTotalSupply().longValue();
 
         // check change
         assertEquals(2_00, newCatBalance - oldCatBalance);
@@ -249,8 +255,8 @@ public class CatTokenTest extends ContractTestFramework {
         var destroyAmount = 2_00;
         // Query old balance
         var oldCatBalance = getCatToken().getBalanceOf(this.testAccount).longValue();
-        var oldGasBalance = GAS_TOKEN.getBalanceOf(this.testAccount).longValue();
-        var oldTotalSupply = new FungibleToken(getCatTokenAddress(), NEOW3J).getTotalSupply().longValue();
+        var oldGasBalance = gasToken.getBalanceOf(this.testAccount).longValue();
+        var oldTotalSupply = new FungibleToken(getCatTokenAddress(), neow3j).getTotalSupply().longValue();
 
         // do the transfer
         assertDoesNotThrow(
@@ -266,8 +272,8 @@ public class CatTokenTest extends ContractTestFramework {
 
         // query new balance
         var newCatBalance = getCatToken().getBalanceOf(this.testAccount).longValue();
-        var newGasBalance = GAS_TOKEN.getBalanceOf(this.testAccount).longValue();
-        var newTotalSupply = new FungibleToken(getCatTokenAddress(), NEOW3J).getTotalSupply().longValue();
+        var newGasBalance = gasToken.getBalanceOf(this.testAccount).longValue();
+        var newTotalSupply = new FungibleToken(getCatTokenAddress(), neow3j).getTotalSupply().longValue();
 
         // check change
         assertEquals(2_00, oldCatBalance - newCatBalance);
