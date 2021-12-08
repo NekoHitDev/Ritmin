@@ -1,11 +1,11 @@
 package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.wallet.Account;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,9 +15,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * cool down time not met, missed ms, finished ms, expired ms,
  * proof of work is null, normal op
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class WCAFinishMilestoneTest extends ContractTestFramework {
-    private final Account testAccount = getTestAccount();
+    private Account testAccount;
+
+    @BeforeEach
+    void setUp() {
+        testAccount = getTestAccount();
+    }
 
     @Test
     void testInvalidId() {
