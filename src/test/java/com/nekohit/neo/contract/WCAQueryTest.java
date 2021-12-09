@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This class test query methods for WCA.
- * Including valid response and invalid or expection handle.
+ * Including valid response and invalid or exception handle.
  */
 @ContractTest(blockTime = 1, contracts = {
         CatToken.class,
