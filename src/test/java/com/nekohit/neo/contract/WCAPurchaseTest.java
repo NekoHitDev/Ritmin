@@ -1,14 +1,11 @@
 package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
-import io.neow3j.transaction.AccountSigner;
-import io.neow3j.transaction.Signer;
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
-import io.neow3j.types.ContractParameter;
-import io.neow3j.wallet.Wallet;
+import io.neow3j.wallet.Account;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,42 +16,27 @@ import static org.junit.jupiter.api.Assertions.*;
  * purchase(unpaid, already start, first ms not finished but expired, insufficient remain,
  * normal op(one shot, multiple purchase)).
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class WCAPurchaseTest extends ContractTestFramework {
-    private final Wallet creatorWallet = getTestWallet();
-    private final Wallet testWallet = getTestWallet();
+    private Account creatorAccount;
+    private Account testAccount;
 
-    @Test
-    void invalidCallerTest() {
-        var tempWallet = Wallet.create();
-        var throwable = assertThrows(
-                TransactionConfigurationException.class,
-                () -> invokeFunction(
-                        getWcaContract(), "onNEP17Payment",
-                        new ContractParameter[]{
-                                ContractParameter.hash160(tempWallet.getDefaultAccount()),
-                                ContractParameter.integer(100),
-                                ContractParameter.string("some_id")
-                        },
-                        new Signer[]{
-                                AccountSigner.calledByEntry(tempWallet.getDefaultAccount())
-                        },
-                        tempWallet
-                )
-        );
-        assertTrue(
-                throwable.getMessage().contains(ExceptionMessages.INVALID_CALLER),
-                "Unknown exception: " + throwable.getMessage()
-        );
+    @BeforeEach
+    void setUp() {
+        creatorAccount = getTestAccount();
+        testAccount = getTestAccount();
     }
 
     @Test
-    void testInvalidId() throws Throwable {
+    void testInvalidId() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> transferToken(
                         getCatToken(),
-                        this.creatorWallet,
+                        this.creatorAccount,
                         getWcaContractAddress(),
                         1000,
                         "some_invalid_id",
@@ -74,18 +56,18 @@ public class WCAPurchaseTest extends ContractTestFramework {
         ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
         // pay again
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> transferToken(
-                        getCatToken(), this.creatorWallet,
+                        getCatToken(), this.creatorAccount,
                         getWcaContractAddress(),
                         1_00, identifier, false
                 )
@@ -103,18 +85,18 @@ public class WCAPurchaseTest extends ContractTestFramework {
         ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
         // pay
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> transferToken(
-                        getCatToken(), this.creatorWallet,
+                        getCatToken(), this.creatorAccount,
                         getWcaContractAddress(),
                         10, identifier, false
                 )
@@ -126,23 +108,52 @@ public class WCAPurchaseTest extends ContractTestFramework {
     }
 
     @Test
+    void testWrongTokenPayStake() throws Throwable {
+        var identifier = "test_wrong_token_pay_stake_" + System.currentTimeMillis();
+        // create WCA
+        ContractInvokeHelper.declareProject(
+                // stake: 1.00 * 1.00
+                getWcaContract(), "description",
+                getCatTokenAddress(), 1_00, 1_00,
+                new String[]{"milestone"},
+                new String[]{"milestone"},
+                new Long[]{System.currentTimeMillis() + 60 * 1000},
+                0, 100, false,
+                identifier, this.creatorAccount
+        );
+        // pay
+        var throwable = assertThrows(
+                TransactionConfigurationException.class,
+                () -> transferToken(
+                        gasToken, this.creatorAccount,
+                        getWcaContractAddress(),
+                        1_00, identifier, false
+                )
+        );
+        assertTrue(
+                throwable.getMessage().contains(ExceptionMessages.INVALID_CALLER),
+                "Unknown exception: " + throwable.getMessage()
+        );
+    }
+
+    @Test
     void testNormalPayStake() throws Throwable {
         var identifier = "test_normal_pay_stake_" + System.currentTimeMillis();
         // create WCA
         ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
         // pay
         assertDoesNotThrow(
                 () -> transferToken(
-                        getCatToken(), this.creatorWallet,
+                        getCatToken(), this.creatorAccount,
                         getWcaContractAddress(),
                         1_00, identifier, false
                 )
@@ -156,24 +167,53 @@ public class WCAPurchaseTest extends ContractTestFramework {
         ContractInvokeHelper.declareProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
         // purchase
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> transferToken(
-                        getCatToken(), this.testWallet,
+                        getCatToken(), this.testAccount,
                         getWcaContractAddress(),
                         10, identifier, false
                 )
         );
         assertTrue(
                 throwable.getMessage().contains(ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING),
+                "Unknown exception: " + throwable.getMessage()
+        );
+    }
+
+    @Test
+    void testPurchaseWrongToken() throws Throwable {
+        var identifier = "test_purchase_wrong_token_" + System.currentTimeMillis();
+        // create WCA
+        ContractInvokeHelper.declareProject(
+                // stake: 1.00 * 1.00
+                getWcaContract(), "description",
+                getCatTokenAddress(), 1_00, 1_00,
+                new String[]{"milestone"},
+                new String[]{"milestone"},
+                new Long[]{System.currentTimeMillis() + 60 * 1000},
+                0, 100, false,
+                identifier, this.creatorAccount
+        );
+        // purchase
+        var throwable = assertThrows(
+                TransactionConfigurationException.class,
+                () -> transferToken(
+                        gasToken, this.testAccount,
+                        getWcaContractAddress(),
+                        10, identifier, false
+                )
+        );
+        assertTrue(
+                throwable.getMessage().contains(ExceptionMessages.INVALID_CALLER),
                 "Unknown exception: " + throwable.getMessage()
         );
     }
@@ -186,22 +226,19 @@ public class WCAPurchaseTest extends ContractTestFramework {
         ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{firstEndTimestamp},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
-        // wait for first milestone expire
-        while (System.currentTimeMillis() <= firstEndTimestamp) {
-            Thread.sleep(100);
-        }
+        Thread.sleep(5 * 1000);
         // purchase
         var throwable = assertThrows(
                 Exception.class,
                 () -> transferToken(
-                        getCatToken(), this.testWallet,
+                        getCatToken(), this.testAccount,
                         getWcaContractAddress(),
                         10, identifier, false
                 )
@@ -219,19 +256,19 @@ public class WCAPurchaseTest extends ContractTestFramework {
         ContractInvokeHelper.createAndPayProject(
                 // stake: 1.00 * 1.00
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         // purchase
         var throwable = assertThrows(
                 Exception.class,
                 () -> transferToken(
-                        getCatToken(), this.testWallet,
+                        getCatToken(), this.testAccount,
                         getWcaContractAddress(),
                         1000_00, identifier, false
                 )
@@ -248,17 +285,17 @@ public class WCAPurchaseTest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1000_00,
+                getCatTokenAddress(), 1_00, 1000_00,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
         // purchase
         assertDoesNotThrow(
                 () -> transferToken(
-                        getCatToken(), this.testWallet,
+                        getCatToken(), this.testAccount,
                         getWcaContractAddress(),
                         1000_00, identifier, true
                 )
@@ -271,24 +308,24 @@ public class WCAPurchaseTest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1000_00,
+                getCatTokenAddress(), 1_00, 1000_00,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
         // purchase
         assertDoesNotThrow(
                 () -> transferToken(
-                        getCatToken(), this.testWallet,
+                        getCatToken(), this.testAccount,
                         getWcaContractAddress(),
                         500_00, identifier, false
                 )
         );
         assertDoesNotThrow(
                 () -> transferToken(
-                        getCatToken(), this.testWallet,
+                        getCatToken(), this.testAccount,
                         getWcaContractAddress(),
                         500_00, identifier, true
                 )

@@ -1,28 +1,25 @@
 package com.nekohit.neo.helper;
 
-import io.neow3j.crypto.ECKeyPair;
 import io.neow3j.devpack.ByteString;
 import io.neow3j.devpack.annotations.Instruction;
 import io.neow3j.script.OpCode;
-import io.neow3j.transaction.Transaction;
 import io.neow3j.types.StackItemType;
-import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
-
-import java.math.BigInteger;
-import java.util.Scanner;
 
 public class Utils {
     @Instruction(opcode = OpCode.CONVERT, operand = StackItemType.BYTE_STRING_CODE)
     public static native ByteString intToByteString(int i);
 
-    public static ByteString paddingByteString(ByteString b, int l) throws Exception {
+    public static ByteString intToPaddingByteString(int i, int l) throws Exception {
+        ByteString b = intToByteString(i);
         require(b.length() <= l, "Max length exceeded.");
         if (b.length() < l) {
-            byte[] buffer = new byte[l - b.length()];
-            b = b.concat(buffer);
+            // note in the NeoVM, int are represented in SMALL endian
+            // So number 1024 = 0x400, which is (low addr)[00][04](high addr)
+            // To padding the zero, we want it to be 0x00...000400
+            // which is [00][04] [00]...[00]
+            //          +--b---+ +---zero--+
+            b = b.concat(new byte[l - b.length()]);
         }
-//        require(b.length() == l, "assert failed!");
         return b;
     }
 
@@ -37,33 +34,5 @@ public class Utils {
         if (!condition) {
             throw new Exception(message);
         }
-    }
-
-    public static Account createAccountFromPrivateKey(String privateKey) {
-        return new Account(ECKeyPair.create(
-                new BigInteger(privateKey, 16)
-        ));
-    }
-
-    /**
-     * Get gas fee from given test
-     *
-     * @param tx the transaction
-     * @return the gas fee in decimal representation
-     */
-    public static double getGasFeeFromTx(Transaction tx) {
-        long fraction = tx.getSystemFee() + tx.getNetworkFee();
-        return fraction / Math.pow(10, 8);
-    }
-
-    public static Wallet readWalletWIF() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Paste account WIF:");
-        String walletWIF = scanner.nextLine();
-        // flush WIF out of screen
-        for (int i = 0; i < 2000; i++) {
-            System.out.println();
-        }
-        return Wallet.withAccounts(Account.fromWIF(walletWIF));
     }
 }

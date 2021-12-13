@@ -16,10 +16,9 @@ public class ProjectStaticContent {
 
     /**
      * Stake rate. Since NeoVM cannot process float number,
-     * so we have to multiply the decimals to convert it into
-     * an integer. (aka the fraction representation)
+     * so we have to limit this to 0.00 (2 decimals)
      */
-    public final int stakePer100Token;
+    public final int stakeRate100;
 
     /**
      * Total sold token. Represented in fraction.
@@ -64,22 +63,40 @@ public class ProjectStaticContent {
     public final int lastMilestoneExpireTime;
 
     /**
-     * If this project will be listed in the result of {@link com.nekohit.neo.contract.WCAContract#advanceQuery(Hash160, Hash160, int, int)},
+     * If this project will be listed in the result of {@link com.nekohit.neo.contract.WCAContract#advanceQuery(Hash160, Hash160, Hash160, int, int)},
      * but this won't prevent somebody brute force your identifier or
      * read the storage area directly.
      */
     public final boolean bePublic;
 
+    /**
+     * Which token is used.
+     * */
+    public final Hash160 tokenHash;
+
+    // Preserved for future use
+    public Object preserved0 = null;
+    public Object preserved1 = null;
+    public Object preserved2 = null;
+    public Object preserved3 = null;
+    public Object preserved4 = null;
+    public Object preserved5 = null;
+    public Object preserved6 = null;
+    public Object preserved7 = null;
+    public Object preserved8 = null;
+    public Object preserved9 = null;
+
     public ProjectStaticContent(
-            Hash160 owner, String description,
-            int stakePer100Token, int maxTokenSoldCount,
+            Hash160 owner, String description, Hash160 tokenHash,
+            int stakeRate100, int maxTokenSoldCount,
             int milestoneCount, int thresholdIndex,
             int coolDownInterval, int thresholdMilestoneExpireTime,
             int lastMilestoneExpireTime, boolean bePublic
     ) {
         this.owner = owner;
         this.description = description;
-        this.stakePer100Token = stakePer100Token;
+        this.tokenHash = tokenHash;
+        this.stakeRate100 = stakeRate100;
         this.maxTokenSoldCount = maxTokenSoldCount;
         this.milestoneCount = milestoneCount;
         this.thresholdIndex = thresholdIndex;
@@ -98,7 +115,7 @@ public class ProjectStaticContent {
      * @return token count in fraction. 1.00 token means 100
      */
     public int getTotalStake() {
-        return this.stakePer100Token * this.maxTokenSoldCount / 100;
+        return this.stakeRate100 * this.maxTokenSoldCount / 100;
     }
 
     /**

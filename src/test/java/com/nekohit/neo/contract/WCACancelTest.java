@@ -1,10 +1,11 @@
 package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
-import io.neow3j.wallet.Wallet;
+import io.neow3j.wallet.Account;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,17 +15,26 @@ import static org.junit.jupiter.api.Assertions.*;
  * ok to cancel(pending and open),
  * shouldn't cancel(active and finished).
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class WCACancelTest extends ContractTestFramework {
-    private final Wallet creatorWallet = getTestWallet();
-    private final Wallet testWallet = getTestWallet();
+    private Account creatorAccount;
+    private Account testAccount;
+
+    @BeforeEach
+    void setUp() {
+        creatorAccount = getTestAccount();
+        testAccount = getTestAccount();
+    }
 
     @Test
     void testCancelNotFound() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.cancelProject(
-                        getWcaContract(), "some_invalid_id", this.creatorWallet
+                        getWcaContract(), "some_invalid_id", this.creatorAccount
                 )
         );
         assertTrue(
@@ -39,18 +49,18 @@ public class WCACancelTest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.cancelProject(
-                        getWcaContract(), identifier, this.testWallet
+                        getWcaContract(), identifier, this.testAccount
                 )
         );
         assertTrue(
@@ -65,26 +75,26 @@ public class WCACancelTest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         assertDoesNotThrow(
                 () -> ContractInvokeHelper.cancelProject(
-                        getWcaContract(), identifier, this.creatorWallet
+                        getWcaContract(), identifier, this.creatorAccount
                 )
         );
     }
 
     @Test
     void testCancelOpen() throws Throwable {
-        Wallet buyerWallet1 = getTestWallet();
-        Wallet buyerWallet2 = getTestWallet();
-        Wallet testWallet = getTestWallet();
+        Account buyerAccount1 = getTestAccount();
+        Account buyerAccount2 = getTestAccount();
+        Account testAccount = getTestAccount();
         var buyer1Purchase = 400_00;
         var buyer2Purchase = 500_00;
         var totalAmount = 1000_00;
@@ -93,7 +103,7 @@ public class WCACancelTest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                stakeRate, totalAmount,
+                getCatTokenAddress(), stakeRate, totalAmount,
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new String[]{"milestone1", "milestone2", "milestone3"},
                 new Long[]{
@@ -102,32 +112,32 @@ public class WCACancelTest extends ContractTestFramework {
                         System.currentTimeMillis() + 62 * 1000
                 },
                 0, 1, false,
-                identifier, testWallet
+                identifier, testAccount
         );
 
         // purchase
         // NOTE: one purchase per WCA per block. Since only one write operation will be accepted
         //       by committee, rest of them will be discarded and become invalid.
         transferToken(
-                getCatToken(), buyerWallet1,
+                getCatToken(), buyerAccount1,
                 getWcaContractAddress(),
                 buyer1Purchase, identifier, true
         );
         transferToken(
-                getCatToken(), buyerWallet2,
+                getCatToken(), buyerAccount2,
                 getWcaContractAddress(),
                 buyer2Purchase, identifier, true
         );
 
-        var creatorOldBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
-        var buyer1OldBalance = getCatToken().getBalanceOf(buyerWallet1.getDefaultAccount()).longValue();
-        var buyer2OldBalance = getCatToken().getBalanceOf(buyerWallet2.getDefaultAccount()).longValue();
+        var creatorOldBalance = getCatToken().getBalanceOf(testAccount).longValue();
+        var buyer1OldBalance = getCatToken().getBalanceOf(buyerAccount1).longValue();
+        var buyer2OldBalance = getCatToken().getBalanceOf(buyerAccount2).longValue();
 
-        ContractInvokeHelper.cancelProject(getWcaContract(), identifier, testWallet);
+        ContractInvokeHelper.cancelProject(getWcaContract(), identifier, testAccount);
 
-        var creatorNewBalance = getCatToken().getBalanceOf(testWallet.getDefaultAccount()).longValue();
-        var buyer1NewBalance = getCatToken().getBalanceOf(buyerWallet1.getDefaultAccount()).longValue();
-        var buyer2NewBalance = getCatToken().getBalanceOf(buyerWallet2.getDefaultAccount()).longValue();
+        var creatorNewBalance = getCatToken().getBalanceOf(testAccount).longValue();
+        var buyer1NewBalance = getCatToken().getBalanceOf(buyerAccount1).longValue();
+        var buyer2NewBalance = getCatToken().getBalanceOf(buyerAccount2).longValue();
 
         // buy this time:
         var staked = totalAmount * stakeRate / 100;
@@ -142,7 +152,7 @@ public class WCACancelTest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1", "milestone2"},
                 new String[]{"milestone1", "milestone2"},
                 new Long[]{
@@ -150,17 +160,17 @@ public class WCACancelTest extends ContractTestFramework {
                         System.currentTimeMillis() + 60 * 1000 + 1
                 },
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         ContractInvokeHelper.finishMilestone(
                 getWcaContract(), identifier, 0, "something",
-                this.creatorWallet);
+                this.creatorAccount);
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.cancelProject(
-                        getWcaContract(), identifier, this.creatorWallet
+                        getWcaContract(), identifier, this.creatorAccount
                 )
         );
         assertTrue(
@@ -175,20 +185,20 @@ public class WCACancelTest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
-        ContractInvokeHelper.finishProject(getWcaContract(), identifier, this.creatorWallet);
+        ContractInvokeHelper.finishProject(getWcaContract(), identifier, this.creatorAccount);
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.cancelProject(
-                        getWcaContract(), identifier, this.creatorWallet
+                        getWcaContract(), identifier, this.creatorAccount
                 )
         );
         assertTrue(
@@ -203,24 +213,24 @@ public class WCACancelTest extends ContractTestFramework {
         // create WCA
         ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
-                1_00, 1_00,
+                getCatTokenAddress(), 1_00, 1_00,
                 new String[]{"milestone1"},
                 new String[]{"milestone1"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.creatorWallet
+                identifier, this.creatorAccount
         );
 
         assertDoesNotThrow(
                 () -> ContractInvokeHelper.cancelProject(
-                        getWcaContract(), identifier, this.creatorWallet
+                        getWcaContract(), identifier, this.creatorAccount
                 )
         );
 
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.cancelProject(
-                        getWcaContract(), identifier, this.creatorWallet
+                        getWcaContract(), identifier, this.creatorAccount
                 )
         );
         assertTrue(

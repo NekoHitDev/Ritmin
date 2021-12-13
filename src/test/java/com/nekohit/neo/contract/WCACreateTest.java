@@ -1,17 +1,16 @@
 package com.nekohit.neo.contract;
 
 import com.nekohit.neo.domain.ExceptionMessages;
+import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.exceptions.TransactionConfigurationException;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 
-import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,23 +18,31 @@ import static org.junit.jupiter.api.Assertions.*;
  * This class test the creation of WCA.
  * Including invalid parameter, invalid milestones, duplicate identifier, etc.
  */
-@TestInstance(Lifecycle.PER_CLASS)
+@ContractTest(blockTime = 1, contracts = {
+        CatToken.class,
+        WCAContract.class,
+})
 public class WCACreateTest extends ContractTestFramework {
-    private final Wallet testWallet = getTestWallet();
+    private Account testAccount;
+
+    @BeforeEach
+    void setUp() {
+        testAccount = getTestAccount();
+    }
 
     @Test
-    void testNegativeStakeRate() throws Throwable {
+    void testNegativeStakeRate() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        -100, 10,
+                        getCatTokenAddress(), -100, 10,
                         new String[]{"milestone"},
                         new String[]{"milestone"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_negative_stake_rate_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -45,18 +52,18 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testZeroStakeRate() throws Throwable {
+    void testZeroStakeRate() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        0, 10,
+                        getCatTokenAddress(), 0, 10,
                         new String[]{"milestone"},
                         new String[]{"milestone"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_zero_stake_rate_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -66,18 +73,18 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testNegativeTokenCount() throws Throwable {
+    void testNegativeTokenCount() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, -100,
+                        getCatTokenAddress(), 100, -100,
                         new String[]{"milestone"},
                         new String[]{"milestone"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_negative_token_count_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -87,18 +94,18 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testZeroTokenCount() throws Throwable {
+    void testZeroTokenCount() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 0,
+                        getCatTokenAddress(), 100, 0,
                         new String[]{"milestone"},
                         new String[]{"milestone"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_zero_token_count_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -108,31 +115,29 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testInvalidSigner() throws Throwable {
+    void testInvalidSigner() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
-                () -> {
-                    ContractTestFramework.invokeFunction(
-                            getWcaContract(), "declareProject",
-                            new ContractParameter[]{
-                                    ContractParameter.hash160(Account.create()),
-                                    ContractParameter.string("Something"),
-                                    ContractParameter.integer(100),
-                                    ContractParameter.integer(1000),
-                                    ContractParameter.array(Arrays.asList("milestone")),
-                                    ContractParameter.array(Arrays.asList("milestone")),
-                                    ContractParameter.array(Arrays.asList(System.currentTimeMillis() + 60 * 1000)),
-                                    ContractParameter.integer(0),
-                                    ContractParameter.integer(100),
-                                    ContractParameter.bool(false),
-                                    ContractParameter.string("test_invalid_signer_" + System.currentTimeMillis())
-                            },
-                            new Signer[]{
-                                    AccountSigner.calledByEntry(this.testWallet.getDefaultAccount())
-                            },
-                            this.testWallet
-                    );
-                }
+                () -> ContractTestFramework.invokeFunction(
+                        getWcaContract(), "declareProject",
+                        new ContractParameter[]{
+                                ContractParameter.hash160(Account.create()),
+                                ContractParameter.string("Something"),
+                                ContractParameter.hash160(getCatTokenAddress()),
+                                ContractParameter.integer(100),
+                                ContractParameter.integer(1000),
+                                ContractParameter.array(List.of("milestone")),
+                                ContractParameter.array(List.of("milestone")),
+                                ContractParameter.array(List.of(System.currentTimeMillis() + 60 * 1000)),
+                                ContractParameter.integer(0),
+                                ContractParameter.integer(100),
+                                ContractParameter.bool(false),
+                                ContractParameter.string("test_invalid_signer_" + System.currentTimeMillis())
+                        },
+                        new Signer[]{
+                                AccountSigner.calledByEntry(this.testAccount)
+                        }
+                )
         );
         assertTrue(
                 throwable.getMessage().contains(ExceptionMessages.INVALID_SIGNATURE),
@@ -145,23 +150,23 @@ public class WCACreateTest extends ContractTestFramework {
         var identifier = "test_duplicate_id_" + System.currentTimeMillis();
         ContractInvokeHelper.declareProject(
                 getWcaContract(), "description",
-                100, 1000,
+                getCatTokenAddress(), 100, 1000,
                 new String[]{"milestone"},
                 new String[]{"milestone"},
                 new Long[]{System.currentTimeMillis() + 60 * 1000},
                 0, 100, false,
-                identifier, this.testWallet
+                identifier, this.testAccount
         );
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 0,
+                        getCatTokenAddress(), 100, 0,
                         new String[]{"milestone"},
                         new String[]{"milestone"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
-                        identifier, this.testWallet
+                        identifier, this.testAccount
                 )
         );
         assertTrue(
@@ -171,18 +176,18 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testDifferentMilestoneCount() throws Throwable {
+    void testDifferentMilestoneCount() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 1000,
+                        getCatTokenAddress(), 100, 1000,
                         new String[]{"milestone1", "milestone2"},
                         new String[]{"milestone1", "milestone2"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_different_milestone_count_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -192,18 +197,18 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testDecreaseEndTimestamp() throws Throwable {
+    void testDecreaseEndTimestamp() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 1000,
+                        getCatTokenAddress(), 100, 1000,
                         new String[]{"milestone1", "milestone2"},
                         new String[]{"milestone1", "milestone2"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000, System.currentTimeMillis() + 59 * 1000},
                         0, 100, false,
                         "test_decrease_end_timestamp_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -213,19 +218,19 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testExpiredEndTimestamp() throws Throwable {
+    void testExpiredEndTimestamp() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 1000,
+                        getCatTokenAddress(), 100, 1000,
                         new String[]{"milestone1"},
                         new String[]{"milestone1"},
                         // definitely a expired timestamp
                         new Long[]{12345L},
                         0, 100, false,
                         "test_expired_end_timestamp_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -234,22 +239,19 @@ public class WCACreateTest extends ContractTestFramework {
         );
     }
 
-    // TODO cannot test zero milestone, 
-    //      since neow3j require at least 1 element in a given array
-
     @Test
-    void testInvalidThresholdMilestone() throws Throwable {
+    void testInvalidThresholdMilestone() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 1000,
+                        getCatTokenAddress(), 100, 1000,
                         new String[]{"milestone1"},
                         new String[]{"milestone1"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         -1, 100, false,
                         "test_invalid_threshold_milestone_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -261,13 +263,13 @@ public class WCACreateTest extends ContractTestFramework {
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 1000,
+                        getCatTokenAddress(), 100, 1000,
                         new String[]{"milestone1"},
                         new String[]{"milestone1"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         1, 100, false,
                         "test_invalid_threshold_milestone_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -277,18 +279,18 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testInvalidCoolDownInterval() throws Throwable {
+    void testInvalidCoolDownInterval() {
         var throwable = assertThrows(
                 TransactionConfigurationException.class,
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 1000,
+                        getCatTokenAddress(), 100, 1000,
                         new String[]{"milestone1"},
                         new String[]{"milestone1"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, -100, false,
                         "test_invalid_cool_down_interval_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
         assertTrue(
@@ -298,17 +300,17 @@ public class WCACreateTest extends ContractTestFramework {
     }
 
     @Test
-    void testNormalOperation() throws Throwable {
+    void testNormalOperation() {
         assertDoesNotThrow(
                 () -> ContractInvokeHelper.declareProject(
                         getWcaContract(), "description",
-                        100, 1000,
+                        getCatTokenAddress(), 100, 1000,
                         new String[]{"milestone1"},
                         new String[]{"milestone1"},
                         new Long[]{System.currentTimeMillis() + 60 * 1000},
                         0, 100, false,
                         "test_create_normal_" + System.currentTimeMillis(),
-                        this.testWallet
+                        this.testAccount
                 )
         );
     }

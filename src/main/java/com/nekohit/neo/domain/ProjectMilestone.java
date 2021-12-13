@@ -24,6 +24,23 @@ public class ProjectMilestone {
      */
     public String proofOfWork;
 
+    /**
+     * Not used, preserved for future.
+     * */
+    public int weight = -1;
+
+    // Preserved for future use
+    public Object preserved0 = null;
+    public Object preserved1 = null;
+    public Object preserved2 = null;
+    public Object preserved3 = null;
+    public Object preserved4 = null;
+    public Object preserved5 = null;
+    public Object preserved6 = null;
+    public Object preserved7 = null;
+    public Object preserved8 = null;
+    public Object preserved9 = null;
+
     public ProjectMilestone(String title, String description, int endTimestamp) {
         this.title = title;
         this.description = description;

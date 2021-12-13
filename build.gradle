@@ -16,23 +16,22 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.neow3j:contract:3.13.0'
-    implementation 'io.neow3j:devpack:3.13.0'
-    implementation 'io.neow3j:compiler:3.13.0'
-    implementation 'ch.qos.logback:logback-classic:1.2.5'
-    //noinspection GradlePackageUpdate
-    implementation 'commons-codec:commons-codec:1.15'
+    implementation 'io.neow3j:contract:3.14.0'
+    implementation 'io.neow3j:devpack:3.14.0'
+    implementation 'io.neow3j:compiler:3.14.0'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+    testImplementation 'ch.qos.logback:logback-classic:1.2.7'
+    //noinspection GradlePackageUpdate
+    testImplementation 'commons-codec:commons-codec:1.15'
+    //noinspection GradlePackageUpdate
+    testImplementation 'javax.xml.bind:jaxb-api:2.3.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testImplementation 'io.neow3j:devpack-test:3.14.0'
 }
 
 test {
     useJUnitPlatform()
-}
-
-tasks.withType(Test).configureEach {
-    maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 }
 
 testlogger {

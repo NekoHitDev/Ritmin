@@ -4,64 +4,59 @@ The contracts developed by NekoHitDev.
 
 ## Cat Token
 
-This is the token accepted by other contracts (currently only the WCA Contract.)
+This is our native token, which has a fixed rate with fUSDT: 1 CAT = 0.5 fUDST.
 
 ### Basic info
 
 Supported standard: `NEP-17`
 
-Deployed: 
+Symbol: `CAT`
 
-+ Test net: [`0xf461dff74f454e5016421341f115a2e789eadbd7`](https://neo3.testnet.neotube.io/contract/0xf461dff74f454e5016421341f115a2e789eadbd7)
+Decimals: `2`
 
-+ Main net: [`TODO`](https://neo3.neotube.io/contract/TODO)
+Total supply: `Not fixed`
 
-### Events and Methods
+Deployed:
 
-#### Events
++ Test
+  net: [`0xf461dff74f454e5016421341f115a2e789eadbd7`](https://neo3.testnet.neotube.io/contract/0xf461dff74f454e5016421341f115a2e789eadbd7)
++ Test net address: `NiC9K2Z2kSuCTmhempiw5TcPHuee6PTsDE`
++ Main
+  net: [`0xcdc17669ce3b7cfa65a29c4941aba14dbff9b12b`](https://neo3.neotube.io/contract/0xcdc17669ce3b7cfa65a29c4941aba14dbff9b12b)
++ Main net address: `NPu1SxtZf2PDDGwzbdWQd2h6Gi5kXiyKM5`
 
-+ `Transfer(from: Hash160, to: Hash160, amount: Integer)`
+### Mint from fUSDT
 
-  Fired when a transaction is successfully processed by contract.
+You can mint CAT by transferring some amount of fUSDT to cat contract. The cat contract will mint your cat tokens in the
+same tx. Note: The tx will be rejected if you send unchangeable amount, like 0.000001 fUSDT.
 
-#### Methods
+### Destroy and get fUSDT
 
-+ `symbol(): String`
-
-  Always return `CAT`, this is the symbol of this token.
-
-+ `decimals(): Integer`
-
-  Always return `2`, this token has decimals of 2.
-
-+ `totalSupply(): Integer`
-
-  Always return `1_000_000_000_00`, this token has a fixed total supply of 1 billion. Discussion can be found here [#5](https://github.com/NekoHitDev/Ritmin/issues/5).
-
-+ `transfer(from: Hash160, to: Hash160, amount: Integer, data: Any): Boolean`
-
-  Transferring some amount of token from `from` account to `to` account. Signature from `from` account is required. Return `true` if and only if this transaction is done.
-
-+ `balanceOf(account: Hash160): Integer`
-
-  Query and return the Cat Token balance of given account.
+You have to invoke the `destroyToken` method with your script hash and cat amount as parameter, along with your
+signature (`CallByEntity` is enough, don't use `Global`). The cat contract will destroy and send the fUSDT to your
+wallet in the same tx.
 
 ## WCA Contract
 
-This is the token accepted by other contracts (currently only the WCA Contract.)
+This is the core contract that handle the crowdfunding protocol.
 
 ### Basic info
 
-Deployed: 
+Deployed:
 
-+ Test net: [`0x199cd12a70bc554f7d3b0b91c5069546b15c0129`](https://neo3.testnet.neotube.io/contract/0x199cd12a70bc554f7d3b0b91c5069546b15c0129)
++ Test net (public
+  test): [`0x514e4dc6398ba12a8c3a5ed96187d606998c4d93`](https://neo3.testnet.neotube.io/contract/0x514e4dc6398ba12a8c3a5ed96187d606998c4d93)
 
-+ Main net: [`TODO`](https://neo3.neotube.io/contract/TODO)
++ Test net (develop
+  use): [`0x3d151c524c35ea5cd549323d98e782cfb7403951`](https://neo3.testnet.neotube.io/contract/0x3d151c524c35ea5cd549323d98e782cfb7403951)
 
-Note: 
++ Main
+  net: [`0x1312460889ef976db3561e7688b077f09d5e98e0`](https://neo3.neotube.io/contract/0x1312460889ef976db3561e7688b077f09d5e98e0)
 
-+ Currently, only Cat Token can make a transfer to this contract. Aka only Cat Token can invoke `onNEP17Payment` method. Otherwise, there will be exception.
-+ Due to limitations from Neo node implementation, **the identifier of WCA must not longer than 62 bytes**. (Max key size is 64bytes, and all map prefix takes 2 ascii-chars/bytes)
+Note:
+
++ Due to limitations from Neo node implementation, **the identifier of WCA must not longer than 62 bytes**. (Max key
+  size is 64bytes, and all map prefix takes 2 ascii-chars/bytes)
 
 ### Events and Methods
 
@@ -83,10 +78,10 @@ Feel free to join the group and ask questions, or submit your ideas. We're glad 
 
 ## Donate
 
-If you like this project, and want to help the development of this project, please
-considering donate some GAS or NEO to this address (Neo N3):
+If you like this project, and want to help the development of this project, please considering donate some GAS or NEO to
+this address (Neo N3):
 
-NYukb9Nj59pQZ7SzubZeJUodrhczkXKD1Y
+NWWpkYtqeUwgHfbFMZurmKei6T85JtA1HQ
 
 Deploy and update contract use a lot of GAS. Your donation will make our deployment easier.
 

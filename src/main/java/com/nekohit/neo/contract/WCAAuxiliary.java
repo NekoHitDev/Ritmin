@@ -29,6 +29,6 @@ public class WCAAuxiliary {
         if (dynamicContent.status != 1) {
             return false;
         }
-        return dynamicContent.thresholdMilestoneFinished || staticContent.isThresholdExpired();
+        return dynamicContent.thresholdMilestonePassed || staticContent.isThresholdExpired();
     }
 }

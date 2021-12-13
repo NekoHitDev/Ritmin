@@ -2,8 +2,6 @@ package com.nekohit.neo.domain;
 
 import com.nekohit.neo.helper.Pair;
 
-import static com.nekohit.neo.helper.Utils.require;
-
 public class ProjectDynamicContent {
     /**
      * How many tokens remained for sale.
@@ -24,7 +22,7 @@ public class ProjectDynamicContent {
     /**
      * If the threshold milestone has been finished by creator/owner.
      */
-    public boolean thresholdMilestoneFinished;
+    public boolean thresholdMilestonePassed;
 
     /**
      * If the last milestone has been finished by creator/owner.
@@ -46,6 +44,18 @@ public class ProjectDynamicContent {
      */
     public int nextMilestoneIndex;
 
+    // Preserved for future use
+    public Object preserved0 = null;
+    public Object preserved1 = null;
+    public Object preserved2 = null;
+    public Object preserved3 = null;
+    public Object preserved4 = null;
+    public Object preserved5 = null;
+    public Object preserved6 = null;
+    public Object preserved7 = null;
+    public Object preserved8 = null;
+    public Object preserved9 = null;
+
     /**
      * Status of this project.<br>
      * 0 - PENDING, the initialized status, only payStake and cancel is allowed.<br>
@@ -58,7 +68,7 @@ public class ProjectDynamicContent {
         this.remainTokenCount = remainTokenCount;
         this.totalPurchasedAmount = 0;
         this.buyerCounter = 0;
-        this.thresholdMilestoneFinished = false;
+        this.thresholdMilestonePassed = false;
         this.lastMilestoneFinished = false;
         this.lastUpdateTime = -1;
         this.finishedMilestoneCount = 0;
@@ -71,11 +81,8 @@ public class ProjectDynamicContent {
      *
      * @param staticContent of a given project
      * @return Pair(to buyer amount, to creator amount)
-     * @throws Exception if partial refund is not available
      */
-    public Pair<Integer, Integer> partialRefund(ProjectStaticContent staticContent, int buyerPurchaseAmount) throws Exception {
-        require(buyerPurchaseAmount != 0, ExceptionMessages.RECORD_NOT_FOUND);
-
+    public Pair<Integer, Integer> partialRefund(ProjectStaticContent staticContent, int buyerPurchaseAmount) {
         int totalMilestones = staticContent.milestoneCount;
         // finished milestone belongs to creator
         int toCreatorAmount = buyerPurchaseAmount * this.finishedMilestoneCount / totalMilestones;
@@ -94,10 +101,8 @@ public class ProjectDynamicContent {
      *
      * @param amount the purchase record
      * @return the amount of refund
-     * @throws Exception if purchase record is 0 (aka not found)
      */
-    public int fullRefund(int amount) throws Exception {
-        require(amount != 0, ExceptionMessages.RECORD_NOT_FOUND);
+    public int fullRefund(int amount) {
         // add to remain token
         this.remainTokenCount += amount;
         // remove from total sold amount

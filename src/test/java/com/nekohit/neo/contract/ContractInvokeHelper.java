@@ -6,7 +6,6 @@ import io.neow3j.transaction.Signer;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
 import io.neow3j.wallet.Account;
-import io.neow3j.wallet.Wallet;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -44,11 +43,12 @@ public class ContractInvokeHelper {
     }
 
     public static String advanceQuery(
-            SmartContract contract, Hash160 creator, Hash160 buyer, int page, int size
+            SmartContract contract, Hash160 token, Hash160 creator, Hash160 buyer, int page, int size
     ) throws Throwable {
         var result = ContractTestFramework.testInvoke(
                 contract, "advanceQuery",
                 new ContractParameter[]{
+                        ContractParameter.hash160(token),
                         ContractParameter.hash160(creator),
                         ContractParameter.hash160(buyer),
                         ContractParameter.integer(page),
@@ -64,17 +64,18 @@ public class ContractInvokeHelper {
      */
     public static String declareProject(
             SmartContract contract, String wcaDescription,
-            int stakePer100Token, long totalAmount,
+            Hash160 token, int stakeRate100, long totalAmount,
             String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
             int thresholdIndex, long coolDownInterval, boolean bePublic,
-            String identifier, Wallet wallet
+            String identifier, Account account
     ) throws Throwable {
         var appLog = ContractTestFramework.invokeFunction(
                 contract, "declareProject",
                 new ContractParameter[]{
-                        ContractParameter.hash160(wallet.getDefaultAccount()),
+                        ContractParameter.hash160(account),
                         ContractParameter.string(wcaDescription),
-                        ContractParameter.integer(stakePer100Token),
+                        ContractParameter.hash160(token),
+                        ContractParameter.integer(stakeRate100),
                         ContractParameter.integer(BigInteger.valueOf(totalAmount)),
                         ContractParameter.array(Arrays.asList(milestoneTitles)),
                         ContractParameter.array(Arrays.asList(milestoneDescriptions)),
@@ -85,29 +86,28 @@ public class ContractInvokeHelper {
                         ContractParameter.string(identifier)
                 },
                 new Signer[]{
-                        AccountSigner.calledByEntry(wallet.getDefaultAccount())
-                },
-                wallet
+                        AccountSigner.calledByEntry(account)
+                }
         );
         return appLog.getExecutions().get(0).getStack().get(0).getString();
     }
 
     public static String createAndPayProject(
             SmartContract contract, String wcaDescription,
-            int stakePer100Token, long totalAmount,
+            Hash160 token, int stakePer100Token, long totalAmount,
             String[] milestoneTitles, String[] milestoneDescriptions, Long[] endTimestamps,
             int thresholdIndex, long coolDownInterval, boolean bePublic,
-            String identifier, Wallet wallet
+            String identifier, Account account
     ) throws Throwable {
         var result = declareProject(
-                contract, wcaDescription, stakePer100Token, totalAmount,
+                contract, wcaDescription, token, stakePer100Token, totalAmount,
                 milestoneTitles, milestoneDescriptions, endTimestamps,
-                thresholdIndex, coolDownInterval, bePublic, identifier, wallet
+                thresholdIndex, coolDownInterval, bePublic, identifier, account
         );
 
         // pay stake
         ContractTestFramework.transferToken(
-                ContractTestFramework.getCatToken(), wallet,
+                ContractTestFramework.tokenFromAddress(token), account,
                 ContractTestFramework.getWcaContractAddress(),
                 stakePer100Token * totalAmount / 100,
                 identifier, true
@@ -118,7 +118,7 @@ public class ContractInvokeHelper {
 
     public static void finishMilestone(
             SmartContract contract, String identifier,
-            int index, String proofOfWork, Wallet wallet
+            int index, String proofOfWork, Account account
     ) throws Throwable {
         ContractTestFramework.invokeFunction(
                 contract, "finishMilestone",
@@ -128,30 +128,28 @@ public class ContractInvokeHelper {
                         ContractParameter.string(proofOfWork)
                 },
                 new Signer[]{
-                        AccountSigner.calledByEntry(wallet.getDefaultAccount())
-                },
-                wallet
+                        AccountSigner.calledByEntry(account)
+                }
         );
     }
 
     public static void refund(
-            SmartContract contract, String identifier, Wallet buyerWallet
+            SmartContract contract, String identifier, Account buyerAccount
     ) throws Throwable {
         ContractTestFramework.invokeFunction(
                 contract, "refund",
                 new ContractParameter[]{
                         ContractParameter.string(identifier),
-                        ContractParameter.hash160(buyerWallet.getDefaultAccount())
+                        ContractParameter.hash160(buyerAccount)
                 },
                 new Signer[]{
-                        AccountSigner.calledByEntry(buyerWallet.getDefaultAccount())
-                },
-                buyerWallet
+                        AccountSigner.calledByEntry(buyerAccount)
+                }
         );
     }
 
     public static void finishProject(
-            SmartContract contract, String identifier, Wallet wallet
+            SmartContract contract, String identifier, Account account
     ) throws Throwable {
         ContractTestFramework.invokeFunction(
                 contract, "finishProject",
@@ -159,14 +157,13 @@ public class ContractInvokeHelper {
                         ContractParameter.string(identifier)
                 },
                 new Signer[]{
-                        AccountSigner.calledByEntry(wallet.getDefaultAccount())
-                },
-                wallet
+                        AccountSigner.calledByEntry(account)
+                }
         );
     }
 
     public static void cancelProject(
-            SmartContract contract, String identifier, Wallet wallet
+            SmartContract contract, String identifier, Account account
     ) throws Throwable {
         ContractTestFramework.invokeFunction(
                 contract, "cancelProject",
@@ -174,9 +171,8 @@ public class ContractInvokeHelper {
                         ContractParameter.string(identifier)
                 },
                 new Signer[]{
-                        AccountSigner.calledByEntry(wallet.getDefaultAccount())
-                },
-                wallet
+                        AccountSigner.calledByEntry(account)
+                }
         );
     }
 }
