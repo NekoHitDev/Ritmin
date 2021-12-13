@@ -23,35 +23,45 @@ public class SignMessage {
                 account.getECKeyPair().getPublicKey().getEncoded(true)) + "`");
         System.out.println("\n----");
 
-        String message = "中文123 English and emoji 🙂";
+        StringBuilder stringBuilder = new StringBuilder();
+        Files.list(Path.of("./compiled_contract"))
+                .forEach(p -> {
+                    try {
+                        byte[] content = Files.readAllBytes(p);
+                        stringBuilder.append(p.getFileName()).append(":\n");
+                        stringBuilder.append(signAndFormat(content, account.getECKeyPair()));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        String message = "The first official release of NekoHit Project (Contracts).\n" +
+                "In this release, we have CatToken v1.0.0 and WcaContract v1.0.0\n\n" +
+                "Release digests:\n\n" + stringBuilder;
 
         System.out.println("Message:\n```");
         System.out.println(message);
         System.out.println("```\n");
         signAndPrint(message, account.getECKeyPair());
 
-        Files.list(Path.of("./compiled_contract"))
-                .forEach(p -> {
-                    try {
-                        byte[] content = Files.readAllBytes(p);
-                        System.out.println(p.getFileName());
-                        signAndPrint(content, account.getECKeyPair());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
 
     }
 
     private static void signAndPrint(String message, ECKeyPair keyPair) {
-        signAndPrint(message.getBytes(StandardCharsets.UTF_8), keyPair);
-    }
-
-    private static void signAndPrint(byte[] message, ECKeyPair keyPair) {
-        Sign.SignatureData signature = Sign.signMessage(message, keyPair);
+        Sign.SignatureData signature = Sign.signMessage(message.getBytes(StandardCharsets.UTF_8), keyPair);
         System.out.println("Signature r: `" + DatatypeConverter.printHexBinary(signature.getR()) + "`");
         System.out.println("Signature s: `" + DatatypeConverter.printHexBinary(signature.getS()) + "`");
         System.out.println("Signature v: `" + DatatypeConverter.printHexBinary(new byte[]{signature.getV()}) + "`");
         System.out.println("\n----");
+    }
+
+    private static String signAndFormat(byte[] message, ECKeyPair keyPair) {
+        Sign.SignatureData signature = Sign.signMessage(message, keyPair);
+        return "Signature r: " +
+                DatatypeConverter.printHexBinary(signature.getR()) + "\n" +
+                "Signature s: " +
+                DatatypeConverter.printHexBinary(signature.getS()) + "\n" +
+                "Signature v: " +
+                DatatypeConverter.printHexBinary(new byte[]{signature.getV()}) + "\n\n";
     }
 }
