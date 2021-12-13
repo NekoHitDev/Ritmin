@@ -233,11 +233,7 @@ public class WCAPurchaseTest extends ContractTestFramework {
                 0, 100, false,
                 identifier, this.creatorAccount
         );
-        // wait for first milestone expire
-        while (System.currentTimeMillis() <= firstEndTimestamp) {
-            //noinspection BusyWait
-            Thread.sleep(100);
-        }
+        Thread.sleep(5 * 1000);
         // purchase
         var throwable = assertThrows(
                 Exception.class,
