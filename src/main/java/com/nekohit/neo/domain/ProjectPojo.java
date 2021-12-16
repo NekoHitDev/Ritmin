@@ -22,7 +22,7 @@ public class ProjectPojo {
 
     /**
      * The Base64 of token hash represented in little endian..
-     * */
+     */
     public final String tokenHashBase64;
 
     /**
@@ -98,6 +98,8 @@ public class ProjectPojo {
         // StdLib.jsonSerialize, so encoded by Base64 first
         this.identifier = identifier;
         this.description = staticContent.description;
+        // TODO here is still base64 encoded hash for json compatibilities
+        //      it's not necessary if we remove those query methods
         this.ownerHashBase64 = StdLib.base64Encode(staticContent.owner.toByteString());
         this.tokenHashBase64 = StdLib.base64Encode(staticContent.tokenHash.toByteString());
         this.creationTimestamp = staticContent.creationTimestamp;

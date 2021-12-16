@@ -1,9 +1,11 @@
 package com.nekohit.neo.contract;
 
+import com.nekohit.neo.helper.Pair;
 import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
+import io.neow3j.devpack.constants.FindOptions;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.events.Event3Args;
 
@@ -143,6 +145,19 @@ public class CatToken {
                     new Object[]{Runtime.getExecutingScriptHash(), from, usdAmount, null});
         }
         return true;
+    }
+
+    public static List<Pair<Hash160, Integer>> dumpHolder() {
+        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(sc, ASSET_PREFIX, FindOptions.RemovePrefix);
+        // Base64 encoded address and corresponding amount
+        List<Pair<Hash160, Integer>> result = new List<>();
+        while (iter.next()) {
+            Iterator.Struct<ByteString, ByteString> elem = iter.get();
+            Hash160 buyer = new Hash160(elem.key);
+            int purchaseAmount = elem.value.toIntOrZero();
+            result.add(new Pair<>(buyer, purchaseAmount));
+        }
+        return result;
     }
 
     @OnDeployment

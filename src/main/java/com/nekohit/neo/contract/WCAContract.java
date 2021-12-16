@@ -108,17 +108,26 @@ public class WCAContract {
         updateDynamicContent(projectId, dynamicContent);
     }
 
-    public static String queryProject(String identifier) {
+    public static ProjectPojo queryProjectProto(String identifier) {
         try {
             ByteString projectId = getProjectId(identifier);
             ProjectStaticContent staticContent = getStaticContent(projectId);
             ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
             ProjectMilestone[] milestones = getMilestones(projectId, staticContent);
 
-            ProjectPojo pojo = new ProjectPojo(identifier, staticContent, dynamicContent, milestones);
-            return StdLib.jsonSerialize(pojo);
+            return new ProjectPojo(identifier, staticContent, dynamicContent, milestones);
         } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // TODO gradually remove this function
+    public static String queryProject(String identifier) {
+        ProjectPojo pojo = queryProjectProto(identifier);
+        if (pojo == null) {
             return "";
+        } else {
+            return StdLib.jsonSerialize(pojo);
         }
     }
 
@@ -132,7 +141,21 @@ public class WCAContract {
         }
     }
 
-    public static String advanceQuery(
+    public static List<Pair<Hash160, Integer>> dumpPurchaseRecord(String identifier) throws Exception {
+        ByteString projectId = getProjectId(identifier);
+        ByteString prefix = new ByteString("PR").concat(projectId);
+        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
+        List<Pair<Hash160, Integer>> result = new List<>();
+        while (iter.next()) {
+            Iterator.Struct<ByteString, ByteString> elem = iter.get();
+            Hash160 buyer = new Hash160(elem.key);
+            int purchaseAmount = elem.value.toIntOrZero();
+            result.add(new Pair<>(buyer, purchaseAmount));
+        }
+        return result;
+    }
+
+    public static List<ProjectPojo> advanceQueryProto(
             Hash160 token, Hash160 creator, Hash160 buyer, int page, int size
     ) throws Exception {
         require(page >= 1, ExceptionMessages.INVALID_PAGE);
@@ -171,6 +194,14 @@ public class WCAContract {
             ProjectPojo pojo = new ProjectPojo(identifier, staticContent, dynamicContent, milestonesInfo);
             result.add(pojo);
         }
+        return result;
+    }
+
+    // TODO gradually remove this method
+    public static String advanceQuery(
+            Hash160 token, Hash160 creator, Hash160 buyer, int page, int size
+    ) throws Exception {
+        List<ProjectPojo> result = advanceQueryProto(token, creator, buyer, page, size);
         return StdLib.jsonSerialize(result);
     }
 

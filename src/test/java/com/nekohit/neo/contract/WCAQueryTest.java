@@ -1,5 +1,6 @@
 package com.nekohit.neo.contract;
 
+import io.neow3j.protocol.core.stackitem.StackItem;
 import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
@@ -11,6 +12,11 @@ import org.bouncycastle.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
+import java.util.List;
+
+import static com.nekohit.neo.contract.ContractInvokeHelper.queryProject;
+import static com.nekohit.neo.contract.ContractInvokeHelper.queryPurchase;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -32,10 +38,53 @@ public class WCAQueryTest extends ContractTestFramework {
     }
 
     @Test
+    void testDumpPurchaseRecord() throws Throwable {
+        // create WCA
+        var identifier = ContractInvokeHelper.createAndPayProject(
+                getWcaContract(), "description",
+                getCatTokenAddress(), 1_00, 1000_00,
+                new String[]{"milestone1"},
+                new String[]{"milestone1"},
+                new Long[]{
+                        System.currentTimeMillis() + 60 * 1000
+                },
+                0, 1, false,
+                "test_dump_pr_" + System.currentTimeMillis(),
+                this.creatorAccount
+        );
+        // purchase
+        transferToken(
+                getCatToken(), this.testAccount,
+                getWcaContractAddress(),
+                1000_00, identifier, true
+        );
+        // query
+        List<StackItem> result = testInvoke(
+                getWcaContract(),
+                "dumpPurchaseRecord",
+                new ContractParameter[]{
+                        ContractParameter.string(identifier)
+                },
+                new Signer[]{}
+        ).getStack().get(0).getList();
+        for (StackItem elem : result) {
+            List<StackItem> pair = elem.getList();
+            String address = pair.get(0).getAddress();
+            BigInteger value = pair.get(1).getInteger();
+            System.out.println(address + ": " + value);
+
+            BigInteger expectedValue = queryPurchase(
+                    getWcaContract(), identifier, Account.fromAddress(address)
+            );
+            assertEquals(expectedValue, value);
+        }
+    }
+
+    @Test
     void testInvalidQueryWCA() {
         assertEquals(
                 "",
-                assertDoesNotThrow(() -> ContractInvokeHelper.queryProject(getWcaContract(), "some_invalid_id"))
+                assertDoesNotThrow(() -> queryProject(getWcaContract(), "some_invalid_id"))
         );
     }
 
@@ -54,7 +103,7 @@ public class WCAQueryTest extends ContractTestFramework {
         );
         assertNotEquals(
                 "",
-                assertDoesNotThrow(() -> ContractInvokeHelper.queryProject(getWcaContract(), identifier))
+                assertDoesNotThrow(() -> queryProject(getWcaContract(), identifier))
         );
     }
 
@@ -62,7 +111,7 @@ public class WCAQueryTest extends ContractTestFramework {
     void testInvalidIdQueryPurchase() {
         assertEquals(
                 0,
-                assertDoesNotThrow(() -> ContractInvokeHelper.queryPurchase(
+                assertDoesNotThrow(() -> queryPurchase(
                         getWcaContract(), "some_invalid_id", Account.create()
                 ).longValue())
         );
@@ -87,7 +136,7 @@ public class WCAQueryTest extends ContractTestFramework {
         );
         assertEquals(
                 0,
-                assertDoesNotThrow(() -> ContractInvokeHelper.queryPurchase(
+                assertDoesNotThrow(() -> queryPurchase(
                         getWcaContract(), identifier, Account.create()
                 ).longValue())
         );
@@ -118,7 +167,7 @@ public class WCAQueryTest extends ContractTestFramework {
 
         assertEquals(
                 purchaseAmount,
-                assertDoesNotThrow(() -> ContractInvokeHelper.queryPurchase(
+                assertDoesNotThrow(() -> queryPurchase(
                         getWcaContract(), identifier, this.testAccount
                 ).longValue())
         );
