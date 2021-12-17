@@ -1,6 +1,6 @@
 package com.nekohit.neo.mainnet;
 
-import com.nekohit.neo.helper.Utils;
+import com.nekohit.neo.TestUtils;
 import io.neow3j.crypto.ECKeyPair;
 import io.neow3j.crypto.Sign;
 import io.neow3j.wallet.Account;
@@ -41,7 +41,7 @@ public class VerifyMessage {
         ECKeyPair.ECPublicKey pubKey = new ECKeyPair.ECPublicKey(PUBLIC_KEY);
         String actualAddress = Account.fromPublicKey(pubKey).getAddress();
         System.out.println("Address from public key: " + actualAddress);
-        Utils.require(EXPECTED_ADDRESS.equals(actualAddress),
+        TestUtils.require(EXPECTED_ADDRESS.equals(actualAddress),
                 "Public key doesn't match the expected address");
 
         System.out.println("Message:\n" + MESSAGE);
@@ -56,7 +56,7 @@ public class VerifyMessage {
                 DatatypeConverter.parseHexBinary(SIGNATURE_S_HEX)
         );
 
-        Utils.require(Sign.verifySignature(
+        TestUtils.require(Sign.verifySignature(
                         MESSAGE.getBytes(StandardCharsets.UTF_8), signature, pubKey),
                 "Invalid signature");
         System.err.println("Signature validated.");

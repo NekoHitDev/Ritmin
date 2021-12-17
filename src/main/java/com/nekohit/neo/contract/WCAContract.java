@@ -17,7 +17,6 @@ import io.neow3j.devpack.events.Event4Args;
 
 import static com.nekohit.neo.contract.WCAAuxiliary.checkIfReadyToFinish;
 import static com.nekohit.neo.contract.WCAAuxiliary.checkIfThresholdMet;
-import static com.nekohit.neo.helper.Utils.require;
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
 @SuppressWarnings({"unused", "unchecked"})
@@ -71,27 +70,27 @@ public class WCAContract {
 
 
     @OnNEP17Payment
-    public static void onPayment(Hash160 from, int amount, Object data) throws Exception {
-        require(amount >= 0, ExceptionMessages.INVALID_AMOUNT);
+    public static void onPayment(Hash160 from, int amount, Object data) {
+        assert amount >= 0 : ExceptionMessages.INVALID_AMOUNT;
         String identifier = (String) data;
         ByteString projectId = getProjectId(identifier);
 
         ProjectStaticContent staticContent = getStaticContent(projectId);
         // Check from hash, must be the one chosen by creator
-        require(staticContent.tokenHash == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_CALLER);
+        assert staticContent.tokenHash == Runtime.getCallingScriptHash() : ExceptionMessages.INVALID_CALLER;
         ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
 
         if (staticContent.owner.equals(from)) {
             // owner paying stake
-            require(dynamicContent.status == 0, ExceptionMessages.INVALID_STATUS_ALLOW_PENDING);
-            require(staticContent.getTotalStake() == amount, ExceptionMessages.INCORRECT_AMOUNT);
+            assert dynamicContent.status == 0 : ExceptionMessages.INVALID_STATUS_ALLOW_PENDING;
+            assert staticContent.getTotalStake() == amount : ExceptionMessages.INCORRECT_AMOUNT;
             // unpaid before, amount is correct, set to ONGOING
             dynamicContent.status = 1;
             onPayStake.fire(from, identifier, amount);
         } else {
-            require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
-            require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
-            require(dynamicContent.remainTokenCount >= amount, ExceptionMessages.INSUFFICIENT_AMOUNT_REMAIN);
+            assert dynamicContent.status == 1 : ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING;
+            assert !checkIfReadyToFinish(staticContent, dynamicContent) : ExceptionMessages.INVALID_STAGE_READY_TO_FINISH;
+            assert dynamicContent.remainTokenCount >= amount : ExceptionMessages.INSUFFICIENT_AMOUNT_REMAIN;
             dynamicContent.remainTokenCount -= amount;
             dynamicContent.totalPurchasedAmount += amount;
             dynamicContent.buyerCounter++;
@@ -108,6 +107,7 @@ public class WCAContract {
         updateDynamicContent(projectId, dynamicContent);
     }
 
+    @Safe
     public static ProjectPojo queryProjectProto(String identifier) {
         try {
             ByteString projectId = getProjectId(identifier);
@@ -122,6 +122,7 @@ public class WCAContract {
     }
 
     // TODO gradually remove this function
+    @Safe
     public static String queryProject(String identifier) {
         ProjectPojo pojo = queryProjectProto(identifier);
         if (pojo == null) {
@@ -131,6 +132,7 @@ public class WCAContract {
         }
     }
 
+    @Safe
     public static int queryPurchase(String identifier, Hash160 buyer) {
         try {
             ByteString projectId = getProjectId(identifier);
@@ -141,7 +143,8 @@ public class WCAContract {
         }
     }
 
-    public static List<Pair<Hash160, Integer>> dumpPurchaseRecord(String identifier) throws Exception {
+    @Safe
+    public static List<Pair<Hash160, Integer>> dumpPurchaseRecord(String identifier) {
         ByteString projectId = getProjectId(identifier);
         ByteString prefix = new ByteString("PR").concat(projectId);
         Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
@@ -155,11 +158,12 @@ public class WCAContract {
         return result;
     }
 
+    @Safe
     public static List<ProjectPojo> advanceQueryProto(
             Hash160 token, Hash160 creator, Hash160 buyer, int page, int size
-    ) throws Exception {
-        require(page >= 1, ExceptionMessages.INVALID_PAGE);
-        require(size >= 1, ExceptionMessages.INVALID_SIZE);
+    ) {
+        assert page >= 1 : ExceptionMessages.INVALID_PAGE;
+        assert size >= 1 : ExceptionMessages.INVALID_SIZE;
         int offset = (page - 1) * size;
         List<ProjectPojo> result = new List<>();
         Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, "ID", FindOptions.RemovePrefix);
@@ -198,9 +202,10 @@ public class WCAContract {
     }
 
     // TODO gradually remove this method
+    @Safe
     public static String advanceQuery(
             Hash160 token, Hash160 creator, Hash160 buyer, int page, int size
-    ) throws Exception {
+    ) {
         List<ProjectPojo> result = advanceQueryProto(token, creator, buyer, page, size);
         return StdLib.jsonSerialize(result);
     }
@@ -211,13 +216,13 @@ public class WCAContract {
             String[] milestoneTitles, String[] milestoneDescriptions, int[] endTimestamps,
             int thresholdIndex, int coolDownInterval,
             boolean bePublic, String identifier
-    ) throws Exception {
-        require(Hash160.isValid(owner), ExceptionMessages.INVALID_HASH160);
-        require(Hash160.isValid(tokenHash), ExceptionMessages.INVALID_HASH160);
-        require(Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
+    ) {
+        assert Hash160.isValid(owner) : ExceptionMessages.INVALID_HASH160;
+        assert Hash160.isValid(tokenHash) : ExceptionMessages.INVALID_HASH160;
+        assert Runtime.checkWitness(owner) || owner == Runtime.getCallingScriptHash() : ExceptionMessages.INVALID_SIGNATURE;
         // projectId should be unique
-        require(identifier.length() != 0, ExceptionMessages.EMPTY_ID);
-        require(projectIdentifierMap.get(identifier) == null, ExceptionMessages.DUPLICATED_ID);
+        assert identifier.length() != 0 : ExceptionMessages.EMPTY_ID;
+        assert projectIdentifierMap.get(identifier) == null : ExceptionMessages.DUPLICATED_ID;
         Integer counter = Storage.getInteger(CTX, COUNTER_KEY);
         if (counter == null) {
             counter = 0;
@@ -228,25 +233,25 @@ public class WCAContract {
         ByteString projectId = Utils.intToByteString(counter);
         projectIdentifierMap.put(identifier, projectId);
 
-        require(projectDescription != null, ExceptionMessages.NULL_DESCRIPTION);
-        require(stakeRate100 > 0, ExceptionMessages.INVALID_STAKE_RATE);
-        require(maxTokenSoldCount > 0, ExceptionMessages.INVALID_MAX_SELL_AMOUNT);
+        assert projectDescription != null : ExceptionMessages.NULL_DESCRIPTION;
+        assert stakeRate100 > 0 : ExceptionMessages.INVALID_STAKE_RATE;
+        assert maxTokenSoldCount > 0 : ExceptionMessages.INVALID_MAX_SELL_AMOUNT;
 
         // check milestone
         int milestoneCount = endTimestamps.length;
-        require(milestoneTitles.length == milestoneCount, ExceptionMessages.INVALID_MILESTONES_COUNT);
-        require(milestoneCount == milestoneDescriptions.length, ExceptionMessages.INVALID_MILESTONES_COUNT);
+        assert milestoneTitles.length == milestoneCount : ExceptionMessages.INVALID_MILESTONES_COUNT;
+        assert milestoneCount == milestoneDescriptions.length : ExceptionMessages.INVALID_MILESTONES_COUNT;
 
         int lastTimestamp = 0;
-        require(endTimestamps[0] > Runtime.getTime(), ExceptionMessages.EXPIRED_TIMESTAMP);
+        assert endTimestamps[0] > Runtime.getTime() : ExceptionMessages.EXPIRED_TIMESTAMP;
         for (int i = 0; i < milestoneCount; i++) {
             int t = endTimestamps[i];
-            require(lastTimestamp < t, ExceptionMessages.INVALID_TIMESTAMP);
+            assert lastTimestamp < t : ExceptionMessages.INVALID_TIMESTAMP;
             lastTimestamp = t;
             updateMilestone(projectId, i, new ProjectMilestone(milestoneTitles[i], milestoneDescriptions[i], t));
         }
-        require(thresholdIndex >= 0 && thresholdIndex < milestoneCount, ExceptionMessages.INVALID_THRESHOLD_INDEX);
-        require(coolDownInterval > 0, ExceptionMessages.INVALID_COOL_DOWN_INTERVAL);
+        assert thresholdIndex >= 0 && thresholdIndex < milestoneCount : ExceptionMessages.INVALID_THRESHOLD_INDEX;
+        assert coolDownInterval > 0 : ExceptionMessages.INVALID_COOL_DOWN_INTERVAL;
 
         // create project info obj
         ProjectStaticContent staticContent = new ProjectStaticContent(
@@ -264,23 +269,23 @@ public class WCAContract {
         return identifier;
     }
 
-    public static void finishMilestone(String identifier, int index, String proofOfWork) throws Exception {
+    public static void finishMilestone(String identifier, int index, String proofOfWork) {
         ByteString projectId = getProjectId(identifier);
         ProjectStaticContent staticContent = getStaticContent(projectId);
         // only creator can update project to finished
-        require(Runtime.checkWitness(staticContent.owner) || staticContent.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
+        assert Runtime.checkWitness(staticContent.owner) || staticContent.owner == Runtime.getCallingScriptHash() : ExceptionMessages.INVALID_SIGNATURE;
         ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
-        require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
+        assert dynamicContent.status == 1 : ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING;
         ProjectMilestone ms = getMilestone(projectId, index);
-        require(ms != null, ExceptionMessages.RECORD_NOT_FOUND);
+        assert ms != null : ExceptionMessages.RECORD_NOT_FOUND;
         // check cool-down time first
         int currentTime = Runtime.getTime();
-        require(dynamicContent.lastUpdateTime + staticContent.coolDownInterval <= currentTime, ExceptionMessages.COOL_DOWN_TIME_NOT_MET);
-        require(index >= dynamicContent.nextMilestoneIndex, ExceptionMessages.INVALID_MILESTONE_PASSED);
-        require(!ms.isFinished(), ExceptionMessages.INVALID_MILESTONE_FINISHED);
-        require(!ms.isExpired(), ExceptionMessages.INVALID_MILESTONE_EXPIRED);
+        assert dynamicContent.lastUpdateTime + staticContent.coolDownInterval <= currentTime : ExceptionMessages.COOL_DOWN_TIME_NOT_MET;
+        assert index >= dynamicContent.nextMilestoneIndex : ExceptionMessages.INVALID_MILESTONE_PASSED;
+        assert !ms.isFinished() : ExceptionMessages.INVALID_MILESTONE_FINISHED;
+        assert !ms.isExpired() : ExceptionMessages.INVALID_MILESTONE_EXPIRED;
         // not finished nor expired, then we can modify it.
-        require(proofOfWork != null && proofOfWork.length() != 0, ExceptionMessages.INVALID_PROOF_OF_WORK);
+        assert proofOfWork != null && proofOfWork.length() != 0 : ExceptionMessages.INVALID_PROOF_OF_WORK;
         ms.proofOfWork = proofOfWork;
         dynamicContent.nextMilestoneIndex = index + 1;
         dynamicContent.finishedMilestoneCount++;
@@ -304,16 +309,14 @@ public class WCAContract {
         }
     }
 
-    public static void finishProject(String identifier) throws Exception {
+    public static void finishProject(String identifier) {
         ByteString projectId = getProjectId(identifier);
         ProjectStaticContent staticContent = getStaticContent(projectId);
         ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
-        require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
-
-        if (!Runtime.checkWitness(staticContent.owner)) {
-            // only owner can finish an unfinished project
-            require(checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH);
-        }
+        assert dynamicContent.status == 1 : ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING;
+        // only owner can finish an unfinished project
+        // otherwise, other one can only finish ready-to-finished
+        assert Runtime.checkWitness(staticContent.owner) || checkIfReadyToFinish(staticContent, dynamicContent) : ExceptionMessages.INVALID_STAGE_ALLOW_READY_TO_FINISH;
 
         // Update status first to prevent re-entry attack
         dynamicContent.status = 2;
@@ -349,18 +352,18 @@ public class WCAContract {
         onFinishProject.fire(identifier);
     }
 
-    public static void refund(String identifier, Hash160 buyer) throws Exception {
-        require(Hash160.isValid(buyer), ExceptionMessages.INVALID_HASH160);
-        require(Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
+    public static void refund(String identifier, Hash160 buyer) {
+        assert Hash160.isValid(buyer) : ExceptionMessages.INVALID_HASH160;
+        assert Runtime.checkWitness(buyer) || buyer == Runtime.getCallingScriptHash() : ExceptionMessages.INVALID_SIGNATURE;
         ByteString projectId = getProjectId(identifier);
         ProjectStaticContent staticContent = getStaticContent(projectId);
         ProjectDynamicContent dynamicContent = getDynamicContent(projectId);
-        require(dynamicContent.status == 1, ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING);
+        assert dynamicContent.status == 1 : ExceptionMessages.INVALID_STATUS_ALLOW_ONGOING;
 
-        require(!checkIfReadyToFinish(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_READY_TO_FINISH);
+        assert !checkIfReadyToFinish(staticContent, dynamicContent) : ExceptionMessages.INVALID_STAGE_READY_TO_FINISH;
         ByteString purchaseId = projectId.concat(buyer.toByteString());
         Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
-        require(value != null && value > 0, ExceptionMessages.RECORD_NOT_FOUND);
+        assert value != null && value > 0 : ExceptionMessages.RECORD_NOT_FOUND;
         // After get the purchase record, delete it.
         // Re-entry attack will get record not found exception at next call.
         projectPurchaseRecordMap.delete(purchaseId);
@@ -392,8 +395,8 @@ public class WCAContract {
         projectDynamicContentMap.delete(projectId);
 
         // check signature
-        require(Hash160.isValid(staticContent.owner), ExceptionMessages.INVALID_HASH160);
-        require(Runtime.checkWitness(staticContent.owner) || staticContent.owner == Runtime.getCallingScriptHash(), ExceptionMessages.INVALID_SIGNATURE);
+        assert Hash160.isValid(staticContent.owner) : ExceptionMessages.INVALID_HASH160;
+        assert Runtime.checkWitness(staticContent.owner) || staticContent.owner == Runtime.getCallingScriptHash() : ExceptionMessages.INVALID_SIGNATURE;
         // check status
         switch (dynamicContent.status) {
             case 0:
@@ -401,7 +404,7 @@ public class WCAContract {
                 break;
             case 1:
                 // ONGOING, check threshold
-                require(!checkIfThresholdMet(staticContent, dynamicContent), ExceptionMessages.INVALID_STAGE_ACTIVE);
+                assert !checkIfThresholdMet(staticContent, dynamicContent) : ExceptionMessages.INVALID_STAGE_ACTIVE;
                 // to creator
                 transferTokenTo(staticContent.tokenHash, staticContent.owner, staticContent.getTotalStake(), identifier);
                 // to buyers
@@ -430,20 +433,19 @@ public class WCAContract {
         onCancelProject.fire(identifier);
     }
 
-    public static void update(ByteString script, String manifest) throws Exception {
-        require(Runtime.checkWitness(OWNER), "The calling entity is not the owner of this contract.");
-        if (script.length() == 0 && manifest.length() == 0) {
-            throw new Exception("The new contract script and manifest must not be empty.");
-        }
+    public static void update(ByteString script, String manifest) {
+        assert Runtime.checkWitness(OWNER) : "The calling entity is not the owner of this contract.";
+        assert script.length() != 0 && manifest.length() != 0 : "The new contract script and manifest must not be empty.";
         ContractManagement.update(script, manifest);
     }
 
     @OnVerification
-    public static boolean verify() throws Exception {
-        require(Runtime.checkWitness(OWNER), "The calling entity is not the owner of this contract.");
+    public static boolean verify() {
+        assert Runtime.checkWitness(OWNER) : "The calling entity is not the owner of this contract.";
         return true;
     }
 
+    @Safe
     public static Hash160 contractOwner() {
         return OWNER;
     }
@@ -459,9 +461,9 @@ public class WCAContract {
      * Check and get the id of the given identifier.
      * If identifier not exist, exception will be thrown.
      */
-    private static ByteString getProjectId(String identifier) throws Exception {
+    private static ByteString getProjectId(String identifier) {
         ByteString id = projectIdentifierMap.get(identifier);
-        require(id != null, ExceptionMessages.RECORD_NOT_FOUND);
+        assert id != null : ExceptionMessages.RECORD_NOT_FOUND;
         return id;
     }
 
@@ -475,7 +477,7 @@ public class WCAContract {
         return (ProjectDynamicContent) StdLib.deserialize(data);
     }
 
-    private static ProjectMilestone getMilestone(ByteString projectId, int index) throws Exception {
+    private static ProjectMilestone getMilestone(ByteString projectId, int index) {
         // Since projectId has no fixed length, thus milestone index must have fixed length
         // otherwise there will be [010][1010] = [0101][010]
         ByteString data = projectMilestoneMap.get(
@@ -486,7 +488,7 @@ public class WCAContract {
         return (ProjectMilestone) StdLib.deserialize(data);
     }
 
-    private static ProjectMilestone[] getMilestones(ByteString projectId, ProjectStaticContent staticContent) throws Exception {
+    private static ProjectMilestone[] getMilestones(ByteString projectId, ProjectStaticContent staticContent) {
         ProjectMilestone[] result = new ProjectMilestone[staticContent.milestoneCount];
         for (int i = 0; i < result.length; i++) {
             result[i] = getMilestone(projectId, i);
@@ -498,7 +500,7 @@ public class WCAContract {
         projectDynamicContentMap.put(projectId, StdLib.serialize(data));
     }
 
-    private static void updateMilestone(ByteString projectId, int index, ProjectMilestone data) throws Exception {
+    private static void updateMilestone(ByteString projectId, int index, ProjectMilestone data) {
         projectMilestoneMap.put(
                 projectId.concat(Utils.intToPaddingByteString(index, 20)),
                 StdLib.serialize(data)

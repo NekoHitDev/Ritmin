@@ -34,4 +34,18 @@ public class TestUtils {
         }
         return Account.fromWIF(walletWIF);
     }
+
+
+    /**
+     * Similar to kotlin's require function. If condition is false, then exception is thrown
+     *
+     * @param condition the condition required to check
+     * @param message   if condition is false, the message for exception
+     */
+    public static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new RuntimeException(message);
+        }
+    }
+
 }
