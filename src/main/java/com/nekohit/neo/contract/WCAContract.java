@@ -23,7 +23,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1.0.0")
+@ManifestExtra(key = "version", value = "v1.0.1")
 // CatToken::transfer
 @Permission(contract = "*", methods = {"transfer"})
 // ContractManagement::update
@@ -93,11 +93,11 @@ public class WCAContract {
             assert dynamicContent.remainTokenCount >= amount : ExceptionMessages.INSUFFICIENT_AMOUNT_REMAIN;
             dynamicContent.remainTokenCount -= amount;
             dynamicContent.totalPurchasedAmount += amount;
-            dynamicContent.buyerCounter++;
             // update purchase record
             ByteString purchaseId = projectId.concat(from.toByteString());
             Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
-            if (value == null) {
+            if (value == null) { // new purchase
+                dynamicContent.buyerCounter++;
                 value = 0;
             }
             value += amount;
@@ -144,13 +144,24 @@ public class WCAContract {
     }
 
     @Safe
-    public static List<Pair<Hash160, Integer>> dumpPurchaseRecord(String identifier) {
+    public static List<Pair<Hash160, Integer>> dumpPurchaseRecord(
+            String identifier, int page, int size
+    ) {
+        assert page >= 1 : ExceptionMessages.INVALID_PAGE;
+        assert size >= 1 : ExceptionMessages.INVALID_SIZE;
+        int offset = (page - 1) * size;
+        List<Pair<Hash160, Integer>> result = new List<>();
+
         ByteString projectId = getProjectId(identifier);
         ByteString prefix = new ByteString("PR").concat(projectId);
         Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(CTX, prefix, FindOptions.RemovePrefix);
-        List<Pair<Hash160, Integer>> result = new List<>();
-        while (iter.next()) {
+
+        while (result.size() < size && iter.next()) {
             Iterator.Struct<ByteString, ByteString> elem = iter.get();
+            if (offset != 0) { // skip the offset
+                offset--;
+                continue;
+            }
             Hash160 buyer = new Hash160(elem.key);
             int purchaseAmount = elem.value.toIntOrZero();
             result.add(new Pair<>(buyer, purchaseAmount));
@@ -191,6 +202,11 @@ public class WCAContract {
                 if (projectPurchaseRecordMap.get(projectId.concat(buyer.toByteString())) == null) {
                     continue;
                 }
+            }
+            if (offset != 0) {
+                // skip the offset
+                offset--;
+                continue;
             }
             ProjectMilestone[] milestonesInfo = getMilestones(projectId, staticContent);
             ProjectDynamicContent dynamicContent = getDynamicContent(projectId);

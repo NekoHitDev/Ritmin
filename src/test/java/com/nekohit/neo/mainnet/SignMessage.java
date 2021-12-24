@@ -35,15 +35,13 @@ public class SignMessage {
                     }
                 });
 
-        String message = "The first official release of NekoHit Project (Contracts).\n" +
-                "In this release, we have CatToken v1.0.0 and WcaContract v1.0.0\n\n" +
+        String message = "Here is the first patch: CatToken v1.0.1 and WcaContract v1.0.1\n\n" +
                 "Release digests:\n\n" + stringBuilder;
 
         System.out.println("Message:\n```");
         System.out.println(message);
         System.out.println("```\n");
         signAndPrint(message, account.getECKeyPair());
-
 
     }
 

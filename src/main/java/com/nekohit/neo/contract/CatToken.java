@@ -15,7 +15,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "CAT Token")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1.0.0")
+@ManifestExtra(key = "version", value = "v1.0.1")
 // Contract as receiver
 @Permission(contract = "*", methods = "onNEP17Payment")
 // USD token transfer
@@ -132,12 +132,20 @@ public class CatToken {
     }
 
     @Safe
-    public static List<Pair<Hash160, Integer>> dumpHolder() {
-        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(sc, ASSET_PREFIX, FindOptions.RemovePrefix);
-        // Base64 encoded address and corresponding amount
+    public static List<Pair<Hash160, Integer>> dumpHolder(
+            int page, int size
+    ) {
+        assert page >= 1 : "Invalid page, page starts from 1.";
+        assert size >= 1 : "Invalid size, size must be non-negative number.";
+        int offset = (page - 1) * size;
         List<Pair<Hash160, Integer>> result = new List<>();
-        while (iter.next()) {
+        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(sc, ASSET_PREFIX, FindOptions.RemovePrefix);
+        while (result.size() < size && iter.next()) {
             Iterator.Struct<ByteString, ByteString> elem = iter.get();
+            if (offset != 0) { // skip the offset
+                offset--;
+                continue;
+            }
             Hash160 buyer = new Hash160(elem.key);
             int purchaseAmount = elem.value.toIntOrZero();
             result.add(new Pair<>(buyer, purchaseAmount));

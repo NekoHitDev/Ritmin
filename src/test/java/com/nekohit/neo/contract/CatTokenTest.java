@@ -61,7 +61,10 @@ public class CatTokenTest extends ContractTestFramework {
         List<StackItem> result = testInvoke(
                 getCatToken(),
                 "dumpHolder",
-                new ContractParameter[0],
+                new ContractParameter[]{
+                        ContractParameter.integer(1),
+                        ContractParameter.integer(20)
+                },
                 new Signer[]{}
         ).getStack().get(0).getList();
 

@@ -21,7 +21,7 @@ public class ProjectPojo {
     public final String ownerHashBase64;
 
     /**
-     * The Base64 of token hash represented in little endian..
+     * The Base64 of token hash represented in little endian.
      */
     public final String tokenHashBase64;
 

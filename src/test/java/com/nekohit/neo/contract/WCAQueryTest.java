@@ -63,7 +63,9 @@ public class WCAQueryTest extends ContractTestFramework {
                 getWcaContract(),
                 "dumpPurchaseRecord",
                 new ContractParameter[]{
-                        ContractParameter.string(identifier)
+                        ContractParameter.string(identifier),
+                        ContractParameter.integer(1),
+                        ContractParameter.integer(20)
                 },
                 new Signer[]{}
         ).getStack().get(0).getList();
