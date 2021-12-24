@@ -1,7 +1,7 @@
 package com.nekohit.neo.mainnet;
 
+import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.contract.WCAContract;
-import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractUtils;
@@ -17,7 +17,7 @@ public class CompileWCA {
     private static final String CONTRACT_OWNER_ADDRESS = "NWWpkYtqeUwgHfbFMZurmKei6T85JtA1HQ";
 
     public static void main(String[] args) throws Exception {
-        Utils.require(AddressUtils.isValidAddress(CONTRACT_OWNER_ADDRESS), "Invalid address");
+        TestUtils.require(AddressUtils.isValidAddress(CONTRACT_OWNER_ADDRESS), "Invalid address");
         System.err.println("Your contract owner address is: " + CONTRACT_OWNER_ADDRESS);
 
         Map<String, String> replaceMap = new HashMap<>();

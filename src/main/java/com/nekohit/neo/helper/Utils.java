@@ -9,9 +9,9 @@ public class Utils {
     @Instruction(opcode = OpCode.CONVERT, operand = StackItemType.BYTE_STRING_CODE)
     public static native ByteString intToByteString(int i);
 
-    public static ByteString intToPaddingByteString(int i, int l) throws Exception {
+    public static ByteString intToPaddingByteString(int i, int l) {
         ByteString b = intToByteString(i);
-        require(b.length() <= l, "Max length exceeded.");
+        assert b.length() <= l : "Max length exceeded.";
         if (b.length() < l) {
             // note in the NeoVM, int are represented in SMALL endian
             // So number 1024 = 0x400, which is (low addr)[00][04](high addr)
@@ -21,18 +21,5 @@ public class Utils {
             b = b.concat(new byte[l - b.length()]);
         }
         return b;
-    }
-
-    /**
-     * Similar to kotlin's require function. If condition is false, then exception is thrown
-     *
-     * @param condition the condition required to check
-     * @param message   if condition is false, the message for exception
-     * @throws Exception if the condition is failed
-     */
-    public static void require(boolean condition, String message) throws Exception {
-        if (!condition) {
-            throw new Exception(message);
-        }
     }
 }

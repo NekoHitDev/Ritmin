@@ -2,8 +2,6 @@ package com.nekohit.neo.testnet;
 
 import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.contract.CatToken;
-import com.nekohit.neo.contract.WCAContract;
-import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.SmartContract;
@@ -30,11 +28,12 @@ public class UpdateContract {
     );
 
     // CatToken
-//    private static final Class<?> CONTRACT_CLASS = CatToken.class;
-//    private static final Hash160 CONTRACT_HASH = new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7");
+    private static final Class<?> CONTRACT_CLASS = CatToken.class;
+    private static final Hash160 CONTRACT_HASH = new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7");
     // WCA contract
-    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
-    private static final Hash160 CONTRACT_HASH = new Hash160("0x514e4dc6398ba12a8c3a5ed96187d606998c4d93");
+//    private static final Class<?> CONTRACT_CLASS = WCAContract.class;
+//    private static final Hash160 CONTRACT_HASH = new Hash160("0x3d151c524c35ea5cd549323d98e782cfb7403951");
+//    private static final Hash160 CONTRACT_HASH = new Hash160("0x514e4dc6398ba12a8c3a5ed96187d606998c4d93");
 
     private static final SmartContract CONTRACT = new SmartContract(CONTRACT_HASH, NEOW3J);
 
@@ -65,7 +64,7 @@ public class UpdateContract {
         System.err.println("Note: Once confirmed, you CANNOT abort this process.");
         String line = scanner.nextLine();
         scanner.close();
-        Utils.require(line.toLowerCase().trim().equals("continue"), "Canceled.");
+        TestUtils.require(line.toLowerCase().trim().equals("continue"), "Canceled.");
 
         System.out.println("Updating contract... Do not stop this program!");
 

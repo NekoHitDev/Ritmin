@@ -2,6 +2,7 @@ package com.nekohit.neo.contract;
 
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.exceptions.UnexpectedReturnTypeException;
+import io.neow3j.protocol.core.stackitem.StackItem;
 import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.math.BigInteger;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -42,15 +45,37 @@ public class CatTokenTest extends ContractTestFramework {
 
     @Test
     void testIsOwner() throws Throwable {
-        assertTrue(invokeFunction(
+        assertTrue(testInvoke(
                         getCatToken(),
                         "verify",
                         new ContractParameter[0],
                         new Signer[]{
                                 AccountSigner.calledByEntry(CONTRACT_OWNER_ACCOUNT)
                         }
-                ).getExecutions().get(0).getStack().get(0).getBoolean()
+                ).getStack().get(0).getBoolean()
         );
+    }
+
+    @Test
+    void testDumpOwner() throws Throwable {
+        List<StackItem> result = testInvoke(
+                getCatToken(),
+                "dumpHolder",
+                new ContractParameter[]{
+                        ContractParameter.integer(1),
+                        ContractParameter.integer(20)
+                },
+                new Signer[]{}
+        ).getStack().get(0).getList();
+
+        for (StackItem elem : result) {
+            List<StackItem> pair = elem.getList();
+            String address = pair.get(0).getAddress();
+            Hash160 account = Hash160.fromAddress(address);
+            BigInteger value = pair.get(1).getInteger();
+            System.out.println(address + ": " + value);
+            assertEquals(getCatToken().getBalanceOf(account), value);
+        }
     }
 
     @Test
