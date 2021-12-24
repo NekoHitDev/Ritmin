@@ -1,5 +1,6 @@
 package com.nekohit.neo.testnet;
 
+import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.helper.Pair;
 import io.neow3j.contract.SmartContract;
 import io.neow3j.protocol.Neow3j;
@@ -21,10 +22,13 @@ public class DumpData {
     );
 
     private static final SmartContract CAT_CONTRACT = new SmartContract(new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7"), NEOW3J);
+
     // or 0x3d151c524c35ea5cd549323d98e782cfb7403951 for dev version
     private static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0x514e4dc6398ba12a8c3a5ed96187d606998c4d93"), NEOW3J);
 
     public static void main(String[] args) throws IOException {
+        BigInteger startBlock = NEOW3J.getBlockCount().send().getBlockCount();
+        System.out.println("Last block number: " + startBlock);
         System.out.println("CAT holders:");
         var catHolderList = dumpCatHolder();
         catHolderList.forEach(it -> System.out.println(it.first + ": "
@@ -47,6 +51,8 @@ public class DumpData {
         });
         System.out.println("Total projects: " + projectIds.size());
 
+        BigInteger endBlock = NEOW3J.getBlockCount().send().getBlockCount();
+        TestUtils.require(startBlock.equals(endBlock), "New block detected");
     }
 
     private static List<Pair<String, BigInteger>> dumpCatHolder() throws IOException {
