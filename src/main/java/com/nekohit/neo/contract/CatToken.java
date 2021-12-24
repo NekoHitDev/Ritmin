@@ -1,9 +1,11 @@
 package com.nekohit.neo.contract;
 
+import com.nekohit.neo.helper.Pair;
 import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
+import io.neow3j.devpack.constants.FindOptions;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.events.Event3Args;
 
@@ -13,7 +15,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "CAT Token")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1.0.0")
+@ManifestExtra(key = "version", value = "v1.0.1")
 // Contract as receiver
 @Permission(contract = "*", methods = "onNEP17Payment")
 // USD token transfer
@@ -39,28 +41,26 @@ public class CatToken {
     private static final StorageContext sc = Storage.getStorageContext();
     private static final StorageMap assetMap = sc.createMap(ASSET_PREFIX);
 
+    @Safe
     public static String symbol() {
         return SYMBOL;
     }
 
+    @Safe
     public static int decimals() {
         return DECIMALS;
     }
 
+    @Safe
     public static int totalSupply() {
         return getTotalSupply();
     }
 
-    public static boolean transfer(Hash160 from, Hash160 to, int amount, Object data) throws Exception {
-        if (!Hash160.isValid(from) || !Hash160.isValid(to)) {
-            throw new Exception("From or To address is not a valid address.");
-        }
-        if (amount < 0) {
-            throw new Exception("The transfer amount was negative.");
-        }
-        if (!Runtime.checkWitness(from) && from != Runtime.getCallingScriptHash()) {
-            throw new Exception("Invalid sender signature. The sender of the tokens needs to be the signing account.");
-        }
+    public static boolean transfer(Hash160 from, Hash160 to, int amount, Object data) {
+        assert Hash160.isValid(from) && Hash160.isValid(to) : "From or To address is not a valid address.";
+        assert amount >= 0 : "The transfer amount was negative.";
+        assert Runtime.checkWitness(from) || from == Runtime.getCallingScriptHash()
+                : "Invalid sender signature. The sender of the tokens needs to be the signing account.";
 
         if (from != to && amount != 0) {
             deductFromBalance(from, amount);
@@ -75,24 +75,17 @@ public class CatToken {
         return true;
     }
 
-    public static int balanceOf(Hash160 account) throws Exception {
-        if (!Hash160.isValid(account)) {
-            throw new Exception("Argument is not a valid address.");
-        }
+    @Safe
+    public static int balanceOf(Hash160 account) {
+        assert Hash160.isValid(account) : "Argument is not a valid address.";
         return getBalance(account);
     }
 
     @OnNEP17Payment
-    public static void onPayment(Hash160 from, int usdAmount, Object data) throws Exception {
-        if (USD_TOKEN_HASH != Runtime.getCallingScriptHash()) {
-            throw new Exception("Invalid caller.");
-        }
-        if (!Hash160.isValid(from)) {
-            throw new Exception("From address is not a valid address.");
-        }
-        if (usdAmount < 0) {
-            throw new Exception("Invalid amount.");
-        }
+    public static void onPayment(Hash160 from, int usdAmount, Object data) {
+        assert USD_TOKEN_HASH == Runtime.getCallingScriptHash() : "Invalid caller.";
+        assert Hash160.isValid(from) : "From address is not a valid address.";
+        assert usdAmount >= 0 : "Invalid amount.";
 
         if (from == OWNER && data instanceof Boolean && ((Boolean) data)) {
             // if come from owner and data is true, this is a donation, aka not exchange
@@ -104,12 +97,10 @@ public class CatToken {
         int catAmount = usdAmount / EXCHANGE_RATE;
         int usedAmount = catAmount * EXCHANGE_RATE;
 
-        if (usedAmount != usdAmount) {
-            // say if someone sent 1.000001USD, then he gets 2CAT,
-            // but he will lose the small remainder
-            // reject tx when this happens
-            throw new Exception("Nonexchangeable amount detected.");
-        }
+        // say if someone sent 1.000001USD, then he gets 2CAT,
+        // but he will lose the small remainder
+        // reject tx when this happens
+        assert usedAmount == usdAmount : "Nonexchangeable amount detected.";
 
         if (catAmount != 0) {
             addToBalance(from, catAmount);
@@ -118,16 +109,11 @@ public class CatToken {
         onTransfer.fire(null, from, catAmount);
     }
 
-    public static boolean destroyToken(Hash160 from, int catAmount) throws Exception {
-        if (!Hash160.isValid(from)) {
-            throw new Exception("From address is not a valid address.");
-        }
-        if (catAmount < 0) {
-            throw new Exception("The destroy amount was negative.");
-        }
-        if (!Runtime.checkWitness(from) && from != Runtime.getCallingScriptHash()) {
-            throw new Exception("Invalid sender signature. The sender of the tokens needs to be the signing account.");
-        }
+    public static boolean destroyToken(Hash160 from, int catAmount) {
+        assert Hash160.isValid(from) : "From address is not a valid address.";
+        assert catAmount >= 0 : "The destroy amount was negative.";
+        assert Runtime.checkWitness(from) || from == Runtime.getCallingScriptHash()
+                : "Invalid sender signature. The sender of the tokens needs to be the signing account.";
 
         int usdAmount = catAmount * EXCHANGE_RATE;
 
@@ -145,6 +131,28 @@ public class CatToken {
         return true;
     }
 
+    @Safe
+    public static List<Pair<Hash160, Integer>> dumpHolder(
+            int page, int size
+    ) {
+        assert page >= 1 : "Invalid page, page starts from 1.";
+        assert size >= 1 : "Invalid size, size must be non-negative number.";
+        int offset = (page - 1) * size;
+        List<Pair<Hash160, Integer>> result = new List<>();
+        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(sc, ASSET_PREFIX, FindOptions.RemovePrefix);
+        while (result.size() < size && iter.next()) {
+            Iterator.Struct<ByteString, ByteString> elem = iter.get();
+            if (offset != 0) { // skip the offset
+                offset--;
+                continue;
+            }
+            Hash160 buyer = new Hash160(elem.key);
+            int purchaseAmount = elem.value.toIntOrZero();
+            result.add(new Pair<>(buyer, purchaseAmount));
+        }
+        return result;
+    }
+
     @OnDeployment
     public static void deploy(Object data, boolean update) {
         if (!update) {
@@ -157,16 +165,14 @@ public class CatToken {
         }
     }
 
-    public static void update(ByteString script, String manifest) throws Exception {
+    public static void update(ByteString script, String manifest) {
         throwIfSignerIsNotOwner();
-        if (script.length() == 0 && manifest.length() == 0) {
-            throw new Exception("The new contract script and manifest must not be empty.");
-        }
+        assert script.length() != 0 && manifest.length() != 0 : "The new contract script and manifest must not be empty.";
         ContractManagement.update(script, manifest);
     }
 
     @OnVerification
-    public static boolean verify() throws Exception {
+    public static boolean verify() {
         throwIfSignerIsNotOwner();
         return true;
     }
@@ -176,14 +182,17 @@ public class CatToken {
      *
      * @return the address of the contract owner.
      */
+    @Safe
     public static Hash160 contractOwner() {
         return OWNER;
     }
 
+    @Safe
     public static Hash160 usdTokenHash() {
         return USD_TOKEN_HASH;
     }
 
+    @Safe
     public static int exchangeRate() {
         return EXCHANGE_RATE;
     }
@@ -195,21 +204,17 @@ public class CatToken {
         return i == null ? 0 : i;
     }
 
-    private static void throwIfSignerIsNotOwner() throws Exception {
-        if (!Runtime.checkWitness(OWNER)) {
-            throw new Exception("The calling entity is not the owner of this contract.");
-        }
+    private static void throwIfSignerIsNotOwner() {
+        assert Runtime.checkWitness(OWNER) : "The calling entity is not the owner of this contract.";
     }
 
     private static void addToBalance(Hash160 key, int value) {
         assetMap.put(key.toByteString(), getBalance(key) + value);
     }
 
-    private static void deductFromBalance(Hash160 key, int value) throws Exception {
+    private static void deductFromBalance(Hash160 key, int value) {
         int oldValue = getBalance(key);
-        if (oldValue < value) {
-            throw new Exception("Insufficient amount.");
-        }
+        assert oldValue >= value : "Insufficient amount.";
         if (oldValue == value) {
             assetMap.delete(key.toByteString());
         } else {

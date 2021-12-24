@@ -3,7 +3,6 @@ package com.nekohit.neo.testnet;
 import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.contract.CatToken;
 import com.nekohit.neo.contract.WCAContract;
-import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractManagement;
@@ -38,7 +37,7 @@ public class DeployContract {
         Account deployAccount = TestUtils.readAccountWIF(scanner);
 
         System.out.println("Expected contract owner address: ");
-        Utils.require(deployAccount.getAddress().equals(scanner.nextLine()),
+        TestUtils.require(deployAccount.getAddress().equals(scanner.nextLine()),
                 "Contract owner address doesn't match your deploy account!");
 
         Map<String, String> replaceMap = new HashMap<>();
@@ -72,7 +71,7 @@ public class DeployContract {
         String line = scanner.nextLine();
         scanner.close();
 
-        Utils.require(line.toLowerCase().trim().equals("confirmed"), "Canceled.");
+        TestUtils.require(line.toLowerCase().trim().equals("confirmed"), "Canceled.");
 
         System.out.println("Deploying contract... Do not stop this program!");
 

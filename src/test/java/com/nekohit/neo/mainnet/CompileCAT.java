@@ -1,7 +1,7 @@
 package com.nekohit.neo.mainnet;
 
+import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.contract.CatToken;
-import com.nekohit.neo.helper.Utils;
 import io.neow3j.compiler.CompilationUnit;
 import io.neow3j.compiler.Compiler;
 import io.neow3j.contract.ContractUtils;
@@ -24,7 +24,7 @@ public class CompileCAT {
     private static final Hash160 USD_CONTRACT_SCRIPT_HASH = new Hash160("0xcd48b160c1bbc9d74997b803b9a7ad50a4bef020");
 
     public static void main(String[] args) throws Exception {
-        Utils.require(AddressUtils.isValidAddress(CONTRACT_OWNER_ADDRESS), "Invalid address");
+        TestUtils.require(AddressUtils.isValidAddress(CONTRACT_OWNER_ADDRESS), "Invalid address");
         System.err.println("Your contract owner address is: " + CONTRACT_OWNER_ADDRESS);
         System.err.println("Your usd token script has is: 0x" + USD_CONTRACT_SCRIPT_HASH);
 
@@ -32,7 +32,7 @@ public class CompileCAT {
                 new HttpService("https://n3seed1.ngd.network:10332/")));
         String usdTokenSymbol = fUSDT.getSymbol();
         System.err.println("USD token symbol: " + usdTokenSymbol);
-        Utils.require(usdTokenSymbol.equals("fUSDT"), "Invalid USD token");
+        TestUtils.require(usdTokenSymbol.equals("fUSDT"), "Invalid USD token");
 
         Map<String, String> replaceMap = new HashMap<>();
         replaceMap.put("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_ADDRESS);
