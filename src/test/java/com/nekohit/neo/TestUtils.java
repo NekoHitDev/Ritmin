@@ -48,6 +48,16 @@ public class TestUtils {
         }
     }
 
+    public interface MessageProvider {
+        String provide();
+    }
+
+    public static void require(boolean condition, MessageProvider messageProvider) {
+        if (!condition) {
+            throw new RuntimeException(messageProvider.provide());
+        }
+    }
+
     /**
      * reverse the content in buffer in place, return the buffer.
      */

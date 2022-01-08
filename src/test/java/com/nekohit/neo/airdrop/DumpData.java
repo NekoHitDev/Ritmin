@@ -7,7 +7,9 @@ import io.neow3j.protocol.Neow3j;
 import io.neow3j.protocol.http.HttpService;
 import io.neow3j.types.Hash160;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
@@ -20,12 +22,17 @@ public class DumpData {
     );
 
     private static final SmartContract CAT_CONTRACT = new SmartContract(new Hash160("0xf461dff74f454e5016421341f115a2e789eadbd7"), NEOW3J);
-    // or 0x3d151c524c35ea5cd549323d98e782cfb7403951 for dev version
     private static final SmartContract WCA_CONTRACT = new SmartContract(new Hash160("0x514e4dc6398ba12a8c3a5ed96187d606998c4d93"), NEOW3J);
 
+    private static final File resultFile = new File("./contract_dump.txt");
+
     public static void main(String[] args) throws IOException {
+        //noinspection ResultOfMethodCallIgnored
+        resultFile.delete();
+        PrintWriter writer = new PrintWriter(resultFile);
+
         BigInteger startBlock = NEOW3J.getBlockCount().send().getBlockCount();
-        System.out.println("Last block number: " + startBlock);
+        writer.println("Last block number: " + startBlock);
         // fetch the data
         var catHolderList = dumpCatHolder(CAT_CONTRACT);
         var projectIds = dumpWcaProjects(WCA_CONTRACT, PROJECT_NOT_PENDING);
@@ -42,15 +49,17 @@ public class DumpData {
         TestUtils.require(startBlock.equals(endBlock), "New block detected");
 
         // print the result
-        catHolderList.forEach(it -> System.out.println("(CAT) " + it.first + ": " + it.second));
-        System.out.println("(TOTAL) holders: " + catHolderList.size());
+        catHolderList.forEach(it -> writer.println("(CAT) " + it.first + ": " + it.second));
+        writer.println("(TOTAL) holders: " + catHolderList.size());
         projectIds.forEach(it -> {
-            System.out.println("(PROJECT) " + it.first + ": " + it.second);
+            writer.println("(PROJECT) " + it.first + ": " + it.second);
             List<Pair<String, BigInteger>> supporters = sponsorMap.get(it.first);
-            supporters.forEach(s -> System.out.println("(SPONSOR) " + it.first + ": " + s.first + ": " + s.second));
-            System.out.println("(TOTAL) sponsors: " + supporters.size());
+            supporters.forEach(s -> writer.println("(SPONSOR) " + it.first + ": " + s.first + ": " + s.second));
+            writer.println("(TOTAL) sponsors: " + supporters.size());
         });
-        System.out.println("(TOTAL) projects: " + projectIds.size());
-        System.out.println("(END) --------------------------------------------------");
+        writer.println("(TOTAL) projects: " + projectIds.size());
+        writer.println("(END) --------------------------------------------------");
+
+        writer.close();
     }
 }

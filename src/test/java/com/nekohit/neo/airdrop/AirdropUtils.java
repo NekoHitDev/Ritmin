@@ -1,10 +1,18 @@
 package com.nekohit.neo.airdrop;
 
+import com.nekohit.neo.TestUtils;
 import com.nekohit.neo.helper.Pair;
 import io.neow3j.contract.SmartContract;
+import io.neow3j.protocol.Neow3j;
+import io.neow3j.protocol.core.response.NeoApplicationLog.Execution.Notification;
+import io.neow3j.protocol.core.response.NeoGetApplicationLog;
+import io.neow3j.protocol.core.response.NeoGetBlock;
+import io.neow3j.protocol.core.response.Transaction;
 import io.neow3j.protocol.core.stackitem.StackItem;
 import io.neow3j.types.ContractParameter;
 import io.neow3j.types.Hash160;
+import io.neow3j.types.Hash256;
+import io.neow3j.types.NeoVMStateType;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -15,6 +23,7 @@ import java.sql.Timestamp;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.nekohit.neo.TestUtils.reverse;
 
@@ -172,4 +181,51 @@ public class AirdropUtils {
         return result;
     }
 
+    public static BigInteger getBlockCount(Neow3j neow3j) {
+        try {
+            return neow3j.getBlockCount().send().getBlockCount();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Return a parallel stream represent the tx hashes in the block
+     */
+    public static Stream<Hash256> dumpTxHashesFromBlock(BigInteger blockIndex, Neow3j neow3j) {
+        NeoGetBlock bResp;
+        try {
+            bResp = neow3j.getBlock(blockIndex, true).send();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        TestUtils.require(!bResp.hasError(), () -> bResp.getError().getMessage() + "#" + blockIndex);
+        return bResp.getBlock().getTransactions().parallelStream()
+                .map(Transaction::getHash);
+    }
+
+    /**
+     * Return a parallel stream represent the tx hashes in the block
+     */
+    public static Stream<Notification> dumpValidNotification(
+            Hash256 txHash, Neow3j neow3j,
+            Hash160 catTokenHash, Hash160 wcaContractHash
+    ) {
+        var req = neow3j.getApplicationLog(txHash);
+        NeoGetApplicationLog resp;
+        try {
+            resp = req.send();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        TestUtils.require(!resp.hasError(), () -> resp.getError().getMessage());
+        var applicationLog = resp.getApplicationLog();
+
+        return applicationLog.getExecutions()
+                .parallelStream()
+                .filter(it -> it.getState() == NeoVMStateType.HALT)
+                .flatMap(it -> it.getNotifications().parallelStream())
+                .filter(it -> it.getContract().equals(catTokenHash)
+                        || it.getContract().equals(wcaContractHash));
+    }
 }
