@@ -1,11 +1,9 @@
 package com.nekohit.neo.contract;
 
-import com.nekohit.neo.helper.Pair;
 import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
-import io.neow3j.devpack.constants.FindOptions;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.events.Event3Args;
 
@@ -15,7 +13,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "CAT Token")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1.0.1")
+@ManifestExtra(key = "version", value = "v1.0.2")
 // Contract as receiver
 @Permission(contract = "*", methods = "onNEP17Payment")
 // USD token transfer
@@ -35,11 +33,10 @@ public class CatToken {
     private static Event3Args<Hash160, Hash160, Integer> onTransfer;
 
     private static final int DECIMALS = 2;
-    private static final ByteString ASSET_PREFIX = new ByteString("asset");
     private static final String TOTAL_SUPPLY_KEY = "totalSupply";
     private static final String SYMBOL = "CAT";
     private static final StorageContext sc = Storage.getStorageContext();
-    private static final StorageMap assetMap = sc.createMap(ASSET_PREFIX);
+    private static final StorageMap assetMap = new StorageMap(sc, "asset");
 
     @Safe
     public static String symbol() {
@@ -131,37 +128,11 @@ public class CatToken {
         return true;
     }
 
-    @Safe
-    public static List<Pair<Hash160, Integer>> dumpHolder(
-            int page, int size
-    ) {
-        assert page >= 1 : "Invalid page, page starts from 1.";
-        assert size >= 1 : "Invalid size, size must be non-negative number.";
-        int offset = (page - 1) * size;
-        List<Pair<Hash160, Integer>> result = new List<>();
-        Iterator<Iterator.Struct<ByteString, ByteString>> iter = Storage.find(sc, ASSET_PREFIX, FindOptions.RemovePrefix);
-        while (result.size() < size && iter.next()) {
-            Iterator.Struct<ByteString, ByteString> elem = iter.get();
-            if (offset != 0) { // skip the offset
-                offset--;
-                continue;
-            }
-            Hash160 buyer = new Hash160(elem.key);
-            int purchaseAmount = elem.value.toIntOrZero();
-            result.add(new Pair<>(buyer, purchaseAmount));
-        }
-        return result;
-    }
-
     @OnDeployment
     public static void deploy(Object data, boolean update) {
         if (!update) {
-            // first time deployment
-            int initialSupply = 0;
-            // Set initialize supply
-            Storage.put(sc, TOTAL_SUPPLY_KEY, initialSupply);
-            // And allocate all tokens to the contract owner.
-            Storage.put(sc, ASSET_PREFIX.concat(OWNER.toByteString()), initialSupply);
+            // Set initialize supply to zero
+            Storage.put(sc, TOTAL_SUPPLY_KEY, 0);
         }
     }
 
@@ -200,8 +171,7 @@ public class CatToken {
     // -------------------- PRIVATE METHOD BELOW --------------------
 
     private static int getTotalSupply() {
-        Integer i = Storage.getInteger(sc, TOTAL_SUPPLY_KEY);
-        return i == null ? 0 : i;
+        return Storage.getIntOrZero(sc, TOTAL_SUPPLY_KEY);
     }
 
     private static void throwIfSignerIsNotOwner() {
@@ -214,7 +184,7 @@ public class CatToken {
 
     private static void deductFromBalance(Hash160 key, int value) {
         int oldValue = getBalance(key);
-        assert oldValue >= value : "Insufficient amount.";
+        assert oldValue >= value : "Insufficient balance.";
         if (oldValue == value) {
             assetMap.delete(key.toByteString());
         } else {
@@ -231,7 +201,6 @@ public class CatToken {
     }
 
     private static int getBalance(Hash160 key) {
-        Integer i = assetMap.getInteger(key.toByteString());
-        return i == null ? 0 : i;
+        return assetMap.getIntOrZero(key.toByteString());
     }
 }

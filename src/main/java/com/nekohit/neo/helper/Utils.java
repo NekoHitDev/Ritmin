@@ -1,16 +1,10 @@
 package com.nekohit.neo.helper;
 
 import io.neow3j.devpack.ByteString;
-import io.neow3j.devpack.annotations.Instruction;
-import io.neow3j.script.OpCode;
-import io.neow3j.types.StackItemType;
 
 public class Utils {
-    @Instruction(opcode = OpCode.CONVERT, operand = StackItemType.BYTE_STRING_CODE)
-    public static native ByteString intToByteString(int i);
-
     public static ByteString intToPaddingByteString(int i, int l) {
-        ByteString b = intToByteString(i);
+        ByteString b = new ByteString(i);
         assert b.length() <= l : "Max length exceeded.";
         if (b.length() < l) {
             // note in the NeoVM, int are represented in SMALL endian
