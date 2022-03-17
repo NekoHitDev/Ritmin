@@ -7,7 +7,6 @@ import io.neow3j.wallet.Account;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
@@ -34,23 +33,7 @@ public class SignMessage {
                         throw new RuntimeException(e);
                     }
                 });
-
-        String message = "Here is the first patch: CatToken v1.0.1 and WcaContract v1.0.1\n\n" +
-                "Release digests:\n\n" + stringBuilder;
-
-        System.out.println("Message:\n```");
-        System.out.println(message);
-        System.out.println("```\n");
-        signAndPrint(message, account.getECKeyPair());
-
-    }
-
-    private static void signAndPrint(String message, ECKeyPair keyPair) {
-        Sign.SignatureData signature = Sign.signMessage(message.getBytes(StandardCharsets.UTF_8), keyPair);
-        System.out.println("Signature r: `" + DatatypeConverter.printHexBinary(signature.getR()) + "`");
-        System.out.println("Signature s: `" + DatatypeConverter.printHexBinary(signature.getS()) + "`");
-        System.out.println("Signature v: `" + DatatypeConverter.printHexBinary(new byte[]{signature.getV()}) + "`");
-        System.out.println("\n----");
+        System.out.println(stringBuilder);
     }
 
     private static String signAndFormat(byte[] message, ECKeyPair keyPair) {

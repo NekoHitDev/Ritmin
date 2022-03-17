@@ -2,7 +2,6 @@ package com.nekohit.neo.contract;
 
 import io.neow3j.contract.FungibleToken;
 import io.neow3j.contract.exceptions.UnexpectedReturnTypeException;
-import io.neow3j.protocol.core.stackitem.StackItem;
 import io.neow3j.test.ContractTest;
 import io.neow3j.transaction.AccountSigner;
 import io.neow3j.transaction.Signer;
@@ -14,8 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.math.BigInteger;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -54,28 +51,6 @@ public class CatTokenTest extends ContractTestFramework {
                         }
                 ).getStack().get(0).getBoolean()
         );
-    }
-
-    @Test
-    void testDumpOwner() throws Throwable {
-        List<StackItem> result = testInvoke(
-                getCatToken(),
-                "dumpHolder",
-                new ContractParameter[]{
-                        ContractParameter.integer(1),
-                        ContractParameter.integer(20)
-                },
-                new Signer[]{}
-        ).getStack().get(0).getList();
-
-        for (StackItem elem : result) {
-            List<StackItem> pair = elem.getList();
-            String address = pair.get(0).getAddress();
-            Hash160 account = Hash160.fromAddress(address);
-            BigInteger value = pair.get(1).getInteger();
-            System.out.println(address + ": " + value);
-            assertEquals(getCatToken().getBalanceOf(account), value);
-        }
     }
 
     @Test
@@ -193,7 +168,7 @@ public class CatTokenTest extends ContractTestFramework {
                 )
         );
         assertTrue(
-                throwable.getMessage().contains("Insufficient amount."),
+                throwable.getMessage().contains("Insufficient balance."),
                 "Unexpected message: " + throwable.getMessage()
         );
     }
@@ -304,6 +279,6 @@ public class CatTokenTest extends ContractTestFramework {
         assertEquals(2_00, oldCatBalance - newCatBalance);
         assertEquals(2_00, oldTotalSupply - newTotalSupply);
         // need to account the gas fee
-        assertEquals(1_000000L - 2000_2390L, newGasBalance - oldGasBalance);
+        assertEquals(1_000000L - 1923_8860L, newGasBalance - oldGasBalance);
     }
 }

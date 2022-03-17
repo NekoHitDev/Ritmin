@@ -11,6 +11,7 @@ import io.neow3j.protocol.core.response.NeoSendRawTransaction;
 import io.neow3j.test.ContractTestExtension;
 import io.neow3j.test.DeployConfig;
 import io.neow3j.test.DeployConfiguration;
+import io.neow3j.test.DeployContext;
 import io.neow3j.transaction.Signer;
 import io.neow3j.transaction.Transaction;
 import io.neow3j.types.ContractParameter;
@@ -50,16 +51,20 @@ public class ContractTestFramework {
 
     @SuppressWarnings("unused")
     @DeployConfig(CatToken.class)
-    public static void catTokenConfig(DeployConfiguration conf) {
+    public static DeployConfiguration catTokenConfig(DeployContext ctx) {
+        DeployConfiguration conf = new DeployConfiguration();
         conf.setSubstitution("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_ACCOUNT.getAddress());
         conf.setSubstitution("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>", GasToken.SCRIPT_HASH.toAddress());
         conf.setSubstitution("<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", GasToken.SCRIPT_HASH.toString());
+        return conf;
     }
 
     @SuppressWarnings("unused")
     @DeployConfig(WCAContract.class)
-    public static void wcaContractConfig(DeployConfiguration conf) {
+    public static DeployConfiguration wcaContractConfig(DeployContext ctx) {
+        DeployConfiguration conf = new DeployConfiguration();
         conf.setSubstitution("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>", CONTRACT_OWNER_ACCOUNT.getAddress());
+        return conf;
     }
 
     @BeforeAll
@@ -140,7 +145,7 @@ public class ContractTestFramework {
                     )
                     .getUnsignedTransaction()
                     .addMultiSigWitness(genesisAccount.getMultiSigAccount().getVerificationScript(),
-                            genesisAccount.getSignerAccounts().toArray(new Account[0]));
+                            genesisAccount.getSignerAccounts());
 
         } else {
             // normal account

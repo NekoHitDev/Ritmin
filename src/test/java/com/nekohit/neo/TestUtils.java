@@ -44,7 +44,7 @@ public class TestUtils {
      */
     public static void require(boolean condition, String message) {
         if (!condition) {
-            throw new RuntimeException(message);
+            throw new IllegalStateException(message);
         }
     }
 
@@ -56,19 +56,5 @@ public class TestUtils {
         if (!condition) {
             throw new RuntimeException(messageProvider.provide());
         }
-    }
-
-    /**
-     * reverse the content in buffer in place, return the buffer.
-     */
-    public static byte[] reverse(byte[] buffer) {
-        int size = buffer.length;
-        byte temp;
-        for (int i = 0; i < size / 2; i++) {
-            temp = buffer[i];
-            buffer[i] = buffer[size - i - 1];
-            buffer[size - i - 1] = temp;
-        }
-        return buffer;
     }
 }
