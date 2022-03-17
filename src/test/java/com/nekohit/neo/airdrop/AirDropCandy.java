@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
@@ -21,20 +22,34 @@ import static com.nekohit.neo.airdrop.AirdropUtils.*;
  */
 public class AirDropCandy {
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("http://127.0.0.1:20332/")
+            new HttpService("http://127.0.0.1:10332/")
     );
 
     private static final Hash160 CAT_TOKEN_HASH = new Hash160("f461dff74f454e5016421341f115a2e789eadbd7");
     private static final Hash160 WCA_CONTRACT_HASH = new Hash160("514e4dc6398ba12a8c3a5ed96187d606998c4d93");
 
-    private static final File resultFile = new File("./notification_dump.txt");
+    private static final File notifyFile = new File("./notification_dump.txt");
+    private static final File holderFile = new File("./cat_holder_dump.txt");
 
     public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+        dumpNotify();
+        // dump cat holder
+        // TODO set this index
+        var blockIndex = getBlockCount(NEOW3J).longValue() - 2;
+        //noinspection ResultOfMethodCallIgnored
+        holderFile.delete();
+        HashMap<String, BigInteger> catHolder = dumpCatHolder(NEOW3J, blockIndex, CAT_TOKEN_HASH);
+        PrintWriter writer = new PrintWriter(holderFile);
+        catHolder.forEach((addr, value) -> writer.println(addr + ": " + value));
+        writer.close();
+    }
+
+    public static void dumpNotify() throws IOException, ExecutionException, InterruptedException {
         var startMs = System.currentTimeMillis();
 
         //noinspection ResultOfMethodCallIgnored
-        resultFile.delete();
-        PrintWriter writer = new PrintWriter(resultFile);
+        notifyFile.delete();
+        PrintWriter writer = new PrintWriter(notifyFile);
         // Set this to make the CPU on 100% usage, be careful with the TCP connection limit
         // Too much thread will increase the kernel load to switch thread (no need for fiber yet)
         // TODO queue overflow? -> CallerRunsPolicy?
@@ -42,6 +57,7 @@ public class AirDropCandy {
         ConcurrentLinkedQueue<CompletableFuture<Void>> linkedList = new ConcurrentLinkedQueue<>();
 
         // Block starts from 0, so count = a -> height is a-1
+        // TODO: Set this index
         var blockCount = getBlockCount(NEOW3J);
         System.out.println("Block count: " + blockCount);
 
@@ -123,5 +139,6 @@ public class AirDropCandy {
         } while (!terminated);
         writer.close();
     }
+
 
 }
