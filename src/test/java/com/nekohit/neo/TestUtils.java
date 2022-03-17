@@ -6,6 +6,7 @@ import io.neow3j.wallet.Account;
 
 import java.math.BigInteger;
 import java.util.Scanner;
+import java.util.function.Supplier;
 
 public class TestUtils {
     public static Account createAccountFromPrivateKey(String privateKey) {
@@ -48,13 +49,9 @@ public class TestUtils {
         }
     }
 
-    public interface MessageProvider {
-        String provide();
-    }
-
-    public static void require(boolean condition, MessageProvider messageProvider) {
+    public static void require(boolean condition, Supplier<String> messageProvider) {
         if (!condition) {
-            throw new RuntimeException(messageProvider.provide());
+            throw new RuntimeException(messageProvider.get());
         }
     }
 }
