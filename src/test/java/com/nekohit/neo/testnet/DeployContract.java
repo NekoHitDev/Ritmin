@@ -29,7 +29,6 @@ public class DeployContract {
             new HttpService("https://neo3-testnet.neoline.vip/")
     );
 
-    private static final boolean REALLY_DEPLOY_FLAG = true;
     private static final Class<?> CONTRACT_CLASS = WCAContract.class;
 
     public static void main(String[] args) throws Throwable {
@@ -75,17 +74,13 @@ public class DeployContract {
 
         System.out.println("Deploying contract... Do not stop this program!");
 
-        if (REALLY_DEPLOY_FLAG) {
-            Transaction tx = deployContract(
-                    compileResult,
-                    deployAccount
-            );
-            System.out.println("Deployed tx: 0x" + tx.getTxId());
-            Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
-            System.out.println("Gas fee: " + TestUtils.getGasFeeFromTx(tx));
-        } else {
-            System.err.println("This is a simulation. No contract is deployed.");
-        }
+        Transaction tx = deployContract(
+                compileResult,
+                deployAccount
+        );
+        System.out.println("Deployed tx: 0x" + tx.getTxId());
+        Await.waitUntilTransactionIsExecuted(tx.getTxId(), NEOW3J);
+        System.out.println("Gas fee: " + TestUtils.getGasFeeFromTx(tx));
 
         System.out.println("Using account: " + deployAccount.getAddress());
         System.out.println("Contract: " + CONTRACT_CLASS.getCanonicalName());
@@ -93,7 +88,7 @@ public class DeployContract {
         System.out.println("Deployed hash: 0x" + contractHash);
         System.out.println("Little endian: 0x" + Hex.encodeHexString(contractHash.toLittleEndianArray(), true));
 
-        if (REALLY_DEPLOY_FLAG && CONTRACT_CLASS == CatToken.class) {
+        if (CONTRACT_CLASS == CatToken.class) {
             FungibleToken token = new FungibleToken(contractHash, NEOW3J);
             transferToken(token, deployAccount, deployAccount.getScriptHash(), 1_00, null);
             System.out.println(token.getBalanceOf(deployAccount));
