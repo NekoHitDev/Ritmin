@@ -29,6 +29,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * This class is the basic framework for testing contract.
  * It offers functions like compile and deploy contract,
