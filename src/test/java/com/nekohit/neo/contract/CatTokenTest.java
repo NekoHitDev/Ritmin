@@ -27,7 +27,7 @@ public class CatTokenTest extends ContractTestFramework {
 
     @BeforeEach
     void setUp() {
-        testAccount = getTestAccount();
+        this.testAccount = getTestAccount();
     }
 
     @Test

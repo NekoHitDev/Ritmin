@@ -4,6 +4,7 @@ import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
+import io.neow3j.devpack.constants.NeoStandard;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.contracts.CryptoLib;
 import io.neow3j.devpack.events.Event1Arg;
@@ -21,7 +22,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @Permission(contract = "*", methods = "onNEP17Payment")
 // ContractManagement::update
 @Permission(contract = "0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", methods = {"update"})
-@SupportedStandards("NEP-17")
+@SupportedStandard(neoStandard = NeoStandard.NEP_17)
 public class NekoinToken {
     private static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
 

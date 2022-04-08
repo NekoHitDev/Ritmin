@@ -18,15 +18,19 @@ import static com.nekohit.neo.airdrop.AirdropUtils.*;
 
 /**
  * Java 16 has a better performance (overall time).
- * Java 11 has too much stop the world gc.
+ * Java 11 has too much stop-the-world gc.
  */
 public class AirDropCandy {
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("http://127.0.0.1:10332/")
+            new HttpService("http://10.172.1.11:20332/")
     );
 
+    // test net
     private static final Hash160 CAT_TOKEN_HASH = new Hash160("f461dff74f454e5016421341f115a2e789eadbd7");
     private static final Hash160 WCA_CONTRACT_HASH = new Hash160("514e4dc6398ba12a8c3a5ed96187d606998c4d93");
+    // main net
+//    private static final Hash160 CAT_TOKEN_HASH = new Hash160("cdc17669ce3b7cfa65a29c4941aba14dbff9b12b");
+//    private static final Hash160 WCA_CONTRACT_HASH = new Hash160("1312460889ef976db3561e7688b077f09d5e98e0");
 
     private static final File notifyFile = new File("./notification_dump.txt");
     private static final File holderFile = new File("./cat_holder_dump.txt");
@@ -139,6 +143,5 @@ public class AirDropCandy {
         } while (!terminated);
         writer.close();
     }
-
 
 }

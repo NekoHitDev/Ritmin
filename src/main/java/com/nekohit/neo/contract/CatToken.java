@@ -4,6 +4,7 @@ import io.neow3j.devpack.Runtime;
 import io.neow3j.devpack.*;
 import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
+import io.neow3j.devpack.constants.NeoStandard;
 import io.neow3j.devpack.contracts.ContractManagement;
 import io.neow3j.devpack.events.Event3Args;
 
@@ -20,7 +21,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @Permission(contract = "<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", methods = "transfer")
 // ContractManagement::update
 @Permission(contract = "0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", methods = {"update"})
-@SupportedStandards("NEP-17")
+@SupportedStandard(neoStandard = NeoStandard.NEP_17)
 public class CatToken {
     private static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
     private static final Hash160 USD_TOKEN_HASH = addressToScriptHash("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>");

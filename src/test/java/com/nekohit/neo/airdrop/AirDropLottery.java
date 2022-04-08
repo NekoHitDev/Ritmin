@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class AirDropLottery {
     private static final Neow3j NEOW3J = Neow3j.build(
-            new HttpService("http://127.0.0.1:10332/")
+            new HttpService("http://10.172.1.11:20332/")
     );
     private static final BigInteger SEED_BLOCK_INDEX = BigInteger.valueOf(942910);
     private static final long SNAPSHOT_BLOCK_INDEX = 1245635;
@@ -33,7 +33,7 @@ public class AirDropLottery {
         Map<String, BigInteger> sponsorTicketMap = new ConcurrentHashMap<>();
 
         WcaContractDumper dumper = new WcaContractDumper(NEOW3J, SNAPSHOT_BLOCK_INDEX,
-                "3d151c524c35ea5cd549323d98e782cfb7403951");
+                "3d151c524c35ea5cd549323d98e782cfb7403951"); // testnet #2
         dumper.updateStorageMap();
         dumper.process().parallelStream()
                 .forEach(w -> {

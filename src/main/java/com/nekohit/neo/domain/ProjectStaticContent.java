@@ -2,8 +2,10 @@ package com.nekohit.neo.domain;
 
 import io.neow3j.devpack.Hash160;
 import io.neow3j.devpack.Runtime;
+import io.neow3j.devpack.annotations.Struct;
 
-public class ProjectStaticContent {
+@Struct
+public final class ProjectStaticContent {
     /**
      * The ScriptHash of owner.
      */
@@ -71,7 +73,7 @@ public class ProjectStaticContent {
 
     /**
      * Which token is used.
-     * */
+     */
     public final Hash160 tokenHash;
 
     // Preserved for future use
