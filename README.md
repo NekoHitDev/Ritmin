@@ -68,7 +68,44 @@ You can use our client to do that, see [NekoHitDev/ritmin-frontend](https://gith
 
 Or you can manually invoke the methods, see [wiki](https://github.com/NekoHitDev/Ritmin/wiki) for the details.
 
-### Group
+## Nekoin Token
+
+This is our DAO token.
+
+### Basic info
+
+Supported standard: `NEP-17`
+
+Symbol: `NEKOIN`
+
+Decimals: `8`
+
+Total supply: `Not fixed`
+
+Deployed:
+
++ Test
+  net: [`0x0ee8873f41537b7e14cbeb8d9d72176e7d137aee`](https://neo3.testnet.neotube.io/contract/0x0ee8873f41537b7e14cbeb8d9d72176e7d137aee)
++ Test net address: `NhevFQjT1bPGKcpc9gFCCrXkce1rEWJozt`
++ Main net: [`TODO`](https://neo3.neotube.io/contract/TODO)
++ Main net address: `TODO`
+
+### Mint&Destroy
+
+Mint&Destroy can only be done by the contract owner.
+
+### Read&Write message
+
+The contract has `writeMessage(ByteString content): ByteString` and `readMessage(ByteString index): ByteString` methods.
+The `writeMessage` method will hash (SHA-256) the content and use that as the index. It will save the content and return
+the index, meanwhile fire a `WriteMessage<Index>` event. If the content has already stored, an exception will be thrown.
+Assuming the SHA-256 will not collide, the index will represent the same content, no matter who wrote it. So
+the `writeMessage` won't validate any signature.
+
+For reading the content out, use `readMessage`, input the index and the content will be returned. The returned value is
+non-null since it will throw an exception if the index is not found.
+
+## Group
 
 Telegram group (Chinese): https://t.me/NekoHitCommunity
 

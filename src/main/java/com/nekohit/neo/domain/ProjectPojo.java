@@ -1,9 +1,11 @@
 package com.nekohit.neo.domain;
 
 import com.nekohit.neo.contract.WCAAuxiliary;
+import io.neow3j.devpack.annotations.Struct;
 import io.neow3j.devpack.contracts.StdLib;
 
-public class ProjectPojo {
+@Struct
+public final class ProjectPojo {
     /**
      * The identifier of this project.
      */

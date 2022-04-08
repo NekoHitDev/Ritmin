@@ -1,8 +1,10 @@
 package com.nekohit.neo.domain;
 
 import com.nekohit.neo.helper.Pair;
+import io.neow3j.devpack.annotations.Struct;
 
-public class ProjectDynamicContent {
+@Struct
+public final class ProjectDynamicContent {
     /**
      * How many tokens remained for sale.
      */

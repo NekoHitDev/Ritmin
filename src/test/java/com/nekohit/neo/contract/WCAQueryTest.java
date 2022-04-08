@@ -38,7 +38,7 @@ public class WCAQueryTest extends ContractTestFramework {
     }
 
     @Test
-    void testDumpPurchaseRecord() throws Throwable {
+    void testListPurchaseRecord() throws Throwable {
         // create WCA
         var identifier = ContractInvokeHelper.createAndPayProject(
                 getWcaContract(), "description",
@@ -61,7 +61,7 @@ public class WCAQueryTest extends ContractTestFramework {
         // query
         List<StackItem> result = testInvoke(
                 getWcaContract(),
-                "dumpPurchaseRecord",
+                "listPurchaseRecord",
                 new ContractParameter[]{
                         ContractParameter.string(identifier),
                         ContractParameter.integer(1),

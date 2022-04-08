@@ -23,7 +23,7 @@ import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 @ManifestExtra(key = "name", value = "WCA Contract")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
-@ManifestExtra(key = "version", value = "v1.0.1")
+@ManifestExtra(key = "version", value = "v1.0.2")
 // CatToken::transfer
 @Permission(contract = "*", methods = {"transfer"})
 // ContractManagement::update
@@ -34,11 +34,11 @@ public class WCAContract {
     private static final StorageContext CTX = Storage.getStorageContext();
 
     private static final String COUNTER_KEY = "CK";
-    private static final StorageMap projectIdentifierMap = CTX.createMap("ID");
-    private static final StorageMap projectStaticContentMap = CTX.createMap("SC");
-    private static final StorageMap projectDynamicContentMap = CTX.createMap("DC");
-    private static final StorageMap projectPurchaseRecordMap = CTX.createMap("PR");
-    private static final StorageMap projectMilestoneMap = CTX.createMap("MS");
+    private static final StorageMap projectIdentifierMap = new StorageMap(CTX, "ID");
+    private static final StorageMap projectStaticContentMap = new StorageMap(CTX, "SC");
+    private static final StorageMap projectDynamicContentMap = new StorageMap(CTX, "DC");
+    private static final StorageMap projectPurchaseRecordMap = new StorageMap(CTX, "PR");
+    private static final StorageMap projectMilestoneMap = new StorageMap(CTX, "MS");
 
     // creator, identifier, milestone count
     @DisplayName("DeclareProject")
@@ -95,10 +95,9 @@ public class WCAContract {
             dynamicContent.totalPurchasedAmount += amount;
             // update purchase record
             ByteString purchaseId = projectId.concat(from.toByteString());
-            Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
-            if (value == null) { // new purchase
+            Integer value = projectPurchaseRecordMap.getIntOrZero(purchaseId);
+            if (value == 0) { // new purchase
                 dynamicContent.buyerCounter++;
-                value = 0;
             }
             value += amount;
             projectPurchaseRecordMap.put(purchaseId, value);
@@ -136,15 +135,14 @@ public class WCAContract {
     public static int queryPurchase(String identifier, Hash160 buyer) {
         try {
             ByteString projectId = getProjectId(identifier);
-            Integer value = projectPurchaseRecordMap.getInteger(projectId.concat(buyer.toByteString()));
-            return value == null ? 0 : value;
+            return projectPurchaseRecordMap.getIntOrZero(projectId.concat(buyer.toByteString()));
         } catch (Exception e) {
             return 0;
         }
     }
 
     @Safe
-    public static List<Pair<Hash160, Integer>> dumpPurchaseRecord(
+    public static List<Pair<Hash160, Integer>> listPurchaseRecord(
             String identifier, int page, int size
     ) {
         assert page >= 1 : ExceptionMessages.INVALID_PAGE;
@@ -239,14 +237,11 @@ public class WCAContract {
         // projectId should be unique
         assert identifier.length() != 0 : ExceptionMessages.EMPTY_ID;
         assert projectIdentifierMap.get(identifier) == null : ExceptionMessages.DUPLICATED_ID;
-        Integer counter = Storage.getInteger(CTX, COUNTER_KEY);
-        if (counter == null) {
-            counter = 0;
-        }
+        Integer counter = Storage.getIntOrZero(CTX, COUNTER_KEY);
         counter++; // update counter
         Storage.put(CTX, COUNTER_KEY, counter);
         // save project id
-        ByteString projectId = Utils.intToByteString(counter);
+        ByteString projectId = new ByteString(counter);
         projectIdentifierMap.put(identifier, projectId);
 
         assert projectDescription != null : ExceptionMessages.NULL_DESCRIPTION;
@@ -378,8 +373,8 @@ public class WCAContract {
 
         assert !checkIfReadyToFinish(staticContent, dynamicContent) : ExceptionMessages.INVALID_STAGE_READY_TO_FINISH;
         ByteString purchaseId = projectId.concat(buyer.toByteString());
-        Integer value = projectPurchaseRecordMap.getInteger(purchaseId);
-        assert value != null && value > 0 : ExceptionMessages.RECORD_NOT_FOUND;
+        Integer value = projectPurchaseRecordMap.getIntOrZero(purchaseId);
+        assert value > 0 : ExceptionMessages.RECORD_NOT_FOUND;
         // After get the purchase record, delete it.
         // Re-entry attack will get record not found exception at next call.
         projectPurchaseRecordMap.delete(purchaseId);

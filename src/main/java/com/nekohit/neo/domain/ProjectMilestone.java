@@ -1,8 +1,10 @@
 package com.nekohit.neo.domain;
 
 import io.neow3j.devpack.Runtime;
+import io.neow3j.devpack.annotations.Struct;
 
-public class ProjectMilestone {
+@Struct
+public final class ProjectMilestone {
     /**
      * The title of this milestone
      */
@@ -26,7 +28,7 @@ public class ProjectMilestone {
 
     /**
      * Not used, preserved for future.
-     * */
+     */
     public int weight = -1;
 
     // Preserved for future use

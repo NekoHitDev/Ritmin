@@ -6,36 +6,32 @@ import io.neow3j.devpack.annotations.*;
 import io.neow3j.devpack.constants.CallFlags;
 import io.neow3j.devpack.constants.NeoStandard;
 import io.neow3j.devpack.contracts.ContractManagement;
+import io.neow3j.devpack.contracts.CryptoLib;
+import io.neow3j.devpack.events.Event1Arg;
 import io.neow3j.devpack.events.Event3Args;
 
 import static io.neow3j.devpack.StringLiteralHelper.addressToScriptHash;
 
+// TODO: Unit test for this contract
 @SuppressWarnings("unused")
-@ManifestExtra(key = "name", value = "CAT Token")
+@ManifestExtra(key = "name", value = "Nekoin Token")
 @ManifestExtra(key = "github", value = "https://github.com/NekoHitDev/Ritmin")
 @ManifestExtra(key = "author", value = "NekoHitDev")
 @ManifestExtra(key = "version", value = "v1.0.2")
 // Contract as receiver
 @Permission(contract = "*", methods = "onNEP17Payment")
-// USD token transfer
-@Permission(contract = "<USD_TOKEN_CONTRACT_HASH_PLACEHOLDER>", methods = "transfer")
 // ContractManagement::update
 @Permission(contract = "0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", methods = {"update"})
 @SupportedStandard(neoStandard = NeoStandard.NEP_17)
-public class CatToken {
+public class NekoinToken {
     private static final Hash160 OWNER = addressToScriptHash("<CONTRACT_OWNER_ADDRESS_PLACEHOLDER>");
-    private static final Hash160 USD_TOKEN_HASH = addressToScriptHash("<USD_TOKEN_CONTRACT_ADDRESS_PLACEHOLDER>");
-    // assuming USD token has 6 decimal: 1USD = 1_000000
-    // rate is 0.5 USD -> 1 CAT  <=>  0_500000 -> 1_00
-    // thus: rate is 5000
-    private static final int EXCHANGE_RATE = 5000;
 
     @DisplayName("Transfer")
     private static Event3Args<Hash160, Hash160, Integer> onTransfer;
 
-    private static final int DECIMALS = 2;
+    private static final int DECIMALS = 8;
     private static final String TOTAL_SUPPLY_KEY = "totalSupply";
-    private static final String SYMBOL = "CAT";
+    private static final String SYMBOL = "NEKOIN";
     private static final StorageContext sc = Storage.getStorageContext();
     private static final StorageMap assetMap = new StorageMap(sc, "asset");
 
@@ -54,6 +50,7 @@ public class CatToken {
         return getTotalSupply();
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public static boolean transfer(Hash160 from, Hash160 to, int amount, Object data) {
         assert Hash160.isValid(from) && Hash160.isValid(to) : "From or To address is not a valid address.";
         assert amount >= 0 : "The transfer amount was negative.";
@@ -69,7 +66,6 @@ public class CatToken {
         if (ContractManagement.getContract(to) != null) {
             Contract.call(to, "onNEP17Payment", CallFlags.All, new Object[]{from, amount, data});
         }
-
         return true;
     }
 
@@ -79,55 +75,43 @@ public class CatToken {
         return getBalance(account);
     }
 
-    @OnNEP17Payment
-    public static void onPayment(Hash160 from, int usdAmount, Object data) {
-        assert USD_TOKEN_HASH == Runtime.getCallingScriptHash() : "Invalid caller.";
-        assert Hash160.isValid(from) : "From address is not a valid address.";
-        assert usdAmount >= 0 : "Invalid amount.";
-
-        if (from == OWNER && data instanceof Boolean && ((Boolean) data)) {
-            // if come from owner and data is true, this is a donation, aka not exchange
-            // just accept that and return
-            // will be used when flamingo is online and dev team stake the USD
-            return;
-        }
-
-        int catAmount = usdAmount / EXCHANGE_RATE;
-        int usedAmount = catAmount * EXCHANGE_RATE;
-
-        // say if someone sent 1.000001USD, then he gets 2CAT,
-        // but he will lose the small remainder
-        // reject tx when this happens
-        assert usedAmount == usdAmount : "Nonexchangeable amount detected.";
-
-        if (catAmount != 0) {
-            addToBalance(from, catAmount);
-            addToTotalSupply(catAmount);
-        }
-        onTransfer.fire(null, from, catAmount);
+    @Safe
+    public static Hash160 contractOwner() {
+        return OWNER;
     }
 
-    public static boolean destroyToken(Hash160 from, int catAmount) {
-        assert Hash160.isValid(from) : "From address is not a valid address.";
-        assert catAmount >= 0 : "The destroy amount was negative.";
-        assert Runtime.checkWitness(from) || from == Runtime.getCallingScriptHash()
-                : "Invalid sender signature. The sender of the tokens needs to be the signing account.";
 
-        int usdAmount = catAmount * EXCHANGE_RATE;
+    // --------------------  MESSAGE READ&WRITE  --------------------
 
-        if (catAmount != 0) {
-            deductFromBalance(from, catAmount);
-            deductFromTotalSupply(catAmount);
-        }
-        onTransfer.fire(from, null, catAmount);
-        if (usdAmount != 0) {
-            // Might get false if we don't hold enough token
-            // This might be useful when dev team want to destroy unsold token
-            return (boolean) Contract.call(USD_TOKEN_HASH, "transfer", CallFlags.All,
-                    new Object[]{Runtime.getExecutingScriptHash(), from, usdAmount, null});
-        }
-        return true;
+    private static final StorageMap messageMap = new StorageMap(sc, "message");
+
+    @DisplayName("WriteMessage")
+    private static Event1Arg<ByteString> onWriteMessage;
+
+    public static ByteString writeMessage(ByteString content) {
+        // hash is 32 bytes
+        ByteString hash = CryptoLib.sha256(content);
+        // throw error when hash exists
+        assert messageMap.get(hash) == null : "Hash duplicated";
+        // save to the map & fire the notify/event
+        messageMap.put(hash, content);
+        onWriteMessage.fire(hash);
+        // return the hash
+        return hash;
     }
+
+    @Safe
+    public static ByteString readMessage(ByteString hash) {
+        // read content
+        ByteString content = messageMap.get(hash);
+        // throw error when hash not found
+        assert content != null : "Hash not found";
+        // return the content (NonNull)
+        return content;
+    }
+
+
+    // --------------------      PRIVILEGED      --------------------
 
     @OnDeployment
     public static void deploy(Object data, boolean update) {
@@ -143,31 +127,28 @@ public class CatToken {
         ContractManagement.update(script, manifest);
     }
 
+    public static void mint(int amount) {
+        throwIfSignerIsNotOwner();
+        assert amount > 0 : "The amount was non-positive.";
+        addToBalance(OWNER, amount);
+        addToTotalSupply(amount);
+        onTransfer.fire(null, OWNER, amount);
+    }
+
+    public static void destroy(int amount) {
+        throwIfSignerIsNotOwner();
+        assert amount > 0 : "The amount was non-positive.";
+        deductFromBalance(OWNER, amount);
+        deductFromTotalSupply(amount);
+        onTransfer.fire(OWNER, null, amount);
+    }
+
     @OnVerification
     public static boolean verify() {
         throwIfSignerIsNotOwner();
         return true;
     }
 
-    /**
-     * Gets the address of the contract owner.
-     *
-     * @return the address of the contract owner.
-     */
-    @Safe
-    public static Hash160 contractOwner() {
-        return OWNER;
-    }
-
-    @Safe
-    public static Hash160 usdTokenHash() {
-        return USD_TOKEN_HASH;
-    }
-
-    @Safe
-    public static int exchangeRate() {
-        return EXCHANGE_RATE;
-    }
 
     // -------------------- PRIVATE METHOD BELOW --------------------
 
